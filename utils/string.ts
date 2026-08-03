@@ -1,0 +1,25 @@
+/**
+ * Pure string helpers.
+ */
+
+export function slugify(value: string): string {
+  return value
+    .normalize("NFKD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9\s-]/g, "")
+    .replace(/[\s_-]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
+export function capitalize(value: string): string {
+  if (value.length === 0) {
+    return value;
+  }
+  return value.charAt(0).toUpperCase() + value.slice(1);
+}
+
+export function isBlank(value: string | null | undefined): boolean {
+  return value === null || value === undefined || value.trim().length === 0;
+}

@@ -1,0 +1,1 @@
+{"version":3,"file":"resource.collector.d.ts","sourceRoot":"","sources":["../../src/collectors/resource.collector.ts"],"names":[],"mappings":"AAAA,OAAO,KAAK,EAAE,SAAS,EAAE,aAAa,EAAE,MAAM,QAAQ,CAAC;AAEvD;;;GAGG;AACH,qBAAa,sBAAuB,YAAW,SAAS;IAG1C,OAAO,CAAC,QAAQ,CAAC,IAAI;IAFjC,OAAO,CAAC,OAAO,CAAC,CAAyB;gBAEZ,IAAI,EAAE,aAAa;IAEhD,KAAK,IAAI,IAAI;IAqBb,IAAI,IAAI,IAAI;CAKb"}

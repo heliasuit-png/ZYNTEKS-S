@@ -1,0 +1,55 @@
+{
+  "name": "zynteksis",
+  "version": "1.0.0",
+  "private": true,
+  "description": "ZYNTEKSIS — commercial observability SaaS source package (Next.js + Supabase)",
+  "type": "module",
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "lint:fix": "next lint --fix",
+    "typecheck": "tsc --noEmit",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "test:smoke": "tsx --test tests/smoke/**/*.test.ts"
+  },
+  "dependencies": {
+    "@radix-ui/react-slot": "^1.1.1",
+    "@supabase/ssr": "^0.12.4",
+    "@supabase/supabase-js": "^2.45.4",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "framer-motion": "^12.43.0",
+    "highlight.js": "^11.11.1",
+    "lucide-react": "^0.460.0",
+    "next": "^15.1.0",
+    "openai": "^7.3.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "react-markdown": "^10.1.0",
+    "rehype-highlight": "^7.0.2",
+    "remark-gfm": "^4.0.1",
+    "resend": "^4.0.1",
+    "tailwind-merge": "^2.5.5",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@eslint/eslintrc": "^3.2.0",
+    "@tailwindcss/postcss": "^4.0.0",
+    "@types/node": "^22.10.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "eslint": "^9.16.0",
+    "eslint-config-next": "^15.1.0",
+    "prettier": "^3.4.1",
+    "prettier-plugin-tailwindcss": "^0.6.9",
+    "tailwindcss": "^4.0.0",
+    "tsx": "^4.23.5",
+    "typescript": "^5.7.2"
+  }
+}

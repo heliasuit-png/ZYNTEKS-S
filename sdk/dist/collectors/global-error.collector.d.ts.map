@@ -1,0 +1,1 @@
+{"version":3,"file":"global-error.collector.d.ts","sourceRoot":"","sources":["../../src/collectors/global-error.collector.ts"],"names":[],"mappings":"AAAA,OAAO,KAAK,EAAE,SAAS,EAAE,aAAa,EAAE,MAAM,QAAQ,CAAC;AAEvD,wEAAwE;AACxE,qBAAa,oBAAqB,YAAW,SAAS;IAGxC,OAAO,CAAC,QAAQ,CAAC,IAAI;IAFjC,OAAO,CAAC,OAAO,CAAC,CAA8B;gBAEjB,IAAI,EAAE,aAAa;IAEhD,KAAK,IAAI,IAAI;IAsBb,IAAI,IAAI,IAAI;CAKb"}

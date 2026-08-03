@@ -1,0 +1,1 @@
+{"version":3,"file":"endpoints.d.ts","sourceRoot":"","sources":["../../src/transport/endpoints.ts"],"names":[],"mappings":"AAAA,OAAO,KAAK,EAAE,WAAW,EAAE,MAAM,UAAU,CAAC;AAE5C,eAAO,MAAM,cAAc,EAAE,MAAM,CAAC,WAAW,EAAE,MAAM,CAKtD,CAAC;AAEF,qEAAqE;AACrE,wBAAgB,UAAU,CAAC,IAAI,EAAE,MAAM,EAAE,IAAI,EAAE,WAAW,GAAG,MAAM,CAMlE"}

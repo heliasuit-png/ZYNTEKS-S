@@ -1,0 +1,613 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:is(.dark *));
+
+:root {
+  --radius: 0.625rem;
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.145 0 0);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.145 0 0);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.145 0 0);
+  --primary: oklch(0.205 0 0);
+  --primary-foreground: oklch(0.985 0 0);
+  --secondary: oklch(0.97 0 0);
+  --secondary-foreground: oklch(0.205 0 0);
+  --muted: oklch(0.97 0 0);
+  --muted-foreground: oklch(0.556 0 0);
+  --accent: oklch(0.97 0 0);
+  --accent-foreground: oklch(0.205 0 0);
+  --destructive: oklch(0.577 0.245 27.325);
+  --border: oklch(0.922 0 0);
+  --input: oklch(0.922 0 0);
+  --ring: oklch(0.708 0 0);
+}
+
+.dark {
+  --background: oklch(0.145 0 0);
+  --foreground: oklch(0.985 0 0);
+  --card: oklch(0.205 0 0);
+  --card-foreground: oklch(0.985 0 0);
+  --popover: oklch(0.205 0 0);
+  --popover-foreground: oklch(0.985 0 0);
+  --primary: oklch(0.922 0 0);
+  --primary-foreground: oklch(0.205 0 0);
+  --secondary: oklch(0.269 0 0);
+  --secondary-foreground: oklch(0.985 0 0);
+  --muted: oklch(0.269 0 0);
+  --muted-foreground: oklch(0.708 0 0);
+  --accent: oklch(0.269 0 0);
+  --accent-foreground: oklch(0.985 0 0);
+  --destructive: oklch(0.704 0.191 22.216);
+  --border: oklch(1 0 0 / 10%);
+  --input: oklch(1 0 0 / 15%);
+  --ring: oklch(0.556 0 0);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+
+  /* ZYNTEKSIS — cyber-luxury AI brand palette. */
+  --color-zt-bg: #050816;
+  --color-zt-surface: #0d1324;
+  --color-zt-surface-2: #141b2e;
+  --color-zt-glass: rgba(18, 24, 38, 0.82);
+  --color-zt-border: rgba(255, 255, 255, 0.08);
+  --color-zt-border-strong: rgba(148, 197, 255, 0.24);
+  --color-zt-primary: #00e5ff;
+  --color-zt-secondary: #3b82f6;
+  --color-zt-purple: #7c3aed;
+  --color-zt-accent: #00e5ff;
+  --color-zt-ai: #00ffd1;
+  --color-zt-pink: #ff4fd8;
+  --color-zt-success: #00ff88;
+  --color-zt-warning: #ffb020;
+  --color-zt-danger: #ff3b5c;
+  --color-zt-text: #ffffff;
+  --color-zt-muted: #cbd5e1;
+  --radius-zt: 16px;
+
+  --font-sans:
+    "Inter", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+    "Segoe UI", Roboto, "Helvetica Neue", Arial, "Apple Color Emoji",
+    "Segoe UI Emoji";
+}
+
+@layer base {
+  * {
+    border-color: var(--border);
+    outline-color: color-mix(in oklab, var(--ring) 50%, transparent);
+  }
+
+  body {
+    background-color: var(--background);
+    color: var(--foreground);
+    font-family: var(--font-sans);
+    font-feature-settings:
+      "rlig" 1,
+      "calt" 1,
+      "ss01" 1,
+      "cv11" 1;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+}
+
+/* ===========================================================================
+   ZYNTEKSIS premium UI system
+   Glassmorphism, animated aurora, neon glow, micro-interactions.
+   All motion is GPU-friendly and disabled under prefers-reduced-motion.
+   =========================================================================== */
+
+/* Signature gradient + reusable glow color tokens. */
+:root {
+  --zt-grad-1: #00e5ff;
+  --zt-grad-2: #3b82f6;
+  --zt-grad-3: #7c3aed;
+  --zt-gradient: linear-gradient(
+    135deg,
+    var(--zt-grad-1),
+    var(--zt-grad-2),
+    var(--zt-grad-3)
+  );
+}
+
+/* --- Glass surfaces -------------------------------------------------------- */
+.zt-glass {
+  background-color: var(--color-zt-glass);
+  backdrop-filter: blur(18px) saturate(150%);
+  -webkit-backdrop-filter: blur(18px) saturate(150%);
+}
+
+.zt-glass-strong {
+  background-color: rgba(13, 19, 36, 0.88);
+  backdrop-filter: blur(24px) saturate(160%);
+  -webkit-backdrop-filter: blur(24px) saturate(160%);
+}
+
+/* Floating card: glass + soft shadow + hairline gradient border. */
+.zt-card {
+  position: relative;
+  background-color: var(--color-zt-glass);
+  backdrop-filter: blur(18px) saturate(150%);
+  -webkit-backdrop-filter: blur(18px) saturate(150%);
+  border: 1px solid var(--color-zt-border);
+  box-shadow:
+    0 1px 0 0 rgba(255, 255, 255, 0.05) inset,
+    0 24px 60px -30px rgba(0, 0, 0, 0.85);
+}
+
+/* --- Neon glow system ------------------------------------------------------ */
+/* Generic soft glow driven by --zt-glow-color (set inline or via a tone). */
+.zt-glow {
+  box-shadow: 0 0 24px -6px var(--zt-glow-color, rgba(59, 130, 246, 0.65));
+}
+.zt-glow-primary {
+  --zt-glow-color: rgba(59, 130, 246, 0.65);
+}
+.zt-glow-secondary {
+  --zt-glow-color: rgba(124, 58, 237, 0.6);
+}
+.zt-glow-accent {
+  --zt-glow-color: rgba(0, 229, 255, 0.6);
+}
+.zt-glow-success {
+  --zt-glow-color: rgba(0, 255, 136, 0.55);
+}
+.zt-glow-warning {
+  --zt-glow-color: rgba(255, 176, 32, 0.55);
+}
+.zt-glow-danger {
+  --zt-glow-color: rgba(255, 59, 92, 0.6);
+}
+
+/* Neon gradient surface: animated tri-color fill + expanding glow + ripple. */
+.zt-neon {
+  position: relative;
+  overflow: hidden;
+  background-image: var(--zt-gradient);
+  background-size: 200% 200%;
+  animation: zt-gradient-pan 6s ease infinite;
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.1) inset,
+    0 10px 34px -10px rgba(0, 229, 255, 0.55),
+    0 6px 24px -8px rgba(124, 58, 237, 0.55);
+  transition:
+    box-shadow 0.35s ease,
+    transform 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.zt-neon:hover {
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.16) inset,
+    0 14px 46px -8px rgba(0, 229, 255, 0.8),
+    0 10px 34px -8px rgba(124, 58, 237, 0.75);
+}
+/* Centered ripple on press. */
+.zt-ripple::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 220%;
+  aspect-ratio: 1;
+  transform: translate(-50%, -50%) scale(0);
+  border-radius: 9999px;
+  background: radial-gradient(
+    circle,
+    rgba(255, 255, 255, 0.45),
+    transparent 60%
+  );
+  opacity: 0;
+  pointer-events: none;
+}
+.zt-ripple:active::after {
+  animation: zt-ripple 0.55s ease-out;
+}
+
+@keyframes zt-gradient-pan {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+@keyframes zt-ripple {
+  0% {
+    opacity: 0.5;
+    transform: translate(-50%, -50%) scale(0);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(1);
+  }
+}
+
+/* Pulsing glow halo (used behind the health ring and AI orb). */
+@keyframes zt-glow-pulse {
+  0%,
+  100% {
+    opacity: 0.35;
+    transform: scale(0.9);
+  }
+  50% {
+    opacity: 0.7;
+    transform: scale(1.06);
+  }
+}
+.zt-glow-pulse {
+  animation: zt-glow-pulse 3.2s ease-in-out infinite;
+}
+
+/* Hover lift micro-interaction. */
+.zt-hover-lift {
+  transition:
+    transform 0.35s cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 0.35s cubic-bezier(0.22, 1, 0.36, 1),
+    border-color 0.35s ease;
+  will-change: transform;
+}
+.zt-hover-lift:hover {
+  transform: translateY(-3px);
+  box-shadow:
+    0 1px 0 0 rgba(255, 255, 255, 0.06) inset,
+    0 30px 70px -28px rgba(0, 0, 0, 0.9);
+  border-color: var(--color-zt-border-strong);
+}
+
+/* Animated gradient border wrapper. */
+.zt-gradient-border {
+  position: relative;
+}
+.zt-gradient-border::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(
+    135deg,
+    color-mix(in oklab, var(--zt-grad-1) 70%, transparent),
+    color-mix(in oklab, var(--zt-grad-2) 40%, transparent) 45%,
+    color-mix(in oklab, var(--zt-grad-3) 65%, transparent)
+  );
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  opacity: 0;
+  transition: opacity 0.35s ease;
+  pointer-events: none;
+}
+.zt-gradient-border:hover::before {
+  opacity: 1;
+}
+
+/* --- Aurora background ------------------------------------------------------ */
+.zt-aurora {
+  background-color: var(--color-zt-bg);
+}
+.zt-aurora__blob {
+  position: absolute;
+  border-radius: 9999px;
+  filter: blur(90px);
+  opacity: 0.5;
+  will-change: transform;
+}
+.zt-aurora__grid {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.035) 1px, transparent 1px);
+  background-size: 48px 48px;
+  mask-image: radial-gradient(
+    ellipse 80% 60% at 50% 0%,
+    #000 40%,
+    transparent 100%
+  );
+  animation: zt-grid-pan 40s linear infinite;
+}
+
+@keyframes zt-aurora-1 {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  50% {
+    transform: translate3d(6%, 8%, 0) scale(1.15);
+  }
+}
+@keyframes zt-aurora-2 {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1.1);
+  }
+  50% {
+    transform: translate3d(-8%, 5%, 0) scale(0.95);
+  }
+}
+@keyframes zt-aurora-3 {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  50% {
+    transform: translate3d(5%, -6%, 0) scale(1.2);
+  }
+}
+@keyframes zt-grid-pan {
+  from {
+    background-position: 0 0;
+  }
+  to {
+    background-position: 48px 48px;
+  }
+}
+
+.zt-anim-aurora-1 {
+  animation: zt-aurora-1 24s ease-in-out infinite;
+}
+.zt-anim-aurora-2 {
+  animation: zt-aurora-2 30s ease-in-out infinite;
+}
+.zt-anim-aurora-3 {
+  animation: zt-aurora-3 28s ease-in-out infinite;
+}
+
+/* Fine-grained animated noise/grain overlay (subtle film-grain texture). */
+.zt-noise {
+  position: absolute;
+  inset: -50%;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  opacity: 0.035;
+  mix-blend-mode: overlay;
+  animation: zt-grain 8s steps(6) infinite;
+}
+@keyframes zt-grain {
+  0% {
+    transform: translate(0, 0);
+  }
+  20% {
+    transform: translate(-4%, 3%);
+  }
+  40% {
+    transform: translate(3%, -4%);
+  }
+  60% {
+    transform: translate(-3%, -2%);
+  }
+  80% {
+    transform: translate(4%, 3%);
+  }
+  100% {
+    transform: translate(0, 0);
+  }
+}
+
+/* Subtle twinkling starfield built from layered radial gradients. */
+.zt-stars {
+  position: absolute;
+  inset: 0;
+  background-image:
+    radial-gradient(1px 1px at 20% 30%, rgba(255, 255, 255, 0.5), transparent),
+    radial-gradient(1px 1px at 75% 20%, rgba(255, 255, 255, 0.35), transparent),
+    radial-gradient(1px 1px at 40% 70%, rgba(255, 255, 255, 0.4), transparent),
+    radial-gradient(1px 1px at 90% 60%, rgba(255, 255, 255, 0.3), transparent),
+    radial-gradient(1px 1px at 60% 85%, rgba(255, 255, 255, 0.35), transparent),
+    radial-gradient(1px 1px at 10% 80%, rgba(255, 255, 255, 0.3), transparent),
+    radial-gradient(1.5px 1.5px at 85% 35%, rgba(124, 92, 255, 0.5), transparent);
+  background-repeat: no-repeat;
+  animation: zt-twinkle 5s ease-in-out infinite;
+}
+@keyframes zt-twinkle {
+  0%,
+  100% {
+    opacity: 0.55;
+  }
+  50% {
+    opacity: 0.9;
+  }
+}
+
+/* --- Shimmer skeleton ------------------------------------------------------- */
+.zt-shimmer {
+  position: relative;
+  overflow: hidden;
+  background-color: rgba(255, 255, 255, 0.04);
+}
+.zt-shimmer::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.08),
+    transparent
+  );
+  animation: zt-shimmer 1.6s ease-in-out infinite;
+}
+@keyframes zt-shimmer {
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+/* --- Micro-interactions ----------------------------------------------------- */
+@keyframes zt-breathe {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.12);
+  }
+}
+.zt-breathe {
+  animation: zt-breathe 3.2s ease-in-out infinite;
+}
+
+@keyframes zt-pulse-ring {
+  0% {
+    transform: scale(0.8);
+    opacity: 0.7;
+  }
+  100% {
+    transform: scale(2.2);
+    opacity: 0;
+  }
+}
+.zt-pulse-ring::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 9999px;
+  background: currentColor;
+  animation: zt-pulse-ring 2s ease-out infinite;
+}
+
+@keyframes zt-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
+}
+.zt-float {
+  animation: zt-float 6s ease-in-out infinite;
+}
+
+@keyframes zt-spin-slow {
+  to {
+    transform: rotate(360deg);
+  }
+}
+.zt-spin-slow {
+  animation: zt-spin-slow 14s linear infinite;
+}
+
+/* --- Custom premium scrollbar ---------------------------------------------- */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(148, 163, 184, 0.28) transparent;
+}
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+*::-webkit-scrollbar-thumb {
+  background-color: rgba(148, 163, 184, 0.22);
+  border-radius: 9999px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+*::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(148, 163, 184, 0.4);
+}
+
+/* --- Light theme (zt palette) ---------------------------------------------- */
+html:not(.dark) {
+  --color-zt-bg: #f3f6fb;
+  --color-zt-surface: #ffffff;
+  --color-zt-surface-2: #eef2f8;
+  --color-zt-glass: rgba(255, 255, 255, 0.86);
+  --color-zt-border: rgba(15, 23, 42, 0.1);
+  --color-zt-border-strong: rgba(37, 99, 235, 0.28);
+  --color-zt-text: #0f172a;
+  --color-zt-muted: #475569;
+  color-scheme: light;
+}
+
+html:not(.dark) .zt-glass-strong {
+  background-color: rgba(255, 255, 255, 0.92);
+}
+
+html:not(.dark) .zt-card {
+  box-shadow:
+    0 1px 0 0 rgba(255, 255, 255, 0.7) inset,
+    0 18px 40px -28px rgba(15, 23, 42, 0.28);
+}
+
+html.dark {
+  color-scheme: dark;
+}
+
+/* --- Density --------------------------------------------------------------- */
+html[data-density="compact"] main {
+  --zt-density-space: 0.85;
+}
+
+html[data-density="compact"] main .space-y-6 {
+  gap: calc(1.25rem * var(--zt-density-space, 1));
+}
+
+html[data-density="compact"] .zt-card,
+html[data-density="compact"] [class*="rounded-2xl"].border {
+  padding-top: 0.85rem;
+  padding-bottom: 0.85rem;
+}
+
+/* --- Accessibility: respect reduced motion --------------------------------- */
+@media (prefers-reduced-motion: reduce) {
+  .zt-anim-aurora-1,
+  .zt-anim-aurora-2,
+  .zt-anim-aurora-3,
+  .zt-aurora__grid,
+  .zt-noise,
+  .zt-stars,
+  .zt-shimmer::after,
+  .zt-breathe,
+  .zt-pulse-ring::after,
+  .zt-float,
+  .zt-spin-slow,
+  .zt-neon,
+  .zt-ripple::after,
+  .zt-glow-pulse {
+    animation: none !important;
+  }
+  .zt-hover-lift {
+    transition: none;
+  }
+}
+
+html.reduce-motion *,
+html.reduce-motion *::before,
+html.reduce-motion *::after {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+  scroll-behavior: auto !important;
+}
