@@ -121,8 +121,23 @@ export async function GET(request: Request): Promise<NextResponse> {
         // Non-blocking profile enrichment.
       }
     }
-  } catch {
-    return NextResponse.redirect(`${origin}${ROUTES.login}?error=auth`);
+  } catch (error) {
+    // TEMPORARY diagnostics — remove after OAuth callback investigation.
+    console.error(error);
+    console.error("[auth/callback] exchange failed", {
+      message: error instanceof Error ? error.message : String(error),
+      name: error instanceof Error ? error.name : undefined,
+      stack: error instanceof Error ? error.stack : undefined,
+      cause:
+        error instanceof Error && "cause" in error
+          ? error.cause
+          : undefined,
+    });
+    const message =
+      error instanceof Error ? error.message : String(error);
+    return NextResponse.redirect(
+      `${origin}${ROUTES.login}?error=${encodeURIComponent(message)}`,
+    );
   }
 
   return NextResponse.redirect(`${origin}${next}`);
