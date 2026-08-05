@@ -45,16 +45,19 @@ GITHUB_CLIENT_SECRET=
 
 **Required setup:** enable each provider and paste Client ID/Secret in **Supabase Dashboard → Authentication → Providers**. Supabase Auth performs the OAuth handshake; the app calls `signInWithOAuth`.
 
-Common redirect URL:
+App redirect URL (Supabase Redirect URLs + OAuth `redirectTo`):
 
 ```text
-{NEXT_PUBLIC_APP_URL}/auth/callback
+https://zynteksisv.vercel.app/auth/callback
 ```
 
-Add the same URL under **Authentication → URL Configuration → Redirect URLs**.
+Supabase Auth provider callback (Google/GitHub console — do not change):
 
-Local example: `http://localhost:3000/auth/callback`  
-Production example: `https://your-domain.com/auth/callback`
+```text
+https://xwxfjzyfrcaxdwvkdedq.supabase.co/auth/v1/callback
+```
+
+Also set Supabase **Site URL** to `https://zynteksisv.vercel.app`.
 
 Apply migration `supabase/migrations/0015_authentication_v2.sql` before relying on login history / last login columns.
 
@@ -64,7 +67,7 @@ Apply migration `supabase/migrations/0015_authentication_v2.sql` before relying 
 
 1. Open [Google Cloud Console](https://console.cloud.google.com/) → APIs & Services → Credentials.
 2. Create **OAuth client ID** (Web application).
-3. Authorized JavaScript origins: your app origin (e.g. `http://localhost:3000`).
+3. Authorized JavaScript origins: `https://zynteksisv.vercel.app`.
 4. Authorized redirect URIs — use the **Supabase callback**, not only the app callback:
 
 ```text

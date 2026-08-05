@@ -20,7 +20,7 @@ are **not production-ready**.
 
 | Variable | Example placeholder in `.env.example` | Buyer action |
 | -------- | ------------------------------------- | ------------ |
-| `NEXT_PUBLIC_APP_URL` | `http://localhost:3000` | Set to your **https** production origin (no trailing slash), e.g. `https://app.your-domain.com` |
+| `NEXT_PUBLIC_APP_URL` | `https://zynteksisv.vercel.app` | Production origin (no trailing slash) |
 | `NEXT_PUBLIC_APP_NAME` | `ZYNTEKSIS` | Keep or set your brand display name |
 | `NEXT_PUBLIC_SUPABASE_URL` | `https://your-project.supabase.co` | **REPLACE** with your Supabase Project URL |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | `your-supabase-anon-key` | **REPLACE** with the `anon` `public` key |
@@ -34,10 +34,10 @@ are **not production-ready**.
 
 Also replace Auth URL examples:
 
-| Setting | Placeholder pattern | Production |
-| ------- | ------------------- | ---------- |
-| Site URL | `http://localhost:3000` | `https://your-domain.com` |
-| Redirect URLs | `http://localhost:3000/auth/...` | `https://your-domain.com/auth/callback` and `.../auth/confirm` |
+| Setting | Production |
+| ------- | ---------- |
+| Site URL | `https://zynteksisv.vercel.app` |
+| Redirect URLs | `https://zynteksisv.vercel.app/auth/callback` and `https://zynteksisv.vercel.app/auth/confirm` |
 
 **Never** set `SKIP_ENV_VALIDATION` in production.
 

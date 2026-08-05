@@ -14,7 +14,7 @@ Never commit real secrets. `.env.local` is gitignored.
 
 | Variable | Required | Exposed to browser | Description | Where to get it |
 | -------- | -------- | ------------------ | ----------- | --------------- |
-| `NEXT_PUBLIC_APP_URL` | Yes | Yes | Canonical public URL (no trailing slash). Used for redirects, emails, absolute links. | Local: `http://localhost:3000`. Prod: your Vercel / custom domain `https://…` |
+| `NEXT_PUBLIC_APP_URL` | Yes | Yes | Canonical public URL (no trailing slash). Used for redirects, emails, absolute links. | Production: `https://zynteksisv.vercel.app` |
 | `NEXT_PUBLIC_APP_NAME` | Yes | Yes | Product display name | Your brand string, default `ZYNTEKSIS` |
 
 ---
@@ -86,8 +86,8 @@ Optional local references only. **Enable providers in Supabase Auth → Provider
 | `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | No | No | Google OAuth (configure in Supabase) | Google Cloud Console |
 | `GITHUB_CLIENT_ID` / `GITHUB_CLIENT_SECRET` | No | No | GitHub OAuth (configure in Supabase) | GitHub Developer settings |
 
-App callback: `{NEXT_PUBLIC_APP_URL}/auth/callback`  
-Provider callback: `https://<PROJECT_REF>.supabase.co/auth/v1/callback`
+App callback: `https://zynteksisv.vercel.app/auth/callback`  
+Provider callback (do not change): `https://xwxfjzyfrcaxdwvkdedq.supabase.co/auth/v1/callback`
 
 ---
 

@@ -39,13 +39,13 @@ Confirm Storage buckets from migration `0009`:
 
 ## 2. Supabase Auth URLs
 
-Replace localhost placeholders with your production domain:
+Use the production application URL:
 
-| Setting | Placeholder (local only) | Production (replace) |
-| ------- | ------------------------ | -------------------- |
-| Site URL | `http://localhost:3000` | `https://your-domain.com` |
-| Redirect URLs | `http://localhost:3000/auth/callback` | `https://your-domain.com/auth/callback` |
-| | `http://localhost:3000/auth/confirm` | `https://your-domain.com/auth/confirm` |
+| Setting | Production value |
+| ------- | ---------------- |
+| Site URL | `https://zynteksisv.vercel.app` |
+| Redirect URLs | `https://zynteksisv.vercel.app/auth/callback` |
+| | `https://zynteksisv.vercel.app/auth/confirm` |
 
 ## 3. Environment variables (placeholders to replace)
 
@@ -54,7 +54,7 @@ Set the same keys as [`.env.example`](../.env.example) in the Vercel project
 
 | Variable | Placeholder pattern in `.env.example` | Must replace? |
 | -------- | ------------------------------------- | ------------- |
-| `NEXT_PUBLIC_APP_URL` | `http://localhost:3000` | **Yes** → `https://…` production origin, no trailing slash |
+| `NEXT_PUBLIC_APP_URL` | `https://zynteksisv.vercel.app` | **Yes** — production origin, no trailing slash |
 | `NEXT_PUBLIC_APP_NAME` | `ZYNTEKSIS` | Optional brand rename |
 | `NEXT_PUBLIC_SUPABASE_URL` | `https://your-project.supabase.co` | **Yes** |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | `your-supabase-anon-key` | **Yes** |
