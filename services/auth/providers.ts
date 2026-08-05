@@ -4,6 +4,7 @@ import { env } from "@/lib/env";
 import type {
   AuthProviderKey,
   OAuthProviderConfig,
+  OAuthProviderId,
 } from "@/services/auth/provider-types";
 
 export type {
@@ -12,42 +13,71 @@ export type {
   OAuthProviderId,
 } from "@/services/auth/provider-types";
 
-function hasPair(id: string, secret: string): boolean {
-  return Boolean(id.trim() && secret.trim());
+const OAUTH_PROVIDERS: Omit<OAuthProviderConfig, "enabled">[] = [
+  {
+    key: "google",
+    supabaseProvider: "google",
+    label: "Continue with Google",
+  },
+  {
+    key: "github",
+    supabaseProvider: "github",
+    label: "Continue with GitHub",
+  },
+];
+
+interface SupabaseAuthSettings {
+  external?: Record<string, boolean | undefined>;
 }
 
-/** Which OAuth buttons to expose — driven by env credentials (configured in Supabase too). */
-export function getOAuthProviderConfigs(): OAuthProviderConfig[] {
-  return [
-    {
-      key: "google",
-      supabaseProvider: "google",
-      label: "Continue with Google",
-      configured: hasPair(env.GOOGLE_CLIENT_ID, env.GOOGLE_CLIENT_SECRET),
-    },
-    {
-      key: "github",
-      supabaseProvider: "github",
-      label: "Continue with GitHub",
-      configured: hasPair(env.GITHUB_CLIENT_ID, env.GITHUB_CLIENT_SECRET),
-    },
-    {
-      key: "microsoft",
-      supabaseProvider: "azure",
-      label: "Continue with Microsoft",
-      configured: hasPair(env.MICROSOFT_CLIENT_ID, env.MICROSOFT_CLIENT_SECRET),
-    },
-    {
-      key: "apple",
-      supabaseProvider: "apple",
-      label: "Continue with Apple",
-      configured: hasPair(env.APPLE_CLIENT_ID, env.APPLE_CLIENT_SECRET),
-    },
-  ];
+/**
+ * Public Supabase Auth settings — source of truth for which OAuth providers
+ * are enabled in the dashboard (not app env vars).
+ */
+export async function fetchSupabaseAuthSettings(): Promise<SupabaseAuthSettings | null> {
+  try {
+    const response = await fetch(
+      `${env.NEXT_PUBLIC_SUPABASE_URL}/auth/v1/settings`,
+      {
+        headers: {
+          apikey: env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+          Authorization: `Bearer ${env.NEXT_PUBLIC_SUPABASE_ANON_KEY}`,
+        },
+        // Provider toggles change rarely; short cache avoids hammering Auth.
+        next: { revalidate: 60 },
+      },
+    );
+    if (!response.ok) return null;
+    return (await response.json()) as SupabaseAuthSettings;
+  } catch {
+    return null;
+  }
 }
 
-export function getConfiguredOAuthProviders(): OAuthProviderConfig[] {
-  return getOAuthProviderConfigs().filter((provider) => provider.configured);
+function isProviderEnabled(
+  settings: SupabaseAuthSettings | null,
+  provider: OAuthProviderId,
+): boolean {
+  if (!settings?.external) {
+    // Settings unavailable — allow the button; signInWithOAuth surfaces real errors.
+    return true;
+  }
+  return settings.external[provider] === true;
+}
+
+/** Google / GitHub buttons — enabled state from Supabase Auth settings. */
+export async function getOAuthProviderConfigs(): Promise<OAuthProviderConfig[]> {
+  const settings = await fetchSupabaseAuthSettings();
+  return OAUTH_PROVIDERS.map((provider) => ({
+    ...provider,
+    enabled: isProviderEnabled(settings, provider.supabaseProvider),
+  }));
+}
+
+/** Providers currently enabled in Supabase Auth. */
+export async function getEnabledOAuthProviders(): Promise<OAuthProviderConfig[]> {
+  const all = await getOAuthProviderConfigs();
+  return all.filter((provider) => provider.enabled);
 }
 
 export function mapSupabaseProviderToKey(
@@ -58,10 +88,6 @@ export function mapSupabaseProviderToKey(
       return "google";
     case "github":
       return "github";
-    case "azure":
-      return "microsoft";
-    case "apple":
-      return "apple";
     case "email":
       return "email";
     default:

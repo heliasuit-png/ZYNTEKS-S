@@ -22,18 +22,21 @@ export function AuthMethodPanel({
   redirectTo,
 }: AuthMethodPanelProps) {
   const [mode, setMode] = useState<Mode>("password");
+  const hasOAuth = providers.some((provider) => provider.enabled);
 
   return (
     <div className="space-y-5">
       <OAuthButtons providers={providers} redirectTo={redirectTo} />
 
-      <div className="relative flex items-center gap-3" aria-hidden>
-        <div className="h-px flex-1 bg-gradient-to-r from-transparent via-white/15 to-transparent" />
-        <span className="text-[10px] font-medium uppercase tracking-[0.2em] text-zt-muted">
-          or
-        </span>
-        <div className="h-px flex-1 bg-gradient-to-r from-transparent via-white/15 to-transparent" />
-      </div>
+      {hasOAuth ? (
+        <div className="relative flex items-center gap-3" aria-hidden>
+          <div className="h-px flex-1 bg-gradient-to-r from-transparent via-white/15 to-transparent" />
+          <span className="text-[10px] font-medium uppercase tracking-[0.2em] text-zt-muted">
+            or
+          </span>
+          <div className="h-px flex-1 bg-gradient-to-r from-transparent via-white/15 to-transparent" />
+        </div>
+      ) : null}
 
       <div
         className="grid grid-cols-2 gap-1 rounded-xl border border-white/10 bg-black/20 p-1"

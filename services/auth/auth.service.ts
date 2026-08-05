@@ -200,14 +200,14 @@ export async function signInWithMagicLink(
 }
 
 export interface OAuthSignInParams {
-  provider: "google" | "github" | "azure" | "apple";
+  provider: "google" | "github";
   redirectTo: string;
   scopes?: string;
 }
 
 /**
- * Starts a Supabase Auth OAuth PKCE flow. Returns the provider URL to redirect to.
- * Provider client secrets are configured in the Supabase Dashboard (and mirrored in env).
+ * Starts a Supabase Auth OAuth PKCE flow via `signInWithOAuth`.
+ * Provider credentials must be configured in the Supabase Dashboard.
  */
 export async function startOAuthSignIn(
   supabase: Supabase,
@@ -220,11 +220,9 @@ export async function startOAuthSignIn(
       scopes,
       skipBrowserRedirect: true,
       queryParams:
-        provider === "azure"
-          ? { prompt: "select_account" }
-          : provider === "google"
-            ? { prompt: "select_account", access_type: "online" }
-            : undefined,
+        provider === "google"
+          ? { prompt: "select_account", access_type: "online" }
+          : undefined,
     },
   });
   if (error) throw mapAuthError(error);

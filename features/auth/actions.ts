@@ -12,7 +12,6 @@ import { safeNextPath } from "@/lib/safe-redirect";
 import { createSupabaseServerClient } from "@/supabase/server";
 import {
   assertAuthRateLimit,
-  getOAuthProviderConfigs,
   recordLoginEvent,
   sendPasswordResetEmail,
   signInWithMagicLink,
@@ -255,21 +254,13 @@ export async function startOAuthAction(
   providerKey: string,
   redirectTo?: string,
 ): Promise<AuthFormState> {
-  const configs = getOAuthProviderConfigs();
-  const config = configs.find((item) => item.key === providerKey);
-  if (!config) {
+  if (providerKey !== "google" && providerKey !== "github") {
     return { status: "error", message: "Unknown authentication provider." };
-  }
-  if (!config.configured) {
-    return {
-      status: "error",
-      message: `${config.label} is not configured. Set credentials in the environment and Supabase Auth providers.`,
-    };
   }
 
   const ctx = await getAuthRequestContext();
   try {
-    assertAuthRateLimit(rateKey(`oauth:${config.key}`, undefined, ctx.ipAddress), 20);
+    assertAuthRateLimit(rateKey(`oauth:${providerKey}`, undefined, ctx.ipAddress), 20);
   } catch (error) {
     return toErrorState(error);
   }
@@ -280,9 +271,9 @@ export async function startOAuthAction(
 
   try {
     const url = await startOAuthSignIn(supabase, {
-      provider: config.supabaseProvider,
+      provider: providerKey,
       redirectTo: callback,
-      scopes: config.supabaseProvider === "github" ? "read:user user:email" : undefined,
+      scopes: providerKey === "github" ? "read:user user:email" : undefined,
     });
     redirect(url);
   } catch (error) {

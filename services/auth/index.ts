@@ -23,7 +23,8 @@ export type {
 } from "@/services/auth/auth.service";
 export {
   getOAuthProviderConfigs,
-  getConfiguredOAuthProviders,
+  getEnabledOAuthProviders,
+  fetchSupabaseAuthSettings,
   identitiesToProviderKeys,
   mapSupabaseProviderToKey,
 } from "@/services/auth/providers";

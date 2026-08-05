@@ -28,7 +28,7 @@ export default async function LoginPage({
     error,
   } = await searchParams;
   const redirectTo = safeNextPath(redirectParam, "");
-  const providers = getOAuthProviderConfigs();
+  const providers = await getOAuthProviderConfigs();
 
   return (
     <AuthCard

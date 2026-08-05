@@ -15,7 +15,7 @@ export const dynamic = "force-dynamic";
 
 export default async function RegisterPage() {
   const platform = await getPlatformRuntimeSettings();
-  const providers = getOAuthProviderConfigs();
+  const providers = await getOAuthProviderConfigs();
 
   if (!platform.registrationEnabled) {
     return (

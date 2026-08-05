@@ -79,17 +79,15 @@ Vercel Cron invokes the routes; the app expects `Authorization: Bearer <CRON_SEC
 
 ## OAuth providers (Authentication v2)
 
-Optional. Gate “Continue with …” buttons in the app. Also configure the same Client ID/Secret in Supabase Auth → Providers. Full setup: [docs/authentication.md](./docs/authentication.md).
+Optional local references only. **Enable providers in Supabase Auth → Providers** — the app reads enabled Google/GitHub from Supabase Auth settings and does not gate buttons on these env vars. Full setup: [docs/authentication.md](./docs/authentication.md).
 
 | Variable | Required | Exposed to browser | Description | Where to get it |
 | -------- | -------- | ------------------ | ----------- | --------------- |
-| `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | No | No | Google OAuth | Google Cloud Console |
-| `GITHUB_CLIENT_ID` / `GITHUB_CLIENT_SECRET` | No | No | GitHub OAuth | GitHub Developer settings |
-| `MICROSOFT_CLIENT_ID` / `MICROSOFT_CLIENT_SECRET` | No | No | Microsoft / Azure AD | Azure App registrations |
-| `APPLE_CLIENT_ID` / `APPLE_CLIENT_SECRET` | No | No | Sign in with Apple | Apple Developer |
+| `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | No | No | Google OAuth (configure in Supabase) | Google Cloud Console |
+| `GITHUB_CLIENT_ID` / `GITHUB_CLIENT_SECRET` | No | No | GitHub OAuth (configure in Supabase) | GitHub Developer settings |
 
 App callback: `{NEXT_PUBLIC_APP_URL}/auth/callback`  
-Provider callback in Google/GitHub/etc.: `https://<PROJECT_REF>.supabase.co/auth/v1/callback`
+Provider callback: `https://<PROJECT_REF>.supabase.co/auth/v1/callback`
 
 ---
 
