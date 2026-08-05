@@ -3,30 +3,61 @@ import type { Metadata } from "next";
 
 import { ROUTES } from "@/lib/constants";
 import { AuthCard } from "@/features/auth/components/auth-card";
-import { RegisterForm } from "@/features/auth/components/register-form";
+import { AuthMethodPanel } from "@/features/auth/components/auth-method-panel";
+import { getOAuthProviderConfigs } from "@/services/auth/providers";
+import { getPlatformRuntimeSettings } from "@/services/platform/runtime-settings.service";
 
 export const metadata: Metadata = {
   title: "Create account",
 };
 
-export default function RegisterPage() {
+export const dynamic = "force-dynamic";
+
+export default async function RegisterPage() {
+  const platform = await getPlatformRuntimeSettings();
+  const providers = getOAuthProviderConfigs();
+
+  if (!platform.registrationEnabled) {
+    return (
+      <AuthCard
+        title="Registration closed"
+        description="New accounts are not being accepted right now."
+        footer={
+          <>
+            Already have an account?{" "}
+            <Link
+              href={ROUTES.login}
+              className="font-medium text-zt-accent hover:underline"
+            >
+              Sign in
+            </Link>
+          </>
+        }
+      >
+        <p className="text-sm text-zt-muted">
+          Contact your platform administrator if you need access.
+        </p>
+      </AuthCard>
+    );
+  }
+
   return (
     <AuthCard
       title="Create your account"
-      description="Start building on ZYNTEKSIS"
+      description="Join ZYNTEKSIS with SSO or email — one identity, no duplicates"
       footer={
         <>
           Already have an account?{" "}
           <Link
             href={ROUTES.login}
-            className="font-medium text-foreground hover:underline"
+            className="font-medium text-zt-accent hover:underline"
           >
             Sign in
           </Link>
         </>
       }
     >
-      <RegisterForm />
+      <AuthMethodPanel variant="register" providers={providers} />
     </AuthCard>
   );
 }

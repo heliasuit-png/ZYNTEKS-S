@@ -65,6 +65,7 @@ export const ROUTES = {
   forgotPassword: "/forgot-password",
   resetPassword: "/reset-password",
   dashboard: "/dashboard",
+  maintenance: "/maintenance",
 } as const;
 
 export const AUTH_ROUTES = {
@@ -98,6 +99,29 @@ export const DASHBOARD_ROUTES = {
 
 export type DashboardRoute =
   (typeof DASHBOARD_ROUTES)[keyof typeof DASHBOARD_ROUTES];
+
+/**
+ * Enterprise Admin Control Center routes.
+ * Gated by `admin_users` membership (not workspace RBAC / profiles.role).
+ */
+export const ADMIN_ROUTES = {
+  root: "/admin",
+  login: "/admin/login",
+  dashboard: "/admin/dashboard",
+  users: "/admin/users",
+  workspaces: "/admin/workspaces",
+  projects: "/admin/projects",
+  monitoring: "/admin/monitoring",
+  apiKeys: "/admin/api-keys",
+  analytics: "/admin/analytics",
+  ai: "/admin/ai",
+  notifications: "/admin/notifications",
+  security: "/admin/security",
+  auditLogs: "/admin/audit",
+  settings: "/admin/settings",
+} as const;
+
+export type AdminRoute = (typeof ADMIN_ROUTES)[keyof typeof ADMIN_ROUTES];
 
 /** Routes that require an authenticated session. */
 export const PROTECTED_ROUTE_PREFIXES = [

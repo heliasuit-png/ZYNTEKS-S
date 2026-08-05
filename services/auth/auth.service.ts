@@ -28,6 +28,11 @@ function mapAuthError(error: AuthError): AppError {
     code,
     statusCode: status as (typeof HTTP_STATUS)[keyof typeof HTTP_STATUS],
     cause: error,
+    details: {
+      authCode: (error as { code?: string }).code ?? null,
+      authStatus: error.status ?? null,
+      authMessage: error.message,
+    },
   });
 }
 
@@ -172,6 +177,66 @@ export async function exchangeCodeForSession(
   return data.session;
 }
 
+export interface MagicLinkParams {
+  email: string;
+  emailRedirectTo: string;
+  /** When true, creates a user if none exists (register via magic link). */
+  shouldCreateUser?: boolean;
+}
+
+/** Passwordless email OTP / magic link via Supabase Auth PKCE. */
+export async function signInWithMagicLink(
+  supabase: Supabase,
+  { email, emailRedirectTo, shouldCreateUser = true }: MagicLinkParams,
+): Promise<void> {
+  const { error } = await supabase.auth.signInWithOtp({
+    email,
+    options: {
+      emailRedirectTo,
+      shouldCreateUser,
+    },
+  });
+  if (error) throw mapAuthError(error);
+}
+
+export interface OAuthSignInParams {
+  provider: "google" | "github" | "azure" | "apple";
+  redirectTo: string;
+  scopes?: string;
+}
+
+/**
+ * Starts a Supabase Auth OAuth PKCE flow. Returns the provider URL to redirect to.
+ * Provider client secrets are configured in the Supabase Dashboard (and mirrored in env).
+ */
+export async function startOAuthSignIn(
+  supabase: Supabase,
+  { provider, redirectTo, scopes }: OAuthSignInParams,
+): Promise<string> {
+  const { data, error } = await supabase.auth.signInWithOAuth({
+    provider,
+    options: {
+      redirectTo,
+      scopes,
+      skipBrowserRedirect: true,
+      queryParams:
+        provider === "azure"
+          ? { prompt: "select_account" }
+          : provider === "google"
+            ? { prompt: "select_account", access_type: "online" }
+            : undefined,
+    },
+  });
+  if (error) throw mapAuthError(error);
+  if (!data.url) {
+    throw new AppError("OAuth provider did not return a redirect URL.", {
+      code: ERROR_CODE.BAD_REQUEST,
+      statusCode: HTTP_STATUS.BAD_REQUEST,
+    });
+  }
+  return data.url;
+}
+
 /** Returns the authenticated user, validated against the auth server. */
 export async function getAuthenticatedUser(
   supabase: Supabase,
@@ -180,4 +245,11 @@ export async function getAuthenticatedUser(
     data: { user },
   } = await supabase.auth.getUser();
   return user;
+}
+
+/** Lists MFA factors for architecture/UI readiness (Supabase Auth MFA). */
+export async function listMfaFactors(supabase: Supabase) {
+  const { data, error } = await supabase.auth.mfa.listFactors();
+  if (error) throw mapAuthError(error);
+  return data;
 }

@@ -44,6 +44,10 @@ export const forgotPasswordSchema = z.object({
   email,
 });
 
+export const magicLinkSchema = z.object({
+  email,
+});
+
 export const resetPasswordSchema = z
   .object({
     password,
@@ -57,4 +61,5 @@ export const resetPasswordSchema = z
 export type SignInInput = z.infer<typeof signInSchema>;
 export type SignUpInput = z.infer<typeof signUpSchema>;
 export type ForgotPasswordInput = z.infer<typeof forgotPasswordSchema>;
+export type MagicLinkInput = z.infer<typeof magicLinkSchema>;
 export type ResetPasswordInput = z.infer<typeof resetPasswordSchema>;

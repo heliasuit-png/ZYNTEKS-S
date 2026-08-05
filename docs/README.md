@@ -8,6 +8,7 @@ guides below. Target time-to-orientation for a new owner: **~30 minutes**.
 | Document | Audience | Contents |
 | -------- | -------- | -------- |
 | [Architecture.md](./Architecture.md) | All engineers | Layers, dependency rules, request flows |
+| [authentication.md](./authentication.md) | Platform / security | Auth v2, OAuth providers, PKCE, MFA readiness |
 | [Backend.md](./Backend.md) | Server engineers | Services, API routes, auth, cron, email |
 | [Frontend.md](./Frontend.md) | UI engineers | App Router, features, components, a11y |
 | [Database.md](./Database.md) | Backend / DBA | Tables, enums, indexes, RLS, migrations |

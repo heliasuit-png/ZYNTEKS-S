@@ -4,6 +4,8 @@ import type { ReactNode } from "react";
 
 import { ROUTES } from "@/lib/constants";
 import { getAuthenticatedUser } from "@/services/auth";
+import { getAdminUserByAuthId } from "@/services/admin/admin-user.service";
+import { getPlatformRuntimeSettings } from "@/services/platform/runtime-settings.service";
 import { getProfileById } from "@/services/profile";
 import {
   getRecentNotifications,
@@ -35,6 +37,14 @@ export default async function DashboardLayout({
   const user = await getAuthenticatedUser(supabase);
   if (!user) {
     redirect(ROUTES.login);
+  }
+
+  const platform = await getPlatformRuntimeSettings();
+  if (platform.maintenanceEnabled) {
+    const adminUser = await getAdminUserByAuthId(supabase, user.id);
+    if (!adminUser) {
+      redirect(ROUTES.maintenance);
+    }
   }
 
   const dashboardUser: DashboardUser = {

@@ -15,8 +15,8 @@ export function FormMessage({ state }: { state: AuthFormState }) {
       className={cn(
         "rounded-md border px-3 py-2 text-sm",
         isError
-          ? "border-destructive/40 bg-destructive/10 text-destructive"
-          : "border-emerald-500/40 bg-emerald-500/10 text-emerald-600",
+          ? "border-rose-500/40 bg-rose-500/10 text-rose-200"
+          : "border-emerald-500/40 bg-emerald-500/10 text-emerald-300",
       )}
     >
       {state.message}

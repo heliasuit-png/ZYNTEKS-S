@@ -109,6 +109,62 @@ export type AuditAction =
   | "password_changed"
   | "security_updated";
 
+/** Platform admin roles for the Enterprise Admin Control Center (`admin_users`). */
+export type AdminPlatformRole =
+  | "SUPER_ADMIN"
+  | "ADMIN"
+  | "SUPPORT"
+  | "READ_ONLY";
+
+export type AdminAuditAction =
+  | "user_promoted"
+  | "user_demoted"
+  | "user_suspended"
+  | "user_reactivated"
+  | "user_password_reset"
+  | "user_force_logout"
+  | "user_deleted"
+  | "workspace_transferred"
+  | "workspace_suspended"
+  | "workspace_reactivated"
+  | "workspace_archived"
+  | "workspace_deleted"
+  | "workspace_renamed"
+  | "workspace_member_removed"
+  | "workspace_member_promoted"
+  | "workspace_member_demoted"
+  | "feature_flag_updated"
+  | "platform_settings_updated"
+  | "auth_login_suspicious"
+  | "auth_oauth_linked";
+
+/** Platform admin lifecycle status on `workspaces.admin_status`. */
+export type WorkspaceAdminStatus = "active" | "suspended" | "archived";
+
+export type FeatureFlagStatus =
+  | "enabled"
+  | "disabled"
+  | "beta"
+  | "internal";
+
+export type FeatureFlagScope =
+  | "global"
+  | "workspace"
+  | "project"
+  | "user";
+
+export type AuthLoginMethod =
+  | "password"
+  | "magic_link"
+  | "oauth_google"
+  | "oauth_github"
+  | "oauth_microsoft"
+  | "oauth_apple"
+  | "recovery"
+  | "unknown";
+
+export type AuthLoginResult = "success" | "failure" | "suspicious";
+
 export interface Database {
   public: {
     Tables: {
@@ -124,6 +180,8 @@ export interface Database {
           language: string;
           timezone: string;
           password_changed_at: string | null;
+          last_login_at: string | null;
+          mfa_enabled: boolean;
           preferences: Json;
           created_at: string;
           updated_at: string;
@@ -139,6 +197,8 @@ export interface Database {
           language?: string;
           timezone?: string;
           password_changed_at?: string | null;
+          last_login_at?: string | null;
+          mfa_enabled?: boolean;
           preferences?: Json;
           created_at?: string;
           updated_at?: string;
@@ -154,6 +214,8 @@ export interface Database {
           language?: string;
           timezone?: string;
           password_changed_at?: string | null;
+          last_login_at?: string | null;
+          mfa_enabled?: boolean;
           preferences?: Json;
           created_at?: string;
           updated_at?: string;
@@ -224,6 +286,7 @@ export interface Database {
           plan: SubscriptionPlan;
           notification_defaults: Json;
           security_policies: Json;
+          admin_status: WorkspaceAdminStatus;
           created_at: string;
           updated_at: string;
         };
@@ -238,6 +301,7 @@ export interface Database {
           plan?: SubscriptionPlan;
           notification_defaults?: Json;
           security_policies?: Json;
+          admin_status?: WorkspaceAdminStatus;
           created_at?: string;
           updated_at?: string;
         };
@@ -252,6 +316,7 @@ export interface Database {
           plan?: SubscriptionPlan;
           notification_defaults?: Json;
           security_policies?: Json;
+          admin_status?: WorkspaceAdminStatus;
           created_at?: string;
           updated_at?: string;
         };
@@ -1250,9 +1315,261 @@ export interface Database {
         };
         Relationships: [];
       };
+      admin_users: {
+        Row: {
+          id: string;
+          user_id: string;
+          role: AdminPlatformRole;
+          created_at: string;
+          updated_at: string;
+          last_login: string | null;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          role: AdminPlatformRole;
+          created_at?: string;
+          updated_at?: string;
+          last_login?: string | null;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          role?: AdminPlatformRole;
+          created_at?: string;
+          updated_at?: string;
+          last_login?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "admin_users_user_id_fkey";
+            columns: ["user_id"];
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      admin_audit_logs: {
+        Row: {
+          id: string;
+          actor_id: string | null;
+          action: AdminAuditAction;
+          target_user_id: string | null;
+          target_workspace_id: string | null;
+          summary: string;
+          metadata: Json;
+          ip_address: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          actor_id?: string | null;
+          action: AdminAuditAction;
+          target_user_id?: string | null;
+          target_workspace_id?: string | null;
+          summary: string;
+          metadata?: Json;
+          ip_address?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          actor_id?: string | null;
+          action?: AdminAuditAction;
+          target_user_id?: string | null;
+          target_workspace_id?: string | null;
+          summary?: string;
+          metadata?: Json;
+          ip_address?: string | null;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
+      feature_flags: {
+        Row: {
+          id: string;
+          key: string;
+          name: string;
+          description: string;
+          scope: FeatureFlagScope;
+          status: FeatureFlagStatus;
+          created_at: string;
+          updated_at: string;
+          updated_by: string | null;
+        };
+        Insert: {
+          id?: string;
+          key: string;
+          name: string;
+          description?: string;
+          scope?: FeatureFlagScope;
+          status?: FeatureFlagStatus;
+          created_at?: string;
+          updated_at?: string;
+          updated_by?: string | null;
+        };
+        Update: {
+          id?: string;
+          key?: string;
+          name?: string;
+          description?: string;
+          scope?: FeatureFlagScope;
+          status?: FeatureFlagStatus;
+          created_at?: string;
+          updated_at?: string;
+          updated_by?: string | null;
+        };
+        Relationships: [];
+      };
+      platform_settings: {
+        Row: {
+          id: number;
+          platform_name: string;
+          maintenance_enabled: boolean;
+          maintenance_message: string | null;
+          registration_enabled: boolean;
+          password_min_length: number;
+          session_timeout_hours: number;
+          mfa_required: boolean;
+          updated_at: string;
+          updated_by: string | null;
+        };
+        Insert: {
+          id?: number;
+          platform_name?: string;
+          maintenance_enabled?: boolean;
+          maintenance_message?: string | null;
+          registration_enabled?: boolean;
+          password_min_length?: number;
+          session_timeout_hours?: number;
+          mfa_required?: boolean;
+          updated_at?: string;
+          updated_by?: string | null;
+        };
+        Update: {
+          id?: number;
+          platform_name?: string;
+          maintenance_enabled?: boolean;
+          maintenance_message?: string | null;
+          registration_enabled?: boolean;
+          password_min_length?: number;
+          session_timeout_hours?: number;
+          mfa_required?: boolean;
+          updated_at?: string;
+          updated_by?: string | null;
+        };
+        Relationships: [];
+      };
+      auth_login_events: {
+        Row: {
+          id: string;
+          user_id: string | null;
+          email: string | null;
+          method: AuthLoginMethod;
+          result: AuthLoginResult;
+          provider: string | null;
+          device_label: string | null;
+          browser: string | null;
+          os: string | null;
+          ip_address: string | null;
+          country: string | null;
+          user_agent: string | null;
+          is_suspicious: boolean;
+          suspicion_reasons: string[];
+          metadata: Json;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id?: string | null;
+          email?: string | null;
+          method?: AuthLoginMethod;
+          result?: AuthLoginResult;
+          provider?: string | null;
+          device_label?: string | null;
+          browser?: string | null;
+          os?: string | null;
+          ip_address?: string | null;
+          country?: string | null;
+          user_agent?: string | null;
+          is_suspicious?: boolean;
+          suspicion_reasons?: string[];
+          metadata?: Json;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string | null;
+          email?: string | null;
+          method?: AuthLoginMethod;
+          result?: AuthLoginResult;
+          provider?: string | null;
+          device_label?: string | null;
+          browser?: string | null;
+          os?: string | null;
+          ip_address?: string | null;
+          country?: string | null;
+          user_agent?: string | null;
+          is_suspicious?: boolean;
+          suspicion_reasons?: string[];
+          metadata?: Json;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
+      webauthn_credentials: {
+        Row: {
+          id: string;
+          user_id: string;
+          credential_id: string;
+          public_key: string;
+          sign_count: number;
+          transports: string[];
+          device_type: string | null;
+          backed_up: boolean;
+          friendly_name: string | null;
+          created_at: string;
+          last_used_at: string | null;
+          revoked_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          credential_id: string;
+          public_key: string;
+          sign_count?: number;
+          transports?: string[];
+          device_type?: string | null;
+          backed_up?: boolean;
+          friendly_name?: string | null;
+          created_at?: string;
+          last_used_at?: string | null;
+          revoked_at?: string | null;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          credential_id?: string;
+          public_key?: string;
+          sign_count?: number;
+          transports?: string[];
+          device_type?: string | null;
+          backed_up?: boolean;
+          friendly_name?: string | null;
+          created_at?: string;
+          last_used_at?: string | null;
+          revoked_at?: string | null;
+        };
+        Relationships: [];
+      };
     };
     Views: Record<string, never>;
-    Functions: Record<string, never>;
+    Functions: {
+      admin_platform_table_count: {
+        Args: Record<string, never>;
+        Returns: number;
+      };
+    };
     Enums: {
       user_role: UserRole;
       user_status: UserStatus;
@@ -1275,8 +1592,15 @@ export interface Database {
       workspace_role: WorkspaceRole;
       workspace_member_status: WorkspaceMemberStatus;
       workspace_invitation_status: WorkspaceInvitationStatus;
+      workspace_admin_status: WorkspaceAdminStatus;
       audit_action: AuditAction;
       status_maintenance_status: StatusMaintenanceStatus;
+      admin_platform_role: AdminPlatformRole;
+      admin_audit_action: AdminAuditAction;
+      feature_flag_status: FeatureFlagStatus;
+      feature_flag_scope: FeatureFlagScope;
+      auth_login_method: AuthLoginMethod;
+      auth_login_result: AuthLoginResult;
     };
     CompositeTypes: Record<string, never>;
   };

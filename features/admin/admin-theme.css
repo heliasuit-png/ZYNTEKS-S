@@ -1,0 +1,122 @@
+/* Scoped Enterprise Admin theme — does not affect the product dashboard. */
+
+[data-admin-theme] {
+  --admin-bg: #05070c;
+  --admin-bg-elevated: #0a0e17;
+  --admin-surface: rgba(255, 255, 255, 0.04);
+  --admin-surface-2: rgba(255, 255, 255, 0.07);
+  --admin-border: rgba(255, 255, 255, 0.08);
+  --admin-border-strong: rgba(59, 130, 246, 0.35);
+  --admin-text: #f4f7fb;
+  --admin-muted: #8b97a8;
+  --admin-accent: #3b82f6;
+  --admin-accent-soft: rgba(59, 130, 246, 0.15);
+  --admin-accent-text: #93c5fd;
+  --admin-danger: #f87171;
+  --admin-sidebar-width: 16.5rem;
+  --admin-topbar-height: 3.75rem;
+  --admin-radius: 1rem;
+  --admin-space-section: 1.25rem;
+  color: var(--admin-text);
+  background: var(--admin-bg);
+  min-height: 100vh;
+}
+
+[data-admin-theme] .admin-glass {
+  background: linear-gradient(
+    145deg,
+    rgba(255, 255, 255, 0.06),
+    rgba(255, 255, 255, 0.02)
+  );
+  border: 1px solid var(--admin-border);
+  border-radius: var(--admin-radius);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.35), 0 18px 40px rgba(0, 0, 0, 0.35);
+}
+
+[data-admin-theme] .admin-panel {
+  border: 1px solid var(--admin-border-strong);
+  border-color: rgba(59, 130, 246, 0.15);
+}
+
+[data-admin-theme] .admin-eyebrow {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--admin-accent-text);
+  opacity: 0.85;
+}
+
+[data-admin-theme] .admin-select {
+  border-radius: 0.5rem;
+  border: 1px solid rgba(59, 130, 246, 0.2);
+  background: rgba(6, 14, 28, 0.9);
+  padding: 0.375rem 0.625rem;
+  font-size: 0.75rem;
+  color: var(--admin-text);
+  outline: none;
+}
+
+[data-admin-theme] .admin-select:focus-visible {
+  outline: 2px solid var(--admin-accent);
+  outline-offset: 2px;
+}
+
+[data-admin-theme] .admin-btn-ghost {
+  border-radius: 0.5rem;
+  border: 1px solid rgba(59, 130, 246, 0.3);
+  padding: 0.25rem 0.625rem;
+  font-size: 11px;
+  color: var(--admin-accent-text);
+  transition: background-color 0.15s ease;
+}
+
+[data-admin-theme] .admin-btn-ghost:hover {
+  background: var(--admin-accent-soft);
+}
+
+[data-admin-theme] .admin-btn-ghost:focus-visible,
+[data-admin-theme] .admin-accent-ring:focus-visible,
+[data-admin-theme] a:focus-visible,
+[data-admin-theme] button:focus-visible,
+[data-admin-theme] input:focus-visible,
+[data-admin-theme] select:focus-visible,
+[data-admin-theme] textarea:focus-visible {
+  outline: 2px solid var(--admin-accent);
+  outline-offset: 2px;
+}
+
+[data-admin-theme] .admin-skeleton {
+  animation: admin-pulse 1.4s ease-in-out infinite;
+  background: var(--admin-surface);
+  border-radius: var(--admin-radius);
+}
+
+@keyframes admin-pulse {
+  0%,
+  100% {
+    opacity: 0.45;
+  }
+  50% {
+    opacity: 0.9;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-admin-theme] *,
+  [data-admin-theme] *::before,
+  [data-admin-theme] *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+@media (max-width: 1023px) {
+  [data-admin-theme] {
+    --admin-sidebar-width: 0px;
+  }
+}

@@ -31,7 +31,7 @@ export function RegisterForm() {
         name="email"
         type="email"
         autoComplete="email"
-        placeholder="you@example.com"
+        placeholder="you@company.com"
         required
         errors={state.fieldErrors?.email}
       />

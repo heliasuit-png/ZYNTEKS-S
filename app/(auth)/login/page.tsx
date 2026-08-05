@@ -4,31 +4,42 @@ import type { Metadata } from "next";
 import { ROUTES } from "@/lib/constants";
 import { safeNextPath } from "@/lib/safe-redirect";
 import { AuthCard } from "@/features/auth/components/auth-card";
-import { LoginForm } from "@/features/auth/components/login-form";
+import { AuthMethodPanel } from "@/features/auth/components/auth-method-panel";
+import { getOAuthProviderConfigs } from "@/services/auth/providers";
 
 export const metadata: Metadata = {
   title: "Sign in",
 };
 
+export const dynamic = "force-dynamic";
+
 export default async function LoginPage({
   searchParams,
 }: {
-  searchParams: Promise<{ reset?: string; redirect?: string }>;
+  searchParams: Promise<{
+    reset?: string;
+    redirect?: string;
+    error?: string;
+  }>;
 }) {
-  const { reset, redirect: redirectParam } = await searchParams;
-  // Preserve deep-link targets from middleware (`?redirect=`), rejecting open redirects.
+  const {
+    reset,
+    redirect: redirectParam,
+    error,
+  } = await searchParams;
   const redirectTo = safeNextPath(redirectParam, "");
+  const providers = getOAuthProviderConfigs();
 
   return (
     <AuthCard
       title="Welcome back"
-      description="Sign in to your ZYNTEKSIS account"
+      description="Enterprise access to your ZYNTEKSIS workspace"
       footer={
         <>
           Don&apos;t have an account?{" "}
           <Link
             href={ROUTES.register}
-            className="font-medium text-foreground hover:underline"
+            className="font-medium text-zt-accent hover:underline"
           >
             Create one
           </Link>
@@ -38,12 +49,24 @@ export default async function LoginPage({
       {reset === "success" ? (
         <p
           role="status"
-          className="rounded-md border border-emerald-500/40 bg-emerald-500/10 px-3 py-2 text-sm text-emerald-600"
+          className="rounded-xl border border-emerald-500/40 bg-emerald-500/10 px-3 py-2 text-sm text-emerald-300"
         >
           Your password has been updated. Sign in with your new password.
         </p>
       ) : null}
-      <LoginForm redirectTo={redirectTo || undefined} />
+      {error ? (
+        <p
+          role="alert"
+          className="rounded-xl border border-rose-500/30 bg-rose-500/10 px-3 py-2 text-sm text-rose-200"
+        >
+          Authentication could not be completed. Please try again.
+        </p>
+      ) : null}
+      <AuthMethodPanel
+        variant="login"
+        providers={providers}
+        redirectTo={redirectTo || undefined}
+      />
     </AuthCard>
   );
 }

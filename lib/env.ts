@@ -41,6 +41,16 @@ const serverSchema = z.object({
   LOG_LEVEL: z
     .enum(["debug", "info", "warn", "error"])
     .default("info"),
+  // OAuth app credentials (also configure in Supabase Auth → Providers).
+  // Optional everywhere — empty values hide/disable provider buttons.
+  GOOGLE_CLIENT_ID: z.string().default(""),
+  GOOGLE_CLIENT_SECRET: z.string().default(""),
+  GITHUB_CLIENT_ID: z.string().default(""),
+  GITHUB_CLIENT_SECRET: z.string().default(""),
+  MICROSOFT_CLIENT_ID: z.string().default(""),
+  MICROSOFT_CLIENT_SECRET: z.string().default(""),
+  APPLE_CLIENT_ID: z.string().default(""),
+  APPLE_CLIENT_SECRET: z.string().default(""),
 });
 
 const clientSchema = z.object({
