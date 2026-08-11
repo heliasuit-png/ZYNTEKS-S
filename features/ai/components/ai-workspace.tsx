@@ -21,6 +21,29 @@ import type {
 
 const PROJECT_MEMORY_KEY = "zt:ai:project";
 
+/**
+ * Temporary diagnostics. Enable in DevTools:
+ *   window.__AI_STREAM_DEBUG__ = true
+ */
+function aiDebug(phase: string, data: Record<string, unknown>) {
+  if (typeof window === "undefined") return;
+  const enabled = (
+    window as Window & { __AI_STREAM_DEBUG__?: boolean }
+  ).__AI_STREAM_DEBUG__;
+  if (!enabled) return;
+  console.info(`[ai-stream] ${phase}`, data);
+}
+
+function summarizeMessages(messages: ChatMessageView[]) {
+  return {
+    count: messages.length,
+    ids: messages.map((m) => m.id),
+    renderKeys: messages.map((m) => m.renderKey ?? null),
+    lengths: messages.map((m) => m.content.length),
+    streaming: messages.map((m) => Boolean(m.streaming)),
+  };
+}
+
 interface AiWorkspaceProps {
   conversations: ConversationListItem[];
   selectedId: string | null;
@@ -41,7 +64,9 @@ function updateAssistant(
   id: string,
   updater: (message: ChatMessageView) => ChatMessageView,
 ): ChatMessageView[] {
-  return messages.map((message) => (message.id === id ? updater(message) : message));
+  return messages.map((message) =>
+    message.id === id || message.renderKey === id ? updater(message) : message,
+  );
 }
 
 type StreamEvent =
@@ -150,14 +175,50 @@ export function AiWorkspace({
     };
   }, []);
 
-  // Sync when the selected conversation changes (sidebar / ?c=). No remount key
-  // on the page — remounting raced Framer Motion template + stream settle.
+  // Tracks the conversation id owned by the in-progress / just-finished stream
+  // so URL catch-up (null → id) does not wipe live messages.
+  const streamConversationRef = useRef<string | null>(null);
   const selectionRef = useRef(selectedId);
+
+  useEffect(() => {
+    aiDebug("props", {
+      selectedId,
+      initialMessages: summarizeMessages(initialMessages),
+      selectedProjectId,
+    });
+  }, [selectedId, initialMessages, selectedProjectId]);
+
+  // Sync when the user switches conversations (sidebar / ?c=).
+  // Must NOT wipe when searchParams catch up to a conversation we already streamed.
   useEffect(() => {
     if (selectionRef.current === selectedId) {
       return;
     }
+
+    const previous = selectionRef.current;
+    // URL catch-up after stream created this conversation — keep client messages.
+    if (
+      previous == null &&
+      selectedId != null &&
+      streamConversationRef.current === selectedId
+    ) {
+      aiDebug("selection-skip-wipe", {
+        previous,
+        selectedId,
+        reason: "url-catchup-after-stream",
+      });
+      selectionRef.current = selectedId;
+      setConversationId(selectedId);
+      return;
+    }
+
+    aiDebug("selection-replace-messages", {
+      previous,
+      selectedId,
+      incoming: summarizeMessages(initialMessages),
+    });
     selectionRef.current = selectedId;
+    streamConversationRef.current = selectedId;
     abortRef.current?.abort();
     setConversationId(selectedId);
     setMessages(initialMessages);
@@ -253,16 +314,26 @@ export function AiWorkspace({
     }
 
     const assistantId = tempId();
-    setMessages((prev) => [
-      ...prev,
-      {
-        id: assistantId,
-        renderKey: assistantId,
-        role: "assistant",
-        content: "",
-        streaming: true,
-      },
-    ]);
+    const startedConversationId = conversationId;
+    setMessages((prev) => {
+      const next = [
+        ...prev,
+        {
+          id: assistantId,
+          renderKey: assistantId,
+          role: "assistant" as const,
+          content: "",
+          streaming: true,
+        },
+      ];
+      aiDebug("assistant-created", {
+        assistantId,
+        selectedId,
+        conversationId: startedConversationId,
+        ...summarizeMessages(next),
+      });
+      return next;
+    });
     setStreaming(true);
 
     try {
@@ -290,6 +361,7 @@ export function AiWorkspace({
       let buffer = "";
       let createdId: string | null = conversationId;
       let finalId: string | undefined;
+      let deltaCount = 0;
 
       for (;;) {
         const { done, value } = await reader.read();
@@ -312,16 +384,32 @@ export function AiWorkspace({
 
           if (event.type === "meta") {
             createdId = event.conversationId;
+            streamConversationRef.current = event.conversationId;
             setConversationId(event.conversationId);
+            aiDebug("meta", {
+              conversationId: event.conversationId,
+              assistantId,
+            });
           } else if (event.type === "delta") {
-            setMessages((prev) =>
-              updateAssistant(prev, assistantId, (m) => ({
+            deltaCount += 1;
+            setMessages((prev) => {
+              const next = updateAssistant(prev, assistantId, (m) => ({
                 ...m,
                 content: m.content + event.text,
-              })),
-            );
+              }));
+              if (deltaCount === 1 || deltaCount % 20 === 0) {
+                aiDebug("delta", {
+                  deltaCount,
+                  assistantId,
+                  chunkLen: event.text.length,
+                  ...summarizeMessages(next),
+                });
+              }
+              return next;
+            });
           } else if (event.type === "done") {
             finalId = event.messageId || undefined;
+            aiDebug("done-event", { assistantId, finalId, deltaCount });
           } else if (event.type === "error") {
             throw new Error(event.message);
           }
@@ -329,38 +417,63 @@ export function AiWorkspace({
       }
 
       setMessages((prev) => {
-        const current = prev.find((m) => m.id === assistantId);
+        const current =
+          prev.find((m) => m.id === assistantId || m.renderKey === assistantId) ??
+          null;
         // Empty aborted/failed assistant turns should not linger.
         if (current && !current.content.trim() && !finalId) {
-          return prev.filter((m) => m.id !== assistantId);
+          const next = prev.filter(
+            (m) => m.id !== assistantId && m.renderKey !== assistantId,
+          );
+          aiDebug("stream-finish-remove-empty", summarizeMessages(next));
+          return next;
         }
-        return updateAssistant(prev, assistantId, (m) => ({
+        const next = updateAssistant(prev, assistantId, (m) => ({
           ...m,
           streaming: false,
           // Persist UUID for feedback; renderKey stays assistantId (stable list key).
           id: finalId ?? m.id,
           renderKey: m.renderKey ?? assistantId,
         }));
-      });
-
-      // Let React commit streaming→markdown before dashboard template motion runs.
-      await new Promise<void>((resolve) => {
-        requestAnimationFrame(() => {
-          requestAnimationFrame(() => resolve());
+        aiDebug("stream-finish", {
+          assistantId,
+          finalId,
+          selectedId,
+          ...summarizeMessages(next),
         });
+        return next;
       });
 
-      if (!conversationId && createdId) {
-        router.replace(`${DASHBOARD_ROUTES.aiAssistant}?c=${createdId}`);
+      // Soft URL update only — router.replace remounts app/(dashboard)/template.tsx
+      // (Framer Motion) and raced the final stream→markdown commit (insertBefore).
+      if (!startedConversationId && createdId) {
+        const url = `${DASHBOARD_ROUTES.aiAssistant}?c=${encodeURIComponent(createdId)}`;
+        streamConversationRef.current = createdId;
+        selectionRef.current = createdId;
+        window.history.replaceState(window.history.state, "", url);
+        aiDebug("history-replaceState", { url, createdId, assistantId, finalId });
       }
+
+      aiDebug("router-refresh", {
+        assistantId,
+        finalId,
+        createdId,
+        selectedId,
+      });
       router.refresh();
     } catch (caught) {
       const err = caught as Error;
       if (err.name === "AbortError") {
+        aiDebug("abort", { assistantId });
         setMessages((prev) => {
-          const current = prev.find((m) => m.id === assistantId);
+          const current =
+            prev.find(
+              (m) => m.id === assistantId || m.renderKey === assistantId,
+            ) ?? null;
           if (!current?.content.trim()) {
-            return prev.filter((m) => m.id !== assistantId);
+            return prev.filter(
+              (m) => m.id !== assistantId && m.renderKey !== assistantId,
+            );
           }
           return updateAssistant(prev, assistantId, (m) => ({
             ...m,
@@ -368,16 +481,18 @@ export function AiWorkspace({
             renderKey: m.renderKey ?? assistantId,
           }));
         });
-        await new Promise<void>((resolve) => {
-          requestAnimationFrame(() => {
-            requestAnimationFrame(() => resolve());
-          });
-        });
         router.refresh();
       } else {
+        aiDebug("error", { assistantId, message: err.message });
         setError(err.message);
         setMessages((prev) =>
-          prev.filter((m) => !(m.id === assistantId && m.content === "")),
+          prev.filter(
+            (m) =>
+              !(
+                (m.id === assistantId || m.renderKey === assistantId) &&
+                m.content === ""
+              ),
+          ),
         );
       }
     } finally {

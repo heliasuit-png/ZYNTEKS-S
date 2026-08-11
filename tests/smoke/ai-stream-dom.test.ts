@@ -58,4 +58,14 @@ describe("AI stream DOM stability", () => {
   it("opts the assistant bubble out of browser translation", () => {
     assert.match(chatMessageSrc, /translate=\{?"no"?\}|translate="no"/);
   });
+
+  it("does not router.replace after stream (avoids dashboard template remount)", () => {
+    assert.equal(
+      /router\.replace\(/.test(workspaceSrc),
+      false,
+      "router.replace remounts Framer Motion template and wipes live messages",
+    );
+    assert.match(workspaceSrc, /history\.replaceState/);
+    assert.match(workspaceSrc, /selection-skip-wipe|url-catchup-after-stream/);
+  });
 });
