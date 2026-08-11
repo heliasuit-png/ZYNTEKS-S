@@ -1,15 +1,52 @@
 "use client";
 
-import { useEffect, useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { Check, Copy, RefreshCw, ThumbsDown, ThumbsUp } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { submitFeedbackAction } from "@/features/ai/actions";
-import { MarkdownMessage } from "@/components/markdown/markdown-message";
 import type { ChatMessageView } from "@/features/ai/types";
 
 const UUID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/**
+ * Write text through the DOM API instead of React text children.
+ * Chrome Translate (and similar) wrap text nodes in <font>; React then fails
+ * with insertBefore/removeChild NotFoundError and the error boundary kills chat.
+ */
+function StablePlainText({
+  content,
+  placeholder,
+  className,
+}: {
+  content: string;
+  placeholder?: string;
+  className?: string;
+}) {
+  const ref = useRef<HTMLDivElement>(null);
+  const display = content || placeholder || "";
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    if (el.textContent !== display) {
+      el.textContent = display;
+    }
+  }, [display]);
+
+  return (
+    <div
+      ref={ref}
+      className={className}
+      translate="no"
+      // Seed for first paint / SSR; subsequent updates go through textContent.
+      suppressHydrationWarning
+    >
+      {display}
+    </div>
+  );
+}
 
 function CopyButton({ value }: { value: string }) {
   const [copied, setCopied] = useState(false);
@@ -54,32 +91,17 @@ export function ChatMessage({
   );
   const [feedbackError, setFeedbackError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
-  // Defer Markdown + action chrome until AFTER the stream-settled commit.
-  // Replacing the plain-text node with MarkdownMessage in the same commit as
-  // streaming→false caused insertBefore NotFoundError → dashboard error boundary
-  // wiped the active chat (while history still had the persisted answer).
-  const [enhanced, setEnhanced] = useState(
-    () => !message.streaming && Boolean(message.content),
-  );
-
+  // Defer action chrome one frame after stream settle so it never mounts in
+  // the same commit as streaming→false (insertBefore race).
+  const [showActions, setShowActions] = useState(false);
   useEffect(() => {
     if (message.streaming || !message.content) {
-      setEnhanced(false);
+      setShowActions(false);
       return;
     }
-    let cancelled = false;
-    let inner = 0;
-    const outer = requestAnimationFrame(() => {
-      inner = requestAnimationFrame(() => {
-        if (!cancelled) setEnhanced(true);
-      });
-    });
-    return () => {
-      cancelled = true;
-      cancelAnimationFrame(outer);
-      if (inner) cancelAnimationFrame(inner);
-    };
-  }, [message.streaming, message.content, message.id, message.renderKey]);
+    const id = window.setTimeout(() => setShowActions(true), 0);
+    return () => window.clearTimeout(id);
+  }, [message.streaming, message.content]);
 
   function rate(next: "up" | "down") {
     if (!persisted || pending) return;
@@ -108,24 +130,21 @@ export function ChatMessage({
         )}
       >
         {isUser ? (
-          <p className="whitespace-pre-wrap text-sm">{message.content}</p>
+          <StablePlainText
+            content={message.content}
+            className="whitespace-pre-wrap break-words text-sm text-zt-text"
+          />
         ) : (
           <div translate="no">
             <div className="min-h-[1.25rem]">
-              {/* Stable plain-text surface — never unmounted during stream settle. */}
-              <div
-                className={cn(
-                  "whitespace-pre-wrap break-words text-sm text-zt-text",
-                  enhanced && "hidden",
-                )}
-                aria-hidden={enhanced}
-              >
-                {message.content || (message.streaming ? "Thinking…" : "")}
-              </div>
-              {enhanced ? <MarkdownMessage content={message.content} /> : null}
+              <StablePlainText
+                content={message.content}
+                placeholder={message.streaming ? "Thinking…" : ""}
+                className="whitespace-pre-wrap break-words text-sm text-zt-text"
+              />
             </div>
 
-            {enhanced ? (
+            {showActions ? (
               <div className="mt-2 border-t border-zt-border/60 pt-2">
                 <div className="flex items-center gap-1">
                   <CopyButton value={message.content} />

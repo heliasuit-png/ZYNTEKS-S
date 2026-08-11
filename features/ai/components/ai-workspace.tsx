@@ -1,13 +1,11 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Menu, Plus, Search, Send, Sparkles, Square, X } from "lucide-react";
 
 import { API_ROUTES, DASHBOARD_ROUTES } from "@/lib/constants";
 import { cn } from "@/lib/utils";
-import { AiInfinity } from "@/components/dashboard/home/ai-infinity";
 import { ChatMessage } from "@/features/ai/components/chat-message";
 import { ConversationItem } from "@/features/ai/components/conversation-item";
 import { setConversationProjectAction } from "@/features/ai/actions";
@@ -104,7 +102,6 @@ export function AiWorkspace({
   selectedProjectId,
   initialPrompt,
 }: AiWorkspaceProps) {
-  const router = useRouter();
   const [messages, setMessages] = useState<ChatMessageView[]>(initialMessages);
   const [input, setInput] = useState("");
   const [streaming, setStreaming] = useState(false);
@@ -114,6 +111,10 @@ export function AiWorkspace({
   const [projectId, setProjectId] = useState<string | null>(selectedProjectId);
   const [historyOpen, setHistoryOpen] = useState(false);
   const [projectPending, startProjectTransition] = useTransition();
+  // Client-owned history list — avoid RSC remounts after a stream
+  // (they race the live chat DOM).
+  const [conversationItems, setConversationItems] =
+    useState<ConversationListItem[]>(conversations);
 
   const abortRef = useRef<AbortController | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -187,6 +188,24 @@ export function AiWorkspace({
       selectedProjectId,
     });
   }, [selectedId, initialMessages, selectedProjectId]);
+
+  // Merge server conversation list without clobbering optimistic rows.
+  useEffect(() => {
+    setConversationItems((prev) => {
+      const byId = new Map<string, ConversationListItem>();
+      for (const c of conversations) byId.set(c.id, c);
+      for (const c of prev) {
+        if (!byId.has(c.id)) byId.set(c.id, c);
+      }
+      // Preserve server order for known ids, then any optimistic-only rows.
+      const serverIds = new Set(conversations.map((c) => c.id));
+      const merged = [
+        ...conversations,
+        ...prev.filter((c) => !serverIds.has(c.id)),
+      ];
+      return merged;
+    });
+  }, [conversations]);
 
   // Sync when the user switches conversations (sidebar / ?c=).
   // Must NOT wipe when searchParams catch up to a conversation we already streamed.
@@ -270,10 +289,12 @@ export function AiWorkspace({
   const filtered = useMemo(() => {
     const term = search.trim().toLowerCase();
     if (!term) {
-      return conversations;
+      return conversationItems;
     }
-    return conversations.filter((c) => c.title.toLowerCase().includes(term));
-  }, [conversations, search]);
+    return conversationItems.filter((c) =>
+      c.title.toLowerCase().includes(term),
+    );
+  }, [conversationItems, search]);
 
   const pinned = filtered.filter((c) => c.pinned);
   const rest = filtered.filter((c) => !c.pinned);
@@ -386,6 +407,23 @@ export function AiWorkspace({
             createdId = event.conversationId;
             streamConversationRef.current = event.conversationId;
             setConversationId(event.conversationId);
+            const titleSeed = (messageText ?? "New chat").trim().slice(0, 72);
+            setConversationItems((prev) => {
+              if (prev.some((c) => c.id === event.conversationId)) {
+                return prev;
+              }
+              return [
+                {
+                  id: event.conversationId,
+                  title: titleSeed || "New chat",
+                  pinned: false,
+                  projectId: projectId,
+                  messageCount: 2,
+                  updatedAt: new Date().toISOString(),
+                },
+                ...prev,
+              ];
+            });
             aiDebug("meta", {
               conversationId: event.conversationId,
               assistantId,
@@ -444,8 +482,8 @@ export function AiWorkspace({
         return next;
       });
 
-      // Soft URL update only — router.replace remounts app/(dashboard)/template.tsx
-      // (Framer Motion) and raced the final stream→markdown commit (insertBefore).
+      // Soft URL update only — never navigate or remount RSC after a
+      // successful stream (that races the live message list DOM).
       if (!startedConversationId && createdId) {
         const url = `${DASHBOARD_ROUTES.aiAssistant}?c=${encodeURIComponent(createdId)}`;
         streamConversationRef.current = createdId;
@@ -453,18 +491,12 @@ export function AiWorkspace({
         window.history.replaceState(window.history.state, "", url);
         aiDebug("history-replaceState", { url, createdId, assistantId, finalId });
       }
-
-      // Defer RSC refresh so it cannot race the stream-settled DOM commit
-      // (refresh + Framer page template + markdown enhance → insertBefore).
-      window.setTimeout(() => {
-        aiDebug("router-refresh", {
-          assistantId,
-          finalId,
-          createdId,
-          selectedId,
-        });
-        router.refresh();
-      }, 400);
+      aiDebug("stream-complete-no-refresh", {
+        assistantId,
+        finalId,
+        createdId,
+        selectedId,
+      });
     } catch (caught) {
       const err = caught as Error;
       if (err.name === "AbortError") {
@@ -485,7 +517,6 @@ export function AiWorkspace({
             renderKey: m.renderKey ?? assistantId,
           }));
         });
-        router.refresh();
       } else {
         aiDebug("error", { assistantId, message: err.message });
         setError(err.message);
@@ -605,7 +636,7 @@ export function AiWorkspace({
   );
 
   return (
-    <div className="flex h-[calc(100vh-7.5rem)] gap-4">
+    <div className="flex h-[calc(100vh-7.5rem)] gap-4" translate="no">
       {/* Desktop sidebar */}
       <aside className="hidden w-72 shrink-0 flex-col rounded-2xl border border-zt-border bg-zt-surface md:flex">
         {historyList}
@@ -678,9 +709,8 @@ export function AiWorkspace({
 
         <div ref={scrollRef} className="flex-1 overflow-y-auto p-4">
           {/*
-            Keep empty-state (AiInfinity / Framer Motion) mounted and CSS-hidden
-            when messages appear. An exclusive ternary unmounted motion nodes
-            while ChatMessage mounted → insertBefore NotFoundError.
+            Empty state stays mounted (CSS-hidden). No Framer Motion here —
+            animated empty cores previously raced the first message mount.
           */}
           <div
             className={cn(
@@ -689,12 +719,9 @@ export function AiWorkspace({
             )}
             aria-hidden={messages.length > 0}
           >
-            <AiInfinity
-              size={200}
-              className="mb-4"
-              paused={messages.length > 0}
-              interactive={messages.length === 0}
-            />
+            <span className="mb-4 flex size-16 items-center justify-center rounded-2xl border border-zt-border bg-zt-surface-2 text-zt-primary">
+              <Sparkles className="size-7" aria-hidden />
+            </span>
             <h3 className="text-base font-medium text-zt-text">
               How can I help with your code health?
             </h3>

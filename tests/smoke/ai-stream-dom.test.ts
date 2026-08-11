@@ -1,10 +1,6 @@
 /**
- * Structural regression: assistant bubble must not swap DOM node types
- * when the first stream delta arrives (empty streaming → content streaming)
- * or when streaming settles (plain → Markdown + actions).
- *
- * That sibling swap is what triggers:
- *   NotFoundError: Failed to execute 'insertBefore' on 'Node'
+ * Structural regression: AI chat must not swap DOM trees / remount page shells
+ * during streaming (insertBefore / removeChild NotFoundError).
  */
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
@@ -19,57 +15,49 @@ const workspaceSrc = readFileSync(
   resolve(process.cwd(), "features/ai/components/ai-workspace.tsx"),
   "utf8",
 );
-const markdownSrc = readFileSync(
-  resolve(process.cwd(), "components/markdown/markdown-message.tsx"),
+const templateSrc = readFileSync(
+  resolve(process.cwd(), "app/(dashboard)/template.tsx"),
   "utf8",
 );
 
 describe("AI stream DOM stability", () => {
-  it("does not conditionally mount Thinking <p> vs MarkdownMessage as alternate children", () => {
-    // Forbidden pattern from the pre-fix that caused first-delta insertBefore.
+  it("updates assistant text via textContent (Chrome Translate safe)", () => {
+    assert.match(chatMessageSrc, /StablePlainText/);
+    assert.match(chatMessageSrc, /el\.textContent\s*=/);
     assert.equal(
-      /streaming && !message\.content \?[\s\S]*?<p[\s\S]*?Thinking/.test(
-        chatMessageSrc,
-      ),
+      /MarkdownMessage/.test(chatMessageSrc),
       false,
-      "Thinking must not be a conditional sibling that unmounts when content arrives",
+      "Live chat must not mount remark/rehype Markdown during/after stream",
     );
   });
 
-  it("keeps a stable plain-text surface and defers Markdown until enhanced", () => {
-    assert.match(chatMessageSrc, /whitespace-pre-wrap break-words/);
-    assert.match(chatMessageSrc, /enhanced && "hidden"/);
-    assert.match(chatMessageSrc, /\{enhanced \? <MarkdownMessage/);
-    assert.equal(
-      /streaming=\{Boolean\(message\.streaming\)\}/.test(chatMessageSrc),
-      false,
-      "Must not mount MarkdownMessage during streaming",
-    );
-    // MarkdownMessage still supports streaming plain mode for other callers.
-    assert.match(markdownSrc, /if \(streaming\)/);
-  });
-
-  it("does not unmount AiInfinity via exclusive empty/messages ternary", () => {
-    // Empty state and message list must both be able to stay mounted (CSS hide).
+  it("does not unmount empty state via exclusive ternary", () => {
     assert.match(workspaceSrc, /messages\.length === 0 && "hidden"/);
-    assert.match(workspaceSrc, /AiInfinity/);
-  });
-
-  it("opts the assistant bubble out of browser translation", () => {
-    assert.match(chatMessageSrc, /translate=\{?"no"?\}|translate="no"/);
-  });
-
-  it("does not router.replace after stream (avoids dashboard template remount)", () => {
     assert.equal(
-      /router\.replace\(/.test(workspaceSrc),
+      /AiInfinity/.test(workspaceSrc),
       false,
-      "router.replace remounts Framer Motion template and wipes live messages",
+      "Framer AiInfinity must stay out of the AI chat tree",
+    );
+  });
+
+  it("opts the chat workspace out of browser translation", () => {
+    assert.match(workspaceSrc, /translate="no"/);
+    assert.match(chatMessageSrc, /translate="no"/);
+  });
+
+  it("does not router.replace or router.refresh after stream", () => {
+    assert.equal(/router\.replace\(/.test(workspaceSrc), false);
+    assert.equal(
+      /router\.refresh\(/.test(workspaceSrc),
+      false,
+      "router.refresh remounts RSC and races live chat DOM",
     );
     assert.match(workspaceSrc, /history\.replaceState/);
-    assert.match(workspaceSrc, /selection-skip-wipe|url-catchup-after-stream/);
+    assert.match(workspaceSrc, /stream-complete-no-refresh|selection-skip-wipe/);
   });
 
-  it("defers router.refresh after stream settle", () => {
-    assert.match(workspaceSrc, /setTimeout\([\s\S]*?router\.refresh\(\)/);
+  it("keeps dashboard template free of Framer Motion", () => {
+    assert.equal(/framer-motion/.test(templateSrc), false);
+    assert.equal(/motion\./.test(templateSrc), false);
   });
 });
