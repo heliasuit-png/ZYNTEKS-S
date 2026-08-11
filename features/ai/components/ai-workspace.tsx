@@ -150,6 +150,22 @@ export function AiWorkspace({
     };
   }, []);
 
+  // Sync when the selected conversation changes (sidebar / ?c=). No remount key
+  // on the page — remounting raced Framer Motion template + stream settle.
+  const selectionRef = useRef(selectedId);
+  useEffect(() => {
+    if (selectionRef.current === selectedId) {
+      return;
+    }
+    selectionRef.current = selectedId;
+    abortRef.current?.abort();
+    setConversationId(selectedId);
+    setMessages(initialMessages);
+    setProjectId(selectedProjectId);
+    setError(null);
+    setStreaming(false);
+  }, [selectedId, initialMessages, selectedProjectId]);
+
   function rememberProject(next: string | null) {
     try {
       if (next) {
@@ -327,9 +343,11 @@ export function AiWorkspace({
         }));
       });
 
-      // Commit settled (non-streaming) UI before navigation remounts the workspace.
+      // Let React commit streaming→markdown before dashboard template motion runs.
       await new Promise<void>((resolve) => {
-        requestAnimationFrame(() => resolve());
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => resolve());
+        });
       });
 
       if (!conversationId && createdId) {
@@ -351,7 +369,9 @@ export function AiWorkspace({
           }));
         });
         await new Promise<void>((resolve) => {
-          requestAnimationFrame(() => resolve());
+          requestAnimationFrame(() => {
+            requestAnimationFrame(() => resolve());
+          });
         });
         router.refresh();
       } else {
@@ -537,41 +557,55 @@ export function AiWorkspace({
           )}
         </header>
 
-        <div ref={scrollRef} className="flex-1 space-y-4 overflow-y-auto p-4">
-          {messages.length === 0 ? (
-            <div className="flex h-full flex-col items-center justify-center text-center">
-              <AiInfinity size={200} className="mb-4" />
-              <h3 className="text-base font-medium text-zt-text">
-                How can I help with your code health?
-              </h3>
-              <p className="mt-1 max-w-sm text-sm text-zt-muted">
-                Ask about errors, incidents, performance, security, or
-                architecture. Attach a project for tailored, evidence-based
-                answers with confidence and related signals.
-              </p>
-              <div className="mt-6 flex max-w-2xl flex-wrap items-center justify-center gap-2">
-                {SUGGESTED_ANALYSES.map((s) => (
-                  <button
-                    key={s.intent}
-                    type="button"
-                    onClick={() => useSuggestion(s.prompt)}
-                    className="zt-glass rounded-full border border-zt-border px-3 py-1.5 text-xs text-zt-muted transition-colors hover:border-zt-border-strong hover:text-zt-text"
-                  >
-                    {s.label}
-                  </button>
-                ))}
-              </div>
+        <div ref={scrollRef} className="flex-1 overflow-y-auto p-4">
+          {/*
+            Keep empty-state (AiInfinity / Framer Motion) mounted and CSS-hidden
+            when messages appear. An exclusive ternary unmounted motion nodes
+            while ChatMessage mounted → insertBefore NotFoundError.
+          */}
+          <div
+            className={cn(
+              "flex h-full flex-col items-center justify-center text-center",
+              messages.length > 0 && "hidden",
+            )}
+            aria-hidden={messages.length > 0}
+          >
+            <AiInfinity size={200} className="mb-4" />
+            <h3 className="text-base font-medium text-zt-text">
+              How can I help with your code health?
+            </h3>
+            <p className="mt-1 max-w-sm text-sm text-zt-muted">
+              Ask about errors, incidents, performance, security, or
+              architecture. Attach a project for tailored, evidence-based
+              answers with confidence and related signals.
+            </p>
+            <div className="mt-6 flex max-w-2xl flex-wrap items-center justify-center gap-2">
+              {SUGGESTED_ANALYSES.map((s) => (
+                <button
+                  key={s.intent}
+                  type="button"
+                  onClick={() => useSuggestion(s.prompt)}
+                  className="zt-glass rounded-full border border-zt-border px-3 py-1.5 text-xs text-zt-muted transition-colors hover:border-zt-border-strong hover:text-zt-text"
+                >
+                  {s.label}
+                </button>
+              ))}
             </div>
-          ) : (
-            messages.map((message, index) => (
+          </div>
+
+          <div
+            className={cn("space-y-4", messages.length === 0 && "hidden")}
+            translate="no"
+          >
+            {messages.map((message, index) => (
               <ChatMessage
                 key={message.renderKey ?? message.id}
                 message={message}
                 canRegenerate={canRegenerate && index === messages.length - 1}
                 onRegenerate={() => void runChat(true)}
               />
-            ))
-          )}
+            ))}
+          </div>
         </div>
 
         <div className="border-t border-zt-border p-3">

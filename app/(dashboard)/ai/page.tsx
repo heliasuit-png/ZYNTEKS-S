@@ -102,7 +102,6 @@ export default async function AiAssistantPage({
 
   return (
     <AiWorkspace
-      key={selectedId ?? "new"}
       conversations={conversations}
       selectedId={selectedId}
       initialMessages={initialMessages}

@@ -84,23 +84,22 @@ export function ChatMessage({
         {isUser ? (
           <p className="whitespace-pre-wrap text-sm">{message.content}</p>
         ) : (
-          <div aria-live="polite">
-            {/* Stable container: Thinking / stream text / final markdown stay here. */}
+          // translate="no": Chrome Translate wraps text nodes in <font> and
+          // desyncs React's fiber tree → insertBefore NotFoundError on stream.
+          <div translate="no">
+            {/*
+              While streaming: ONE plain text <div> for the entire stream
+              (Thinking… → tokens). Never mount MarkdownMessage / never swap
+              a Thinking <p> for a different child type on the first delta.
+              After streaming=false: mount Markdown once with GFM/highlight.
+            */}
             <div className="min-h-[1.25rem]">
-              {message.streaming && !message.content ? (
-                <p className="flex items-center gap-2 text-sm text-zt-muted">
-                  <span
-                    className="size-2 animate-pulse rounded-full bg-zt-primary"
-                    aria-hidden
-                  />
-                  Thinking…
-                </p>
-              ) : null}
-              {message.content ? (
-                <MarkdownMessage
-                  content={message.content}
-                  streaming={Boolean(message.streaming)}
-                />
+              {message.streaming ? (
+                <div className="whitespace-pre-wrap break-words text-sm text-zt-text">
+                  {message.content || "Thinking…"}
+                </div>
+              ) : message.content ? (
+                <MarkdownMessage content={message.content} />
               ) : null}
             </div>
 
