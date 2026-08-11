@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { Check, Copy, RefreshCw, ThumbsDown, ThumbsUp } from "lucide-react";
 
 import { cn } from "@/lib/utils";
@@ -54,6 +54,32 @@ export function ChatMessage({
   );
   const [feedbackError, setFeedbackError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
+  // Defer Markdown + action chrome until AFTER the stream-settled commit.
+  // Replacing the plain-text node with MarkdownMessage in the same commit as
+  // streaming→false caused insertBefore NotFoundError → dashboard error boundary
+  // wiped the active chat (while history still had the persisted answer).
+  const [enhanced, setEnhanced] = useState(
+    () => !message.streaming && Boolean(message.content),
+  );
+
+  useEffect(() => {
+    if (message.streaming || !message.content) {
+      setEnhanced(false);
+      return;
+    }
+    let cancelled = false;
+    let inner = 0;
+    const outer = requestAnimationFrame(() => {
+      inner = requestAnimationFrame(() => {
+        if (!cancelled) setEnhanced(true);
+      });
+    });
+    return () => {
+      cancelled = true;
+      cancelAnimationFrame(outer);
+      if (inner) cancelAnimationFrame(inner);
+    };
+  }, [message.streaming, message.content, message.id, message.renderKey]);
 
   function rate(next: "up" | "down") {
     if (!persisted || pending) return;
@@ -84,26 +110,22 @@ export function ChatMessage({
         {isUser ? (
           <p className="whitespace-pre-wrap text-sm">{message.content}</p>
         ) : (
-          // translate="no": Chrome Translate wraps text nodes in <font> and
-          // desyncs React's fiber tree → insertBefore NotFoundError on stream.
           <div translate="no">
-            {/*
-              While streaming: ONE plain text <div> for the entire stream
-              (Thinking… → tokens). Never mount MarkdownMessage / never swap
-              a Thinking <p> for a different child type on the first delta.
-              After streaming=false: mount Markdown once with GFM/highlight.
-            */}
             <div className="min-h-[1.25rem]">
-              {message.streaming ? (
-                <div className="whitespace-pre-wrap break-words text-sm text-zt-text">
-                  {message.content || "Thinking…"}
-                </div>
-              ) : message.content ? (
-                <MarkdownMessage content={message.content} />
-              ) : null}
+              {/* Stable plain-text surface — never unmounted during stream settle. */}
+              <div
+                className={cn(
+                  "whitespace-pre-wrap break-words text-sm text-zt-text",
+                  enhanced && "hidden",
+                )}
+                aria-hidden={enhanced}
+              >
+                {message.content || (message.streaming ? "Thinking…" : "")}
+              </div>
+              {enhanced ? <MarkdownMessage content={message.content} /> : null}
             </div>
 
-            {!message.streaming && message.content ? (
+            {enhanced ? (
               <div className="mt-2 border-t border-zt-border/60 pt-2">
                 <div className="flex items-center gap-1">
                   <CopyButton value={message.content} />

@@ -454,13 +454,17 @@ export function AiWorkspace({
         aiDebug("history-replaceState", { url, createdId, assistantId, finalId });
       }
 
-      aiDebug("router-refresh", {
-        assistantId,
-        finalId,
-        createdId,
-        selectedId,
-      });
-      router.refresh();
+      // Defer RSC refresh so it cannot race the stream-settled DOM commit
+      // (refresh + Framer page template + markdown enhance → insertBefore).
+      window.setTimeout(() => {
+        aiDebug("router-refresh", {
+          assistantId,
+          finalId,
+          createdId,
+          selectedId,
+        });
+        router.refresh();
+      }, 400);
     } catch (caught) {
       const err = caught as Error;
       if (err.name === "AbortError") {
@@ -685,7 +689,12 @@ export function AiWorkspace({
             )}
             aria-hidden={messages.length > 0}
           >
-            <AiInfinity size={200} className="mb-4" />
+            <AiInfinity
+              size={200}
+              className="mb-4"
+              paused={messages.length > 0}
+              interactive={messages.length === 0}
+            />
             <h3 className="text-base font-medium text-zt-text">
               How can I help with your code health?
             </h3>

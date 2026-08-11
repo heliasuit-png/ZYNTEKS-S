@@ -26,15 +26,18 @@ export function AiInfinity({
   size = 260,
   className,
   interactive = true,
+  paused = false,
 }: {
   size?: number;
   className?: string;
   interactive?: boolean;
+  /** Freeze ambient motion (e.g. when chat messages are visible). */
+  paused?: boolean;
 }) {
   const uid = useId().replace(/[^a-zA-Z0-9]/g, "");
   const gradId = `zt-inf-${uid}`;
   const ref = useRef<HTMLDivElement>(null);
-  const reduce = useReducedMotion();
+  const reduce = Boolean(useReducedMotion()) || paused;
 
   const px = useMotionValue(0);
   const py = useMotionValue(0);

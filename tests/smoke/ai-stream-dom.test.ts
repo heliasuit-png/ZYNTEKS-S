@@ -1,6 +1,7 @@
 /**
  * Structural regression: assistant bubble must not swap DOM node types
- * when the first stream delta arrives (empty streaming → content streaming).
+ * when the first stream delta arrives (empty streaming → content streaming)
+ * or when streaming settles (plain → Markdown + actions).
  *
  * That sibling swap is what triggers:
  *   NotFoundError: Failed to execute 'insertBefore' on 'Node'
@@ -35,11 +36,10 @@ describe("AI stream DOM stability", () => {
     );
   });
 
-  it("keeps a single streaming text surface (no Markdown mount while streaming)", () => {
-    assert.match(
-      chatMessageSrc,
-      /message\.streaming \?[\s\S]*?whitespace-pre-wrap[\s\S]*?MarkdownMessage/,
-    );
+  it("keeps a stable plain-text surface and defers Markdown until enhanced", () => {
+    assert.match(chatMessageSrc, /whitespace-pre-wrap break-words/);
+    assert.match(chatMessageSrc, /enhanced && "hidden"/);
+    assert.match(chatMessageSrc, /\{enhanced \? <MarkdownMessage/);
     assert.equal(
       /streaming=\{Boolean\(message\.streaming\)\}/.test(chatMessageSrc),
       false,
@@ -67,5 +67,9 @@ describe("AI stream DOM stability", () => {
     );
     assert.match(workspaceSrc, /history\.replaceState/);
     assert.match(workspaceSrc, /selection-skip-wipe|url-catchup-after-stream/);
+  });
+
+  it("defers router.refresh after stream settle", () => {
+    assert.match(workspaceSrc, /setTimeout\([\s\S]*?router\.refresh\(\)/);
   });
 });
