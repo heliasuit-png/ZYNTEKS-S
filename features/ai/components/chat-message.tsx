@@ -84,18 +84,25 @@ export function ChatMessage({
         {isUser ? (
           <p className="whitespace-pre-wrap text-sm">{message.content}</p>
         ) : (
-          <>
-            {message.content ? (
-              <MarkdownMessage content={message.content} />
-            ) : message.streaming ? (
-              <p
-                className="flex items-center gap-2 text-sm text-zt-muted"
-                aria-live="polite"
-              >
-                <span className="size-2 animate-pulse rounded-full bg-zt-primary" />
-                Thinking…
-              </p>
-            ) : null}
+          <div aria-live="polite">
+            {/* Stable container: Thinking / stream text / final markdown stay here. */}
+            <div className="min-h-[1.25rem]">
+              {message.streaming && !message.content ? (
+                <p className="flex items-center gap-2 text-sm text-zt-muted">
+                  <span
+                    className="size-2 animate-pulse rounded-full bg-zt-primary"
+                    aria-hidden
+                  />
+                  Thinking…
+                </p>
+              ) : null}
+              {message.content ? (
+                <MarkdownMessage
+                  content={message.content}
+                  streaming={Boolean(message.streaming)}
+                />
+              ) : null}
+            </div>
 
             {!message.streaming && message.content ? (
               <div className="mt-2 border-t border-zt-border/60 pt-2">
@@ -151,7 +158,7 @@ export function ChatMessage({
                 ) : null}
               </div>
             ) : null}
-          </>
+          </div>
         )}
       </div>
     </div>

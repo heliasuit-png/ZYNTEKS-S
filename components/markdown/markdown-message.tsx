@@ -148,7 +148,24 @@ const components: Components = {
   },
 };
 
-export function MarkdownMessage({ content }: { content: string }) {
+export function MarkdownMessage({
+  content,
+  streaming = false,
+}: {
+  content: string;
+  /** While true, skip GFM/highlight plugins to keep the DOM tree stable. */
+  streaming?: boolean;
+}) {
+  // Streaming: plain text only — remark/rehype trees shift every token and
+  // race React's reconciler (NotFoundError on removeChild/insertBefore).
+  if (streaming) {
+    return (
+      <div className="whitespace-pre-wrap break-words text-sm text-zt-text">
+        {content}
+      </div>
+    );
+  }
+
   return (
     <div className="text-sm text-zt-text [&>*:first-child]:mt-0 [&>*:last-child]:mb-0">
       <Markdown

@@ -13,6 +13,8 @@ export interface ChatMessageView {
   content: string;
   streaming?: boolean;
   feedback?: "up" | "down" | null;
+  /** Stable client list key; never swaps when `id` becomes the persisted UUID. */
+  renderKey?: string;
 }
 
 export interface UsageView {

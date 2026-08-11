@@ -93,12 +93,25 @@ export function AiWorkspace({
   const abortRef = useRef<AbortController | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const scrollRafRef = useRef<number | null>(null);
 
+  // Coalesce scroll into one rAF per frame — never smooth-scroll on every token.
   useEffect(() => {
-    scrollRef.current?.scrollTo({
-      top: scrollRef.current.scrollHeight,
-      behavior: "smooth",
+    if (scrollRafRef.current != null) {
+      cancelAnimationFrame(scrollRafRef.current);
+    }
+    scrollRafRef.current = requestAnimationFrame(() => {
+      scrollRafRef.current = null;
+      const el = scrollRef.current;
+      if (!el) return;
+      el.scrollTop = el.scrollHeight;
     });
+    return () => {
+      if (scrollRafRef.current != null) {
+        cancelAnimationFrame(scrollRafRef.current);
+        scrollRafRef.current = null;
+      }
+    };
   }, [messages]);
 
   // Prefill a starter prompt from a deep-link intent on a fresh conversation.
@@ -226,7 +239,13 @@ export function AiWorkspace({
     const assistantId = tempId();
     setMessages((prev) => [
       ...prev,
-      { id: assistantId, role: "assistant", content: "", streaming: true },
+      {
+        id: assistantId,
+        renderKey: assistantId,
+        role: "assistant",
+        content: "",
+        streaming: true,
+      },
     ]);
     setStreaming(true);
 
@@ -302,8 +321,15 @@ export function AiWorkspace({
         return updateAssistant(prev, assistantId, (m) => ({
           ...m,
           streaming: false,
+          // Persist UUID for feedback; renderKey stays assistantId (stable list key).
           id: finalId ?? m.id,
+          renderKey: m.renderKey ?? assistantId,
         }));
+      });
+
+      // Commit settled (non-streaming) UI before navigation remounts the workspace.
+      await new Promise<void>((resolve) => {
+        requestAnimationFrame(() => resolve());
       });
 
       if (!conversationId && createdId) {
@@ -321,7 +347,11 @@ export function AiWorkspace({
           return updateAssistant(prev, assistantId, (m) => ({
             ...m,
             streaming: false,
+            renderKey: m.renderKey ?? assistantId,
           }));
+        });
+        await new Promise<void>((resolve) => {
+          requestAnimationFrame(() => resolve());
         });
         router.refresh();
       } else {
@@ -535,7 +565,7 @@ export function AiWorkspace({
           ) : (
             messages.map((message, index) => (
               <ChatMessage
-                key={message.id}
+                key={message.renderKey ?? message.id}
                 message={message}
                 canRegenerate={canRegenerate && index === messages.length - 1}
                 onRegenerate={() => void runChat(true)}
