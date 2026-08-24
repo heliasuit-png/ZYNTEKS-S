@@ -56,5 +56,31 @@ export async function updateSupabaseSession(
     data: { user },
   } = await supabase.auth.getUser();
 
+  if (!user) {
+    return { response, user: null };
+  }
+
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+  const accessToken = session?.access_token;
+  if (!accessToken) {
+    return { response, user: null };
+  }
+
+  const { isAccessTokenInvalidated } = await import(
+    "@/services/auth/session-validity"
+  );
+  if (await isAccessTokenInvalidated(supabase, user.id, accessToken)) {
+    // Drop revoked auth cookies so middleware and clients agree the session is gone.
+    for (const { name } of request.cookies.getAll()) {
+      if (/^sb-.*-auth-token/i.test(name)) {
+        response.cookies.set(name, "", { maxAge: 0, path: "/" });
+        request.cookies.delete(name);
+      }
+    }
+    return { response, user: null };
+  }
+
   return { response, user };
 }

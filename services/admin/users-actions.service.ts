@@ -193,24 +193,17 @@ export async function forceLogoutUser(
   const target = await requireTargetProfile(userId);
   const admin = createSupabaseAdminClient();
 
-  const { data, error } = await admin
-    .from("user_sessions")
-    .update({
-      revoked_at: new Date().toISOString(),
-      is_current: false,
-    })
-    .eq("user_id", userId)
-    .is("revoked_at", null)
-    .select("id");
-  if (error) throw mapPostgrestError(error);
+  const { markAllSessionsInvalidated } = await import(
+    "@/services/auth/session-validity"
+  );
+  const count = await markAllSessionsInvalidated(admin, userId, null);
 
   try {
     await admin.auth.admin.signOut(userId);
   } catch {
-    // Session table revocation still applies if Auth signOut is unavailable.
+    // Session table + invalidation stamp still apply if Auth signOut is unavailable.
   }
 
-  const count = data?.length ?? 0;
   await writeAdminAuditLog({
     actorId: ctx.actorId,
     action: "user_force_logout",

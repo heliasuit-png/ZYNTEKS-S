@@ -37,3 +37,9 @@ export { recordLoginEvent } from "@/services/auth/login-events.service";
 export { assertAuthRateLimit } from "@/services/auth/rate-limit";
 export { getAuthRequestContext } from "@/services/auth/request-context";
 export { getMfaStatus } from "@/services/auth/mfa.service";
+export {
+  hashAccessToken,
+  getJwtIssuedAtSeconds,
+  isAccessTokenInvalidated,
+  markAllSessionsInvalidated,
+} from "@/services/auth/session-validity";

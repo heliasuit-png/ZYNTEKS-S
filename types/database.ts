@@ -182,6 +182,7 @@ export interface Database {
           password_changed_at: string | null;
           last_login_at: string | null;
           mfa_enabled: boolean;
+          sessions_invalidated_at: string | null;
           preferences: Json;
           created_at: string;
           updated_at: string;
@@ -199,6 +200,7 @@ export interface Database {
           password_changed_at?: string | null;
           last_login_at?: string | null;
           mfa_enabled?: boolean;
+          sessions_invalidated_at?: string | null;
           preferences?: Json;
           created_at?: string;
           updated_at?: string;
@@ -216,6 +218,7 @@ export interface Database {
           password_changed_at?: string | null;
           last_login_at?: string | null;
           mfa_enabled?: boolean;
+          sessions_invalidated_at?: string | null;
           preferences?: Json;
           created_at?: string;
           updated_at?: string;

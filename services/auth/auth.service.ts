@@ -94,7 +94,27 @@ export async function signInWithPassword(
 }
 
 export async function signOut(supabase: Supabase): Promise<void> {
-  const { error } = await supabase.auth.signOut();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+
+  // Stamp invalidation + revoke tracked sessions BEFORE clearing the Auth
+  // session so RLS still allows the owner to write their own rows.
+  if (user) {
+    const { markAllSessionsInvalidated } = await import(
+      "@/services/auth/session-validity"
+    );
+    await markAllSessionsInvalidated(
+      supabase,
+      user.id,
+      session?.access_token ?? null,
+    );
+  }
+
+  const { error } = await supabase.auth.signOut({ scope: "global" });
   if (error) {
     throw mapAuthError(error);
   }
@@ -242,6 +262,25 @@ export async function getAuthenticatedUser(
   const {
     data: { user },
   } = await supabase.auth.getUser();
+  if (!user) {
+    return null;
+  }
+
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+  const accessToken = session?.access_token;
+  if (!accessToken) {
+    return null;
+  }
+
+  const { isAccessTokenInvalidated } = await import(
+    "@/services/auth/session-validity"
+  );
+  if (await isAccessTokenInvalidated(supabase, user.id, accessToken)) {
+    return null;
+  }
+
   return user;
 }
 
