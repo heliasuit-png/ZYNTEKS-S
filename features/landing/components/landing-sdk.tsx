@@ -41,8 +41,8 @@ export function LandingSdk() {
     <LandingSection
       id="sdk"
       eyebrow="SDK"
-      title="Install in one command"
-      description="Choose your package manager and framework. Generate a key in the dashboard, then ship."
+      title="Connect the SDK"
+      description="Path-install the local @zynteksis/sdk package (build sdk/ first), generate a project key, then init in the browser."
     >
       <Reveal>
         <div className="overflow-hidden rounded-2xl border border-zt-border bg-[#070d18]">

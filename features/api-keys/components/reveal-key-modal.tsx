@@ -35,7 +35,12 @@ export function RevealKeyModal({
       <div className="space-y-3">
         <div className="flex items-center gap-2 rounded-lg border border-zt-warning/30 bg-zt-warning/10 px-3 py-2 text-xs text-zt-warning">
           <AlertTriangle className="size-4 shrink-0" aria-hidden />
-          Store this key somewhere safe. You won&apos;t be able to view it again.
+          <span>
+            Store this key somewhere safe. You won&apos;t be able to view it
+            again. This is a project ingest key (
+            <code className="rounded bg-black/20 px-1">ZYN-KEY-…</code>
+            ) — not a Supabase service_role, anon key, or database password.
+          </span>
         </div>
         <div className="flex items-center gap-2">
           <code className="flex-1 overflow-x-auto whitespace-nowrap rounded-lg border border-zt-border bg-zt-surface-2 px-3 py-2 font-mono text-sm text-zt-text">

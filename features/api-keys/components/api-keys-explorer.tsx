@@ -8,6 +8,8 @@ import Link from "next/link";
 import { EmptyState } from "@/components/dashboard/empty-state";
 import { Pagination } from "@/components/dashboard/pagination";
 import { FadeIn } from "@/components/dashboard/motion";
+import { Toast } from "@/components/dashboard/toast";
+import type { ToastVariant } from "@/components/dashboard/toast";
 import {
   API_KEY_ENVIRONMENTS,
   API_KEY_ENVIRONMENT_LABELS,
@@ -18,6 +20,7 @@ import { ApiKeyCard } from "@/features/api-keys/components/api-key-card";
 import { GenerateKeyModal } from "@/features/api-keys/components/generate-key-modal";
 import type { ProjectOption } from "@/features/api-keys/components/generate-key-modal";
 import { RevealKeyModal } from "@/features/api-keys/components/reveal-key-modal";
+import { apiKeyActionErrorMessage } from "@/features/api-keys/lib/safe-feedback";
 import type { ApiKey } from "@/features/api-keys/types";
 
 const selectClass =
@@ -39,6 +42,12 @@ interface ApiKeysExplorerProps {
   filters: ApiKeysFilters;
 }
 
+interface FeedbackToast {
+  message: string;
+  variant: ToastVariant;
+  title?: string;
+}
+
 export function ApiKeysExplorer({
   apiKeys,
   projects,
@@ -56,6 +65,7 @@ export function ApiKeysExplorer({
   const [generateOpen, setGenerateOpen] = useState(false);
   const [revealKey, setRevealKey] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [toast, setToast] = useState<FeedbackToast | null>(null);
 
   const isFirstRender = useRef(true);
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
@@ -107,17 +117,52 @@ export function ApiKeysExplorer({
     router.push(`${pathname}?${params.toString()}`);
   }
 
+  const showToast = useCallback((next: FeedbackToast) => {
+    setToast(next);
+  }, []);
+
   const handleRevoke = useCallback(
     async (id: string) => {
       setBusyId(id);
       try {
-        await fetch(`${API_ROUTES.apiKeys}/${id}/revoke`, { method: "POST" });
+        const response = await fetch(`${API_ROUTES.apiKeys}/${id}/revoke`, {
+          method: "POST",
+        });
+        const payload = (await response.json().catch(() => null)) as {
+          success?: boolean;
+          error?: { message?: string };
+          message?: string;
+        } | null;
+
+        if (!response.ok || payload?.success === false) {
+          showToast({
+            variant: "error",
+            title: "Revoke failed",
+            message: apiKeyActionErrorMessage(
+              response.status,
+              payload?.error?.message ?? payload?.message,
+            ),
+          });
+          return;
+        }
+
+        showToast({
+          variant: "success",
+          title: "Key revoked",
+          message: "The API key can no longer authenticate requests.",
+        });
         router.refresh();
+      } catch {
+        showToast({
+          variant: "error",
+          title: "Revoke failed",
+          message: apiKeyActionErrorMessage(null),
+        });
       } finally {
         setBusyId(null);
       }
     },
-    [router],
+    [router, showToast],
   );
 
   const handleRegenerate = useCallback(
@@ -128,19 +173,66 @@ export function ApiKeysExplorer({
           `${API_ROUTES.apiKeys}/${id}/regenerate`,
           { method: "POST" },
         );
-        const payload = (await response.json()) as {
-          success: boolean;
+        const payload = (await response.json().catch(() => null)) as {
+          success?: boolean;
           data?: { plainKey?: string };
-        };
-        if (payload.success && payload.data?.plainKey) {
-          setRevealKey(payload.data.plainKey);
+          error?: { message?: string };
+          message?: string;
+        } | null;
+
+        if (!response.ok || !payload?.success || !payload.data?.plainKey) {
+          showToast({
+            variant: "error",
+            title: "Regenerate failed",
+            message: apiKeyActionErrorMessage(
+              response.status,
+              payload?.error?.message ?? payload?.message,
+            ),
+          });
+          return;
         }
+
+        setRevealKey(payload.data.plainKey);
+        showToast({
+          variant: "success",
+          title: "Key regenerated",
+          message: "Copy the new key now — it will not be shown again.",
+        });
         router.refresh();
+      } catch {
+        showToast({
+          variant: "error",
+          title: "Regenerate failed",
+          message: apiKeyActionErrorMessage(null),
+        });
       } finally {
         setBusyId(null);
       }
     },
-    [router],
+    [router, showToast],
+  );
+
+  const handleCreated = useCallback(
+    (plainKey: string) => {
+      setRevealKey(plainKey);
+      showToast({
+        variant: "success",
+        title: "API key created",
+        message: "Copy the key now — it will not be shown again.",
+      });
+    },
+    [showToast],
+  );
+
+  const handleCreateError = useCallback(
+    (message: string) => {
+      showToast({
+        variant: "error",
+        title: "Could not create key",
+        message: apiKeyActionErrorMessage(null, message),
+      });
+    },
+    [showToast],
   );
 
   const hasProjects = projects.length > 0;
@@ -285,13 +377,22 @@ export function ApiKeysExplorer({
         open={generateOpen}
         onClose={() => setGenerateOpen(false)}
         projects={projects}
-        onCreated={setRevealKey}
+        onCreated={handleCreated}
+        onError={handleCreateError}
       />
       <RevealKeyModal
         open={revealKey !== null}
         plainKey={revealKey}
         onClose={() => setRevealKey(null)}
       />
+      {toast ? (
+        <Toast
+          message={toast.message}
+          title={toast.title}
+          variant={toast.variant}
+          onDismiss={() => setToast(null)}
+        />
+      ) : null}
     </div>
   );
 }

@@ -7,6 +7,7 @@ import { z } from "zod";
 import { DASHBOARD_ROUTES, ROUTES } from "@/lib/constants";
 import { env } from "@/lib/env";
 import { isAppError } from "@/lib/errors";
+import { rateLimit } from "@/lib/rate-limit";
 import {
   changePassword,
   getAuthenticatedUser,
@@ -153,6 +154,14 @@ export async function changePasswordAction(
     return { status: "error", message: "You must be signed in." };
   }
 
+  const passwordLimit = rateLimit(`settings:password:${user.id}`, 5, 60_000);
+  if (!passwordLimit.allowed) {
+    return {
+      status: "error",
+      message: "Too many password change attempts. Please try again shortly.",
+    };
+  }
+
   try {
     await changePassword(
       supabase,
@@ -231,6 +240,14 @@ export async function deleteAccountAction(
 
   const { supabase, user } = await resolveUser();
   if (!user) return { status: "error", message: "You must be signed in." };
+
+  const deleteLimit = rateLimit(`settings:delete:${user.id}`, 3, 3_600_000);
+  if (!deleteLimit.allowed) {
+    return {
+      status: "error",
+      message: "Too many account deletion attempts. Please try again later.",
+    };
+  }
 
   try {
     const admin = createSupabaseAdminClient();

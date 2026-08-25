@@ -16,7 +16,10 @@
     "typecheck": "tsc --noEmit",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "test:smoke": "tsx --test tests/smoke/**/*.test.ts"
+    "test:smoke": "tsx --test tests/smoke/**/*.test.ts",
+    "test:integration": "tsx --test tests/integration/**/*.test.ts tests/integration/safety/**/*.test.ts",
+    "sdk:build": "npm --prefix sdk run build",
+    "sdk:typecheck": "npm --prefix sdk run typecheck"
   },
   "dependencies": {
     "@radix-ui/react-slot": "^1.1.1",

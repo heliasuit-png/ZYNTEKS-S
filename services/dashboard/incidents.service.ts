@@ -94,7 +94,6 @@ export async function listIncidents(
         supabase
           .from("heartbeats")
           .select("project_id, environment, occurred_at")
-          .eq("user_id", user.id)
           .in("project_id", projectIds)
           .order("occurred_at", { ascending: false })
           .limit(200),
@@ -285,7 +284,6 @@ export async function getIncidentDetail(
     supabase
       .from("errors")
       .select("id, message, level, occurrences, last_seen")
-      .eq("user_id", user.id)
       .eq("project_id", incident.project_id)
       .gte("last_seen", windowStart)
       .lte("last_seen", windowEnd)
@@ -294,7 +292,6 @@ export async function getIncidentDetail(
     supabase
       .from("heartbeats")
       .select("id, occurred_at, environment, release, page")
-      .eq("user_id", user.id)
       .eq("project_id", incident.project_id)
       .gte("occurred_at", windowStart)
       .lte("occurred_at", windowEnd)
@@ -312,7 +309,6 @@ export async function getIncidentDetail(
     supabase
       .from("performance_logs")
       .select("id, occurred_at, url, lcp, ttfb, page_load")
-      .eq("user_id", user.id)
       .eq("project_id", incident.project_id)
       .gte("occurred_at", windowStart)
       .lte("occurred_at", windowEnd)
@@ -321,7 +317,6 @@ export async function getIncidentDetail(
     supabase
       .from("api_keys")
       .select("id, name, key_prefix, environment, last_used_at")
-      .eq("user_id", user.id)
       .eq("project_id", incident.project_id)
       .eq("status", "active")
       .order("last_used_at", { ascending: false, nullsFirst: false })
@@ -336,7 +331,6 @@ export async function getIncidentDetail(
     supabase
       .from("incidents")
       .select("downtime_seconds, resolved_at, started_at")
-      .eq("user_id", user.id)
       .eq("project_id", incident.project_id)
       .eq("status", "resolved")
       .not("downtime_seconds", "is", null)

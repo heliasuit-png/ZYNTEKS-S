@@ -20,12 +20,14 @@ export default async function LoginPage({
     reset?: string;
     redirect?: string;
     error?: string;
+    signedOut?: string;
   }>;
 }) {
   const {
     reset,
     redirect: redirectParam,
     error,
+    signedOut,
   } = await searchParams;
   const redirectTo = safeNextPath(redirectParam, "");
   const providers = await getOAuthProviderConfigs();
@@ -46,6 +48,14 @@ export default async function LoginPage({
         </>
       }
     >
+      {signedOut === "1" ? (
+        <p
+          role="status"
+          className="rounded-xl border border-zt-border bg-zt-surface-2 px-3 py-2 text-sm text-zt-muted"
+        >
+          You signed out. Sign in again to continue.
+        </p>
+      ) : null}
       {reset === "success" ? (
         <p
           role="status"

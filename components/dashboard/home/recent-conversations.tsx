@@ -1,4 +1,5 @@
 import { MessageSquare, Sparkles } from "lucide-react";
+import Link from "next/link";
 
 import {
   Panel,
@@ -7,6 +8,7 @@ import {
   PanelTitle,
 } from "@/components/dashboard/panel";
 import { EmptyState } from "@/components/dashboard/empty-state";
+import { DASHBOARD_ROUTES } from "@/lib/constants";
 import { formatDate } from "@/utils/format";
 import type { AiConversation } from "@/types/dashboard";
 
@@ -25,7 +27,16 @@ export function RecentConversations({
           <EmptyState
             icon={Sparkles}
             title="No conversations yet"
-            description="Start chatting with the AI Assistant to see history here."
+            description="Ask the AI assistant about errors, performance, or architecture. Your recent chats will show up here."
+            action={
+              <Link
+                href={DASHBOARD_ROUTES.aiAssistant}
+                className="inline-flex items-center gap-2 rounded-xl bg-zt-primary px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-zt-primary/90"
+              >
+                <Sparkles className="size-4" aria-hidden />
+                Open AI Assistant
+              </Link>
+            }
           />
         ) : (
           <ul className="space-y-3">
@@ -35,9 +46,12 @@ export function RecentConversations({
                   <MessageSquare className="size-4" aria-hidden />
                 </span>
                 <div className="min-w-0">
-                  <p className="truncate text-sm font-medium text-zt-text">
+                  <Link
+                    href={`${DASHBOARD_ROUTES.aiAssistant}?c=${conversation.id}`}
+                    className="truncate text-sm font-medium text-zt-text hover:text-zt-primary"
+                  >
                     {conversation.title}
-                  </p>
+                  </Link>
                   <p className="truncate text-xs text-zt-muted">
                     {conversation.model} · {conversation.messageCount} messages ·{" "}
                     {formatDate(conversation.updatedAt)}

@@ -369,5 +369,5 @@ export async function signOutAction(): Promise<void> {
   const supabase = await createSupabaseServerClient();
   await signOut(supabase);
   revalidatePath("/", "layout");
-  redirect(ROUTES.login);
+  redirect(`${ROUTES.login}?signedOut=1`);
 }

@@ -104,7 +104,7 @@ export default async function DashboardPage() {
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
             <WorkspaceStat label="Members" value={workspaceUsage.memberCount} />
             <WorkspaceStat label="Projects" value={workspaceUsage.projectCount} />
-            <WorkspaceStat label="API usage" value={workspaceUsage.apiKeyCount} />
+            <WorkspaceStat label="API keys" value={workspaceUsage.apiKeyCount} />
             <WorkspaceStat label="AI usage (30d)" value={workspaceUsage.aiMessageCount} />
             <WorkspaceStat
               label="Health"

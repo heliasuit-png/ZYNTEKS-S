@@ -45,38 +45,60 @@ export function DashboardHero({
     setGreeting(greetingFor(new Date().getHours()));
   }, []);
 
-  const healthy = overall === "operational" && stats.errorsToday === 0;
+  const healthy =
+    overall === "operational" &&
+    stats.errorsToday === 0 &&
+    stats.totalProjects > 0;
 
-  const summary: SummaryLine[] = [
-    healthy
-      ? {
-          icon: CheckCircle2,
-          text: "Everything looks healthy today.",
-          className: "text-zt-success",
-        }
-      : {
-          icon: AlertTriangle,
-          text:
-            overall === "down"
-              ? "A service disruption needs attention."
-              : "Some systems need a closer look.",
-          className: "text-zt-warning",
-        },
-    {
-      icon: overall === "operational" ? ShieldCheck : AlertTriangle,
-      text:
-        stats.openIncidents === 0
-          ? "No incidents detected."
-          : `${stats.openIncidents} incident${stats.openIncidents === 1 ? "" : "s"} open.`,
-      className:
-        stats.openIncidents === 0 ? "text-zt-success" : "text-zt-warning",
-    },
-    {
-      icon: FolderKanban,
-      text: `${stats.activeProjects} project${stats.activeProjects === 1 ? "" : "s"} monitored.`,
-      className: "text-zt-muted",
-    },
-  ];
+  const summary: SummaryLine[] =
+    stats.totalProjects === 0
+      ? [
+          {
+            icon: CheckCircle2,
+            text: "You're set up — try AI or create your first project.",
+            className: "text-zt-primary",
+          },
+          {
+            icon: ShieldCheck,
+            text: "No incidents yet. Monitoring starts when the SDK connects.",
+            className: "text-zt-muted",
+          },
+          {
+            icon: FolderKanban,
+            text: "0 projects so far — create one to issue an API key.",
+            className: "text-zt-muted",
+          },
+        ]
+      : [
+          healthy
+            ? {
+                icon: CheckCircle2,
+                text: "Everything looks healthy today.",
+                className: "text-zt-success",
+              }
+            : {
+                icon: AlertTriangle,
+                text:
+                  overall === "down"
+                    ? "A service disruption needs attention."
+                    : "Some systems need a closer look.",
+                className: "text-zt-warning",
+              },
+          {
+            icon: overall === "operational" ? ShieldCheck : AlertTriangle,
+            text:
+              stats.openIncidents === 0
+                ? "No incidents detected."
+                : `${stats.openIncidents} incident${stats.openIncidents === 1 ? "" : "s"} open.`,
+            className:
+              stats.openIncidents === 0 ? "text-zt-success" : "text-zt-warning",
+          },
+          {
+            icon: FolderKanban,
+            text: `${stats.activeProjects} project${stats.activeProjects === 1 ? "" : "s"} monitored.`,
+            className: "text-zt-muted",
+          },
+        ];
 
   return (
     <motion.div

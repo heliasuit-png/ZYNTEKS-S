@@ -76,12 +76,11 @@ export function SecurityView({
             <div>
               <PanelTitle>Two-factor authentication</PanelTitle>
               <PanelDescription>
-                Personal MFA enrollment is prepared for a future release. Workspace
-                policy can already require 2FA when your identity provider supports
-                it.
+                In-app authenticator enrollment is not available yet. You can still
+                require MFA through your identity provider via Organization settings.
               </PanelDescription>
             </div>
-            <Badge tone="default">Coming soon</Badge>
+            <Badge tone="default">Not available yet</Badge>
           </PanelHeader>
           <PanelContent className="space-y-3">
             <div className="flex items-start gap-3 rounded-xl border border-dashed border-zt-border bg-white/[0.015] p-4">
@@ -92,19 +91,17 @@ export function SecurityView({
                 <p className="text-sm font-medium text-zt-text">
                   Authenticator app enrollment
                 </p>
-                <p className="text-sm text-zt-muted">
-                  TOTP setup, recovery codes and challenge prompts will appear here.
-                  Until then, enforce the workspace policy from Organization settings.
+                <p className="mt-1 text-sm text-zt-muted">
+                  TOTP setup, recovery codes, and challenge prompts will land here
+                  in a later release. Until then, use Organization settings for
+                  workspace MFA policy.
                 </p>
                 <div className="flex flex-wrap gap-2 pt-2">
-                  <Button type="button" size="sm" disabled aria-disabled>
-                    Enable 2FA (soon)
-                  </Button>
                   <Link
                     href={DASHBOARD_ROUTES.organization}
                     className="inline-flex items-center rounded-lg border border-zt-border px-3 py-1.5 text-sm text-zt-muted transition-colors hover:text-zt-text"
                   >
-                    Manage 2FA policy
+                    Manage MFA policy
                   </Link>
                 </div>
               </div>

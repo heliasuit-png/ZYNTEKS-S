@@ -44,6 +44,7 @@ export function getJwtIssuedAtSeconds(accessToken: string): number | null {
 
 /**
  * Returns true when this access token must be treated as logged-out:
+ * - profile status is banned (suspended account),
  * - matching user_sessions row is revoked, or
  * - JWT iat is at/before profiles.sessions_invalidated_at (global logout).
  */
@@ -58,7 +59,7 @@ export async function isAccessTokenInvalidated(
   const [profileResult, sessionResult] = await Promise.all([
     supabase
       .from("profiles")
-      .select("sessions_invalidated_at")
+      .select("sessions_invalidated_at, status")
       .eq("id", userId)
       .maybeSingle(),
     supabase
@@ -68,6 +69,10 @@ export async function isAccessTokenInvalidated(
       .eq("session_token_hash", tokenHash)
       .maybeSingle(),
   ]);
+
+  if (profileResult.data?.status === "banned") {
+    return true;
+  }
 
   if (sessionResult.data?.revoked_at) {
     return true;

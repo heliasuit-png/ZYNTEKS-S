@@ -372,7 +372,7 @@ function buildTimeline(input: {
 /** Computes full health dashboard for the authenticated user's workspace. */
 export async function buildHealthDashboard(
   supabase: TypedSupabaseClient,
-  userId: string,
+  _userId: string,
   params: HealthFilterParams = {},
 ): Promise<HealthDashboard> {
   const now = Date.now();
@@ -388,7 +388,6 @@ export async function buildHealthDashboard(
   const { data: projects } = await supabase
     .from("projects")
     .select("id, name, status")
-    .eq("user_id", userId)
     .order("name", { ascending: true })
     .limit(100);
 
@@ -478,7 +477,6 @@ export async function buildHealthDashboard(
     supabase
       .from("heartbeats")
       .select("occurred_at, release, environment, memory, uptime")
-      .eq("user_id", userId)
       .eq("project_id", selectedProjectId)
       .gte("occurred_at", fromIso)
       .lte("occurred_at", toIso)
@@ -489,7 +487,6 @@ export async function buildHealthDashboard(
       .select(
         "occurred_at, fcp, lcp, cls, inp, ttfb, page_load, navigation, environment, url",
       )
-      .eq("user_id", userId)
       .eq("project_id", selectedProjectId)
       .gte("occurred_at", fromIso)
       .lte("occurred_at", toIso)
@@ -498,7 +495,6 @@ export async function buildHealthDashboard(
     supabase
       .from("errors")
       .select("id, message, level, occurrences, last_seen, environment")
-      .eq("user_id", userId)
       .eq("project_id", selectedProjectId)
       .gte("last_seen", fromIso)
       .lte("last_seen", toIso)
@@ -509,7 +505,6 @@ export async function buildHealthDashboard(
       .select(
         "id, project_id, title, status, severity, started_at, resolved_at, downtime_seconds",
       )
-      .eq("user_id", userId)
       .eq("project_id", selectedProjectId)
       .gte("started_at", new Date(now - 90 * DAY_MS).toISOString())
       .order("started_at", { ascending: false })
@@ -517,7 +512,6 @@ export async function buildHealthDashboard(
     supabase
       .from("errors")
       .select("occurrences")
-      .eq("user_id", userId)
       .eq("project_id", selectedProjectId)
       .gte("last_seen", prevFromIso)
       .lt("last_seen", fromIso)
@@ -525,7 +519,6 @@ export async function buildHealthDashboard(
     supabase
       .from("heartbeats")
       .select("project_id, occurred_at, environment")
-      .eq("user_id", userId)
       .in("project_id", projectIds)
       .gte("occurred_at", new Date(now - DAY_MS).toISOString())
       .order("occurred_at", { ascending: false })
@@ -533,14 +526,12 @@ export async function buildHealthDashboard(
     supabase
       .from("performance_logs")
       .select("project_id, ttfb, page_load, environment")
-      .eq("user_id", userId)
       .in("project_id", projectIds)
       .gte("occurred_at", fromIso)
       .limit(1000),
     supabase
       .from("errors")
       .select("project_id, occurrences, level, last_seen")
-      .eq("user_id", userId)
       .in("project_id", projectIds)
       .gte("last_seen", fromIso)
       .limit(500),
@@ -549,7 +540,6 @@ export async function buildHealthDashboard(
       .select(
         "id, project_id, title, status, severity, started_at, resolved_at, downtime_seconds",
       )
-      .eq("user_id", userId)
       .in("project_id", projectIds)
       .gte("started_at", new Date(now - 90 * DAY_MS).toISOString())
       .limit(200),

@@ -135,7 +135,12 @@ Production-quality for commercial source-code sale and deployment, with intentio
 
 ## Database / migrations
 
-Migrations `0001` → `0009` are ordered and idempotent where noted. Apply in sequence in Supabase SQL Editor (or CLI) before production traffic. Key surfaces: profiles, projects/keys, errors, incidents/notifications/status, AI, workspaces/enterprise RBAC, notification prefs, status pages, settings prefs + storage buckets.
+Migrations `0001` → `0017`, then `0019` → `0021` are ordered and idempotent where noted
+(skip `0018` unless Lemon Squeezy is intentionally enabled). Apply in sequence in
+Supabase SQL Editor (or CLI) before production traffic. Key surfaces: profiles,
+projects/keys, errors, incidents/notifications/status, AI, workspaces/enterprise
+RBAC, notification prefs, status pages, settings prefs + storage buckets, session
+invalidation, security hardening, telemetry isolation, AI quota RPCs.
 
 ---
 

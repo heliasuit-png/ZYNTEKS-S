@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 
 import { fail, withErrorHandling } from "@/lib/api-response";
-import { ForbiddenError, UnauthorizedError } from "@/lib/errors";
+import { ForbiddenError, RateLimitError, UnauthorizedError } from "@/lib/errors";
+import { rateLimit } from "@/lib/rate-limit";
 import {
   exportAuditCsv,
   exportAuditJson,
@@ -28,6 +29,11 @@ export const GET = withErrorHandling(async (request: Request) => {
   const admin = await getAdminUserByAuthId(supabase, user.id);
   if (!admin || !hasAdminPermission(admin.role, "admin:audit:read")) {
     return fail(new ForbiddenError("Admin audit access required."));
+  }
+
+  const exportLimit = rateLimit(`export:admin-audit:${user.id}`, 10, 60_000);
+  if (!exportLimit.allowed) {
+    throw new RateLimitError("Too many export requests. Please try again shortly.");
   }
 
   const { searchParams } = new URL(request.url);

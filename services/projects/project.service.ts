@@ -46,7 +46,7 @@ export interface ListProjectsParams extends Partial<PaginationParams> {
 
 export async function listProjects(
   supabase: Supabase,
-  userId: string,
+  _userId: string,
   params: ListProjectsParams = {},
 ): Promise<Paginated<Project>> {
   const pagination = normalizePagination(params);
@@ -57,8 +57,6 @@ export async function listProjects(
 
   if (params.workspaceId) {
     query = query.eq("workspace_id", params.workspaceId);
-  } else {
-    query = query.eq("user_id", userId);
   }
 
   const search = params.search?.trim();
@@ -82,12 +80,11 @@ export async function listProjects(
 
 export async function countProjects(
   supabase: Supabase,
-  userId: string,
+  _userId: string,
 ): Promise<number> {
   const { count, error } = await supabase
     .from("projects")
-    .select("id", { count: "exact", head: true })
-    .eq("user_id", userId);
+    .select("id", { count: "exact", head: true });
 
   if (error) {
     throw mapPostgrestError(error);

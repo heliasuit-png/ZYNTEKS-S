@@ -1,13 +1,16 @@
 # Database
 
 Supabase PostgreSQL schema for ZYNTEKSIS. Source of truth:
-`supabase/migrations/` (apply **0001 → 0009** in order).
+`supabase/migrations/` — apply files in numeric order from the repository
+(do not invent numbers).
 
 Typed client: `types/database.ts` + `TypedSupabaseClient` (`supabase/types.ts`).
 
 ---
 
-## Migration order
+## Migration order (non-payment)
+
+Apply these in order for a normal product install:
 
 | # | File | Summary |
 | - | ---- | ------- |
@@ -20,11 +23,44 @@ Typed client: `types/database.ts` + `TypedSupabaseClient` (`supabase/types.ts`).
 | 7 | `0007_notification_center_preferences.sql` | Notification center preference tweaks |
 | 8 | `0008_status_pages_complete.sql` | Maintenance windows, status completeness |
 | 9 | `0009_settings_profile_preferences.sql` | Profile prefs JSON + Storage buckets/policies |
+| 10 | `0010_create_admin_users.sql` | Platform admin_users |
+| 11 | `0011_create_admin_audit_logs.sql` | Admin audit log |
+| 12 | `0012_workspace_admin_command_center.sql` | Workspace admin surfaces |
+| 13 | `0013_platform_settings_feature_flags.sql` | Platform settings + feature flags |
+| 14 | `0014_align_platform_settings_columns.sql` | Settings column alignment |
+| 15 | `0015_authentication_v2.sql` | Auth login events / session-related columns |
+| 16 | `0016_admin_users_lock_privileged_columns.sql` | Lock privileged admin_users columns |
+| 17 | `0017_sessions_invalidated_at.sql` | `profiles.sessions_invalidated_at` for logout/suspend JWT rejection |
+| 19 | `0019_security_hardening.sql` | Member/API-key/profile RLS hardening + invite accept RPC |
+| 20 | `0020_workspace_telemetry_isolation.sql` | Workspace-aware SELECT for telemetry / keys / incidents |
+| 21 | `0021_owner_guard_ai_quota.sql` | Workspace owner_id transfer guard + atomic AI usage RPC |
 
-**How to run:** Supabase SQL Editor (paste each file) or `supabase db push` after linking.
+### When to apply 0017 and 0019
+
+| Migration | Apply when |
+| --------- | ---------- |
+| **0017** | Before relying on server-side session invalidation after logout, force-logout, or suspend. Application code compares JWT `iat` to `sessions_invalidated_at`. |
+| **0019** | Before exposing production to untrusted clients that can call PostgREST/Supabase with a user JWT. Closes workspace self-join, API key foreign-project insert, and privileged profile column updates. Prefer **staging first**, then production DB, then deploy app builds that call `accept_workspace_invitation`. |
+| **0020** | Before expecting workspace members to see shared project telemetry (errors, heartbeats, performance, incidents, API key metadata). Apply after **0019**. |
+
+**Production order of operations (DB vs app):** apply required SQL migrations to the target database **before** (or atomically ahead of) shipping application code that depends on new columns/RPCs/policies. See [Deployment.md](./Deployment.md).
+
+### Payment migration — only when Lemon Squeezy is intentionally enabled
+
+| # | File | Summary |
+| - | ---- | ------- |
+| 18 | `0018_billing_lemon_squeezy.sql` | Billing customers / subscriptions / webhook idempotency |
+
+Do **not** apply `0018` as part of a default non-payment deploy. Keep
+`LEMON_SQUEEZY_MODE=off` until credentials and an explicit enablement decision
+exist. Details: [LEMON_SQUEEZY.md](./LEMON_SQUEEZY.md).
+
+**How to run:** Supabase SQL Editor (paste each file) or a controlled apply
+script against the **intended** project only (see `scripts/apply-staging-migrations.mjs`
+for staging). Never apply staging scripts to production by accident.
 
 **Rollback:** forward-only. On a fresh project, recreate DB and re-apply. In
-production, ship a new `0010_…` corrective migration. See also root
+production, ship a new numbered corrective migration. See also root
 [DATABASE.md](../DATABASE.md).
 
 ---
@@ -69,14 +105,14 @@ Exact production values from `supabase/migrations/` (also mirrored in
 
 | Table | Relations | Notes |
 | ----- | --------- | ----- |
-| `profiles` | `id` → `auth.users(id)` | Plan, role, status, avatar, preferences JSON (0009) |
+| `profiles` | `id` → `auth.users(id)` | Plan, role, status, avatar, preferences JSON (0009); `sessions_invalidated_at` (0017) |
 
 ### Projects & keys
 
 | Table | Relations | Notes |
 | ----- | --------- | ----- |
 | `projects` | `user_id` → profiles; `workspace_id` → workspaces (0006) | Slug unique per owner/workspace |
-| `api_keys` | `project_id`, `user_id` | Stores **hash** only |
+| `api_keys` | `project_id`, `user_id` | Stores **hash** only; INSERT bound to manageable project (0019) |
 | `api_key_logs` | `api_key_id`, `project_id`, `user_id` | Audit trail |
 
 ### Telemetry
@@ -95,7 +131,7 @@ Exact production values from `supabase/migrations/` (also mirrored in
 
 | Table | Relations | Notes |
 | ----- | --------- | ----- |
-| `incidents` | `project_id`, owner user | Lifecycle |
+| `incidents` | `project_id`, owner user | Lifecycle; INSERT project binding (0019) |
 | `incident_updates` | `incident_id` | Timeline |
 | `notification_preferences` | per user | Channel/type prefs |
 | `notification_queue` | user / payload | Outbox |
@@ -123,7 +159,7 @@ Exact production values from `supabase/migrations/` (also mirrored in
 | Table | Relations | Notes |
 | ----- | --------- | ----- |
 | `workspaces` | `owner_id` | Org |
-| `workspace_members` | workspace + user + role | Membership |
+| `workspace_members` | workspace + user + role | No self-join INSERT; invite accept via RPC (0019) |
 | `workspace_invitations` | workspace + email + role | Pending invites |
 | `audit_logs` | workspace + actor | Security/compliance |
 | `user_sessions` | user | Session inventory |
@@ -142,6 +178,7 @@ Exact production values from `supabase/migrations/` (also mirrored in
 Critical lookup indexes include:
 
 - `profiles_email_key` (unique lower email)
+- `profiles_sessions_invalidated_at_idx` (0017)
 - `projects_user_id_idx`, `projects_workspace_id_idx`, `projects_created_at_idx`
 - `api_keys_key_hash_idx`, `api_keys_project_id_idx`
 - `errors_project_fingerprint_idx`, `errors_project_last_seen_idx`
@@ -164,6 +201,9 @@ Full list: search `create index` in `supabase/migrations/`.
 | `handle_ai_message_change()` | Keeps conversation message counters in sync |
 | `is_workspace_member(uuid)` | RLS helper |
 | `workspace_member_role(uuid)` | RLS helper |
+| `user_can_manage_project(uuid)` | RLS helper (0019) |
+| `accept_workspace_invitation(text)` | SECURITY DEFINER invite accept (0019) |
+| `workspace_members_guard_privileged_update` | Blocks member self role/status escalation (0019) |
 
 ---
 
@@ -176,6 +216,8 @@ RLS is enabled on application tables. Patterns:
 | Owner-scoped (`auth.uid() = user_id`) | Early projects/keys/telemetry/AI/incidents |
 | Workspace membership helpers | Projects/members after 0006 |
 | Invitee-or-admin | `workspace_invitations` |
+| Project-manage check | `api_keys` / `incidents` INSERT (0019) |
+| Column grants (privileged locked) | `profiles.role` / `subscription_plan` / `status` (0019) |
 | Public read | Selected status page / maintenance policies |
 | Storage path checks | avatars & workspace-logos (0009) |
 

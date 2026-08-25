@@ -270,59 +270,51 @@ export async function acceptInvitation(
   userEmail: string,
   token: string,
 ): Promise<Invitation> {
-  const invitation = await getInvitationByToken(supabase, token);
-  if (!invitation) throw new NotFoundError("Invitation not found");
-  if (invitation.status !== "pending") {
-    throw new ConflictError("This invitation is no longer pending.");
-  }
-  if (new Date(invitation.expires_at).getTime() < Date.now()) {
-    await supabase
-      .from("workspace_invitations")
-      .update({ status: "expired" })
-      .eq("id", invitation.id);
-    throw new ConflictError("This invitation has expired.");
-  }
-  if (invitation.email.toLowerCase() !== userEmail.trim().toLowerCase()) {
-    throw new ForbiddenError(
-      "This invitation was sent to a different email address.",
-    );
+  // Membership insert is restricted to owners/admins via RLS; accept path runs
+  // through SECURITY DEFINER RPC accept_workspace_invitation (search_path=public).
+  const { data: invitationId, error: rpcError } = await supabase.rpc(
+    "accept_workspace_invitation",
+    { p_token: token },
+  );
+
+  if (rpcError) {
+    const message = rpcError.message.toLowerCase();
+    if (message.includes("not found")) {
+      throw new NotFoundError("Invitation not found");
+    }
+    if (message.includes("expired")) {
+      throw new ConflictError("This invitation has expired.");
+    }
+    if (message.includes("no longer pending")) {
+      throw new ConflictError("This invitation is no longer pending.");
+    }
+    if (message.includes("email mismatch")) {
+      throw new ForbiddenError(
+        "This invitation was sent to a different email address.",
+      );
+    }
+    throw mapError(rpcError);
   }
 
-  const { error: memberError } = await supabase
-    .from("workspace_members")
-    .insert({
-      workspace_id: invitation.workspace_id,
-      user_id: userId,
-      role: invitation.role,
-      status: "active",
-      invited_by: invitation.invited_by,
-      last_active_at: new Date().toISOString(),
-    });
-
-  if (memberError && memberError.code !== UNIQUE_VIOLATION) {
-    throw mapError(memberError);
+  if (!invitationId) {
+    throw new NotFoundError("Invitation not found");
   }
 
   const { data, error } = await supabase
     .from("workspace_invitations")
-    .update({
-      status: "accepted",
-      accepted_by: userId,
-      accepted_at: new Date().toISOString(),
-    })
-    .eq("id", invitation.id)
     .select("*")
+    .eq("id", invitationId)
     .single();
 
   if (error) throw mapError(error);
 
   await writeAuditLog(supabase, {
-    workspaceId: invitation.workspace_id,
+    workspaceId: data.workspace_id,
     actorId: userId,
     action: "invitation_accepted",
     summary: `${userEmail} accepted a workspace invitation`,
     resourceType: "workspace_invitation",
-    resourceId: invitation.id,
+    resourceId: data.id,
   });
 
   return data;

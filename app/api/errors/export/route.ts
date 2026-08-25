@@ -2,7 +2,8 @@ import { NextResponse } from "next/server";
 
 import { fail, withErrorHandling } from "@/lib/api-response";
 import { API_KEY_ENVIRONMENTS } from "@/lib/constants";
-import { UnauthorizedError } from "@/lib/errors";
+import { RateLimitError, UnauthorizedError } from "@/lib/errors";
+import { rateLimit } from "@/lib/rate-limit";
 import { getAuthenticatedUser } from "@/services/auth";
 import { exportErrorsCsv } from "@/services/dashboard/errors.service";
 import { createSupabaseServerClient } from "@/supabase/server";
@@ -15,6 +16,11 @@ export const GET = withErrorHandling(async (request: Request) => {
   const user = await getAuthenticatedUser(supabase);
   if (!user) {
     return fail(new UnauthorizedError());
+  }
+
+  const exportLimit = rateLimit(`export:errors:${user.id}`, 10, 60_000);
+  if (!exportLimit.allowed) {
+    throw new RateLimitError("Too many export requests. Please try again shortly.");
   }
 
   const { searchParams } = new URL(request.url);

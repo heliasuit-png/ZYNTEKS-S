@@ -130,6 +130,18 @@ export async function suspendUser(
     .eq("id", userId);
   if (error) throw mapPostgrestError(error);
 
+  // Reuse 0017 session invalidation so in-flight JWTs die immediately.
+  const { markAllSessionsInvalidated } = await import(
+    "@/services/auth/session-validity"
+  );
+  await markAllSessionsInvalidated(admin, userId, null);
+
+  try {
+    await admin.auth.admin.signOut(userId);
+  } catch {
+    // Profile stamp + revoked sessions still apply if Auth signOut is unavailable.
+  }
+
   await writeAdminAuditLog({
     actorId: ctx.actorId,
     action: "user_suspended",

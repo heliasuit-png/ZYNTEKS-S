@@ -2,6 +2,7 @@ import { getHealthSummary } from "@/services/dashboard/health.service";
 import { getOpenIncidentCount } from "@/services/dashboard/incidents.service";
 import { listErrors } from "@/services/dashboard/errors.service";
 import { listProjects } from "@/services/dashboard/projects.service";
+import { listAccessibleProjectIds } from "@/services/projects/access";
 import { getAuthenticatedUser } from "@/services/auth";
 import { createSupabaseServerClient } from "@/supabase/server";
 import type { DashboardStats } from "@/types/dashboard";
@@ -9,7 +10,7 @@ import type { DashboardStats } from "@/types/dashboard";
 /**
  * Aggregates the headline dashboard statistics from live resource services.
  * `apiRequestsToday` counts SDK ingest rows (heartbeats + performance + errors)
- * created in the last 24 hours for the authenticated user's projects.
+ * created in the last 24 hours for projects the user can view.
  */
 export async function getDashboardStats(): Promise<DashboardStats> {
   const [projects, errors, openIncidents, health, ingestToday] =
@@ -42,12 +43,7 @@ async function countSdkIngestToday(): Promise<number> {
     if (!user) return 0;
 
     const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
-    const { data: projectRows } = await supabase
-      .from("projects")
-      .select("id")
-      .eq("user_id", user.id);
-
-    const projectIds = (projectRows ?? []).map((row) => row.id);
+    const projectIds = await listAccessibleProjectIds(supabase);
     if (projectIds.length === 0) return 0;
 
     const [heartbeats, performance, errorRows] = await Promise.all([

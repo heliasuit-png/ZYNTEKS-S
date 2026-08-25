@@ -106,7 +106,7 @@ export function ProjectsExplorer({
           description={
             search
               ? `No projects match “${search}”. Try a different search.`
-              : "Create your first project to start building with ZYNTEKSIS."
+              : "Create your first project to start monitoring errors, health, and API keys. You can still use the AI assistant without a project."
           }
           action={
             search ? undefined : (

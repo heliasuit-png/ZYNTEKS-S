@@ -26,6 +26,7 @@ interface GenerateKeyModalProps {
   onClose: () => void;
   projects: ProjectOption[];
   onCreated: (plainKey: string) => void;
+  onError?: (message: string) => void;
 }
 
 export function GenerateKeyModal({
@@ -33,6 +34,7 @@ export function GenerateKeyModal({
   onClose,
   projects,
   onCreated,
+  onError,
 }: GenerateKeyModalProps) {
   const router = useRouter();
   const [state, formAction, isPending] = useActionState(
@@ -42,17 +44,21 @@ export function GenerateKeyModal({
   const handledRef = useRef<typeof state | null>(null);
 
   useEffect(() => {
-    if (
-      state.status === "success" &&
-      state.plainKey &&
-      handledRef.current !== state
-    ) {
+    if (handledRef.current === state) {
+      return;
+    }
+    if (state.status === "success" && state.plainKey) {
       handledRef.current = state;
       onCreated(state.plainKey);
       router.refresh();
       onClose();
+      return;
     }
-  }, [state, onCreated, router, onClose]);
+    if (state.status === "error" && state.message) {
+      handledRef.current = state;
+      onError?.(state.message);
+    }
+  }, [state, onCreated, onError, router, onClose]);
 
   const fieldErrors = state.fieldErrors ?? {};
 

@@ -69,8 +69,8 @@ Defined in `vercel.json` and registered in `cron/`:
 
 | Job | Path | Schedule |
 | --- | ---- | -------- |
-| Health | `/api/cron/health` | `*/15 * * * *` |
-| Monitor | `/api/cron/monitor` | `* * * * *` |
+| Health | `/api/cron/health` | `0 0 * * *` (Hobby daily; Pro may use `*/15 * * * *`) |
+| Monitor | `/api/cron/monitor` | `0 1 * * *` (Hobby daily; Pro may use `* * * * *`) |
 
 Monitor pass: outage detection, auto-resolve, notification queue flush.
 

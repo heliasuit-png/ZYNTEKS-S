@@ -40,15 +40,19 @@ After a path install, import as `@zynteksis/sdk` (the package `name` field).
 
 ## Usage
 
+> **Security:** `apiKey` must be a project key from the ZYNTEKSIS **API Keys**
+> page (`ZYN-KEY-…`). It is **not** a Supabase `service_role` key, anon key, or
+> database password. Never put platform secrets in browser bundles.
+
 ```ts
 import { Zynteksis } from "@zynteksis/sdk";
 
 const zyn = new Zynteksis({
   apiKey: "ZYN-KEY-XXXXXXXXXXXXXXXXXXXXXXXX",
-  environment: "development",
+  environment: "production",
   release: "1.0.0",
-  // Point at your ZYNTEKSIS host when the consumer app is not same-origin.
-  endpoint: "http://localhost:3000",
+  // Required when the consumer app is not same-origin with ZYNTEKSIS.
+  endpoint: "https://zynteksisv.vercel.app",
 });
 
 zyn.init();
@@ -61,6 +65,39 @@ automatically. You can also report manually:
 zyn.captureException(new Error("Something broke"));
 zyn.captureMessage("Checkout completed", "info");
 zyn.captureEvent({ type: "user.action", name: "upgrade_clicked" });
+```
+
+### Auth header
+
+The transport sends `X-Zynteksis-Key: <apiKey>`. The server also accepts
+`Authorization: Bearer <apiKey>`.
+
+Ingest paths (relative to `endpoint`):
+
+| Kind | Path |
+| ---- | ---- |
+| error | `/api/sdk/error` |
+| heartbeat | `/api/sdk/heartbeat` |
+| performance | `/api/sdk/performance` |
+| events | `/api/sdk/events` |
+
+### Server / Node (HTTP)
+
+`init()` is **browser-only** and no-ops on Node. Server-side code should call
+the ingest endpoints directly with the same project API key:
+
+```ts
+const endpoint = "https://zynteksisv.vercel.app";
+const apiKey = process.env.ZYNTEKSIS_API_KEY!; // ZYN-KEY-… only
+
+await fetch(`${endpoint}/api/sdk/heartbeat`, {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+    "X-Zynteksis-Key": apiKey,
+  },
+  body: JSON.stringify({ environment: "production", release: "1.0.0" }),
+});
 ```
 
 ### React error boundary
@@ -96,9 +133,26 @@ import { ErrorBoundary } from "@zynteksis/sdk/react";
 
 ## Framework support
 
-React, Next.js and vanilla JavaScript are supported today. The collector
-architecture is framework-agnostic, leaving room for Vue and Angular
-integrations.
+React, Next.js and vanilla JavaScript (any **browser** bundler) are supported.
+`init()` is browser-only; Vue/Svelte/etc. use the same browser API.
+
+**React Native / native mobile:** do not use `@zynteksis/sdk` `init()`. Call the
+HTTP ingest endpoints with `X-Zynteksis-Key` (same as server-side Node). Store
+the project API key securely (Keychain / Keystore or a backend proxy).
+
+Server / Node code should call HTTP ingest with `X-Zynteksis-Key`.
+
+## Dashboard monitoring
+
+After ingest succeeds, open the ZYNTEKSIS dashboard → **Errors**, **Health**,
+and **Insights** for the connected project. Telemetry is isolated to the
+project that owns the API key.
+
+## Rate limits & troubleshooting
+
+Ingest defaults to **240 requests / minute / key**. On `401`, regenerate the
+key; on empty dashboards, verify `endpoint` and project filters. See
+[`docs/SDK.md`](../docs/SDK.md) for the full troubleshooting table.
 
 ## Reliability
 

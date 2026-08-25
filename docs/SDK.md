@@ -56,12 +56,55 @@ import { Zynteksis } from "@zynteksis/sdk";
 
 const zyn = new Zynteksis({
   apiKey: "ZYN-KEY-XXXXXXXXXXXXXXXXXXXXXXXX",
-  environment: "development", // production | staging | development
+  environment: "production", // production | staging | development
   release: "1.2.3",
-  endpoint: "http://localhost:3000", // required when the app is not same-origin
+  // Required when the consumer app is not same-origin with ZYNTEKSIS.
+  endpoint: "https://zynteksisv.vercel.app",
 });
 
 zyn.init();
+```
+
+> **Security:** Use only a project `ZYN-KEY-…` from **API Keys**. Never use
+> Supabase `service_role`, anon keys, or database passwords in the SDK or browser.
+
+### Server / Node
+
+`init()` is browser-only. POST to ingest with `X-Zynteksis-Key` (or
+`Authorization: Bearer`):
+
+| Kind | Path |
+| ---- | ---- |
+| error | `/api/sdk/error` |
+| heartbeat | `/api/sdk/heartbeat` |
+| performance | `/api/sdk/performance` |
+| events | `/api/sdk/events` |
+
+### Native mobile (React Native / iOS / Android)
+
+Do **not** use `@zynteksis/sdk` `init()` in React Native or other native mobile
+runtimes — it is a browser SDK (DOM / `window` / `localStorage` assumptions).
+
+Use the HTTP ingest API with your project API key:
+
+```http
+POST /api/sdk/heartbeat
+X-Zynteksis-Key: ZYN-KEY-…
+Content-Type: application/json
+```
+
+Same paths as Server / Node above. Keep the key in secure native storage (or a
+backend proxy); never embed platform secrets in the app binary.
+
+```ts
+await fetch("https://zynteksisv.vercel.app/api/sdk/heartbeat", {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+    "X-Zynteksis-Key": process.env.ZYNTEKSIS_API_KEY!,
+  },
+  body: JSON.stringify({ environment: "production", release: "1.0.0" }),
+});
 ```
 
 | Option | Default | Description |
@@ -164,8 +207,36 @@ can filter incidents and errors by deploy.
 ## Reliability
 
 - Retries with exponential backoff  
-- Offline queue in `localStorage`, flushed on reconnect (`flushOffline`)  
+- Offline queue in `localStorage`, flushed automatically on reconnect  
 - Call `zyn.close()` on teardown if you need to stop collectors  
+
+---
+
+## Project isolation
+
+Every API key belongs to **one project**. Ingest always attributes telemetry to
+that project — client payloads cannot redirect data into another project by
+sending a foreign `projectId`.
+
+---
+
+## Rate limits
+
+SDK ingest routes share an in-memory limiter (default **240 requests / minute /
+key**). See `SDK_INGEST.rateLimit` in `lib/constants.ts` and payload schemas in
+[API.md](./API.md). On `429`, back off and retry.
+
+---
+
+## Troubleshooting
+
+| Symptom | What to check |
+| -------- | ------------- |
+| `401` on ingest | Key missing, mistyped, or revoked — create/regenerate on **API Keys** |
+| No rows in dashboard | Wrong `endpoint`, wrong project key, or filters excluding the environment |
+| Browser CORS errors | Call the hosted ZYNTEKSIS origin; ingest routes enable CORS for browser SDK |
+| `init()` does nothing on Node | Expected — use raw HTTP with `X-Zynteksis-Key` on the server |
+| Install fails from npm registry | Package is path-installed from `sdk/` for commercial delivery |
 
 ---
 

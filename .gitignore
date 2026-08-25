@@ -33,6 +33,11 @@ yarn-error.log*
 .env
 .env.*
 !.env.example
+!.env.integration.example
+!.env.staging.example
+env.staging
+.staging-cron-secret.tmp
+.staging-project-ref.tmp
 
 # vercel
 .vercel
@@ -45,4 +50,6 @@ next-env.d.ts
 .idea
 .vscode/*
 !.vscode/extensions.json
+.env*
+
 .env*

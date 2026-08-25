@@ -101,8 +101,24 @@ export async function assertWithinUsageLimit(
   if (limit === null) {
     return;
   }
-  const used = await getMonthlyMessageCount(supabase, userId);
-  if (used >= limit) {
+
+  const { data: within, error } = await supabase.rpc("ai_usage_within_limit", {
+    p_user_id: userId,
+    p_limit: limit,
+  });
+
+  if (error) {
+    // Fallback to count if RPC not yet applied (local/dev without 0021).
+    const used = await getMonthlyMessageCount(supabase, userId);
+    if (used >= limit) {
+      throw new ForbiddenError(
+        `You have reached your monthly limit of ${limit} AI messages. Upgrade your plan to continue.`,
+      );
+    }
+    return;
+  }
+
+  if (!within) {
     throw new ForbiddenError(
       `You have reached your monthly limit of ${limit} AI messages. Upgrade your plan to continue.`,
     );
@@ -114,6 +130,8 @@ export interface RecordUsageInput {
   messageId: string | null;
   model: string;
   usage: TokenUsage;
+  /** Plan limit for atomic claim; null = unlimited. */
+  planLimit?: number | null;
 }
 
 export async function recordUsage(
@@ -121,17 +139,46 @@ export async function recordUsage(
   userId: string,
   input: RecordUsageInput,
 ): Promise<void> {
-  const { error } = await supabase.from("ai_usage").insert({
-    user_id: userId,
-    conversation_id: input.conversationId,
-    message_id: input.messageId,
-    model: input.model,
-    prompt_tokens: input.usage.promptTokens,
-    completion_tokens: input.usage.completionTokens,
-    total_tokens: input.usage.totalTokens,
+  const planLimit =
+    input.planLimit === undefined ? null : input.planLimit;
+
+  const { error: rpcError } = await supabase.rpc("ai_record_usage_atomic", {
+    p_user_id: userId,
+    p_limit: planLimit,
+    p_conversation_id: input.conversationId,
+    p_message_id: input.messageId,
+    p_model: input.model,
+    p_prompt_tokens: input.usage.promptTokens,
+    p_completion_tokens: input.usage.completionTokens,
+    p_total_tokens: input.usage.totalTokens,
   });
 
-  if (error) {
-    throw error;
+  if (!rpcError) {
+    return;
   }
+
+  if (/ai_quota_exceeded/i.test(rpcError.message)) {
+    throw new ForbiddenError(
+      "You have reached your monthly AI message limit. Upgrade your plan to continue.",
+    );
+  }
+
+  // Fallback insert when RPC is not deployed yet.
+  if (/could not find the function/i.test(rpcError.message)) {
+    const { error } = await supabase.from("ai_usage").insert({
+      user_id: userId,
+      conversation_id: input.conversationId,
+      message_id: input.messageId,
+      model: input.model,
+      prompt_tokens: input.usage.promptTokens,
+      completion_tokens: input.usage.completionTokens,
+      total_tokens: input.usage.totalTokens,
+    });
+    if (error) {
+      throw error;
+    }
+    return;
+  }
+
+  throw rpcError;
 }

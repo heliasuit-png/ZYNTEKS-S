@@ -15,8 +15,8 @@ import type { Paginated, PaginationParams } from "@/types/dashboard";
 import type { Incident, IncidentWithUpdates } from "./types";
 
 /**
- * User-scoped incident service. Reads and mutates incidents owned by the
- * current user; Row Level Security enforces ownership via the injected client.
+ * Workspace-aware incident service. Reads and mutates incidents for projects
+ * the caller can view; Row Level Security enforces access via the injected client.
  */
 
 type Supabase = TypedSupabaseClient;
@@ -41,17 +41,14 @@ function sanitizeSearch(value: string): string {
 
 export async function listIncidents(
   supabase: Supabase,
-  userId: string,
+  _userId: string,
   params: ListIncidentsParams = {},
 ): Promise<Paginated<Incident>> {
   const pagination = normalizePagination(params);
   const from = (pagination.page - 1) * pagination.pageSize;
   const to = from + pagination.pageSize - 1;
 
-  let query = supabase
-    .from("incidents")
-    .select("*", { count: "exact" })
-    .eq("user_id", userId);
+  let query = supabase.from("incidents").select("*", { count: "exact" });
 
   if (params.status) {
     query = query.eq("status", params.status);
@@ -104,12 +101,11 @@ export async function listIncidents(
 
 export async function countOpenIncidents(
   supabase: Supabase,
-  userId: string,
+  _userId: string,
 ): Promise<number> {
   const { count, error } = await supabase
     .from("incidents")
     .select("id", { count: "exact", head: true })
-    .eq("user_id", userId)
     .neq("status", "resolved");
   if (error) {
     throw error;
@@ -119,13 +115,12 @@ export async function countOpenIncidents(
 
 export async function getIncidentById(
   supabase: Supabase,
-  userId: string,
+  _userId: string,
   id: string,
 ): Promise<IncidentWithUpdates> {
   const { data: incident, error } = await supabase
     .from("incidents")
     .select("*")
-    .eq("user_id", userId)
     .eq("id", id)
     .maybeSingle();
 
@@ -167,7 +162,6 @@ export async function addIncidentUpdate(
   const { data: incident, error: fetchError } = await supabase
     .from("incidents")
     .select("*")
-    .eq("user_id", userId)
     .eq("id", incidentId)
     .maybeSingle();
 
@@ -229,7 +223,6 @@ export async function addIncidentUpdate(
   const { data: updated, error: updateError } = await supabase
     .from("incidents")
     .update(patch)
-    .eq("user_id", userId)
     .eq("id", incidentId)
     .select("*")
     .single();

@@ -73,17 +73,14 @@ export interface ListApiKeysParams extends Partial<PaginationParams> {
 
 export async function listApiKeys(
   supabase: Supabase,
-  userId: string,
+  _userId: string,
   params: ListApiKeysParams = {},
 ): Promise<Paginated<ApiKey>> {
   const pagination = normalizePagination(params);
   const from = (pagination.page - 1) * pagination.pageSize;
   const to = from + pagination.pageSize - 1;
 
-  let query = supabase
-    .from("api_keys")
-    .select("*", { count: "exact" })
-    .eq("user_id", userId);
+  let query = supabase.from("api_keys").select("*", { count: "exact" });
 
   if (params.projectId) {
     query = query.eq("project_id", params.projectId);
@@ -111,13 +108,12 @@ export async function listApiKeys(
 
 export async function getApiKeyById(
   supabase: Supabase,
-  userId: string,
+  _userId: string,
   id: string,
 ): Promise<ApiKey> {
   const { data, error } = await supabase
     .from("api_keys")
     .select("*")
-    .eq("user_id", userId)
     .eq("id", id)
     .maybeSingle();
 
@@ -132,13 +128,12 @@ export async function getApiKeyById(
 
 async function countActiveKeysForProject(
   supabase: Supabase,
-  userId: string,
+  _userId: string,
   projectId: string,
 ): Promise<number> {
   const { count, error } = await supabase
     .from("api_keys")
     .select("id", { count: "exact", head: true })
-    .eq("user_id", userId)
     .eq("project_id", projectId)
     .eq("status", "active");
 
@@ -220,7 +215,6 @@ export async function revokeApiKey(
   const { data, error } = await supabase
     .from("api_keys")
     .update({ status: "revoked", revoked_at: new Date().toISOString() })
-    .eq("user_id", userId)
     .eq("id", id)
     .select("*")
     .maybeSingle();
@@ -258,7 +252,6 @@ export async function regenerateApiKey(
       revoked_at: null,
       last_used_at: null,
     })
-    .eq("user_id", userId)
     .eq("id", id)
     .select("*")
     .maybeSingle();

@@ -6,7 +6,8 @@ import type { CronJob } from "@/cron/types";
  */
 export const healthJob: CronJob = {
   name: "health",
-  schedule: "*/15 * * * *",
+  // Hobby: once daily. Pro can restore "*/15 * * * *" in vercel.json.
+  schedule: "0 0 * * *",
   path: "/api/cron/health",
   run: async ({ invokedAt }) => ({
     ok: true,

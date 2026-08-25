@@ -5,6 +5,7 @@ import { z } from "zod";
 
 import { DASHBOARD_ROUTES } from "@/lib/constants";
 import { isAppError } from "@/lib/errors";
+import { rateLimit } from "@/lib/rate-limit";
 import { createSupabaseServerClient } from "@/supabase/server";
 import { getAuthenticatedUser } from "@/services/auth";
 import {
@@ -36,6 +37,17 @@ function toErrorMessage(error: unknown): string {
   return "Something went wrong. Please try again.";
 }
 
+function assertUserMutationLimit(userId: string, action: string, limit: number) {
+  const result = rateLimit(`api-keys:${action}:${userId}`, limit, 60_000);
+  if (!result.allowed) {
+    return {
+      status: "error" as const,
+      message: "Too many API key operations. Please try again shortly.",
+    };
+  }
+  return null;
+}
+
 export async function createApiKeyAction(
   _prevState: ApiKeyFormState,
   formData: FormData,
@@ -55,6 +67,9 @@ export async function createApiKeyAction(
   if (!user) {
     return { status: "error", message: "You must be signed in." };
   }
+
+  const limited = assertUserMutationLimit(user.id, "create", 30);
+  if (limited) return limited;
 
   try {
     const { apiKey, plainKey } = await createApiKey(supabase, user.id, {
@@ -89,6 +104,9 @@ export async function revokeApiKeyAction(
     return { status: "error", message: "You must be signed in." };
   }
 
+  const limited = assertUserMutationLimit(user.id, "revoke", 30);
+  if (limited) return limited;
+
   try {
     await revokeApiKey(supabase, user.id, idResult.data.id);
     revalidatePath(DASHBOARD_ROUTES.apiKeys);
@@ -112,6 +130,9 @@ export async function regenerateApiKeyAction(
   if (!user) {
     return { status: "error", message: "You must be signed in." };
   }
+
+  const limited = assertUserMutationLimit(user.id, "regenerate", 20);
+  if (limited) return limited;
 
   try {
     const { apiKey, plainKey } = await regenerateApiKey(

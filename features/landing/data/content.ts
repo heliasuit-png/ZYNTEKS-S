@@ -91,7 +91,7 @@ export const FAQ_ITEMS = [
   },
   {
     q: "Which frameworks does the SDK support?",
-    a: "Install via npm, pnpm, or yarn. The SDK surface targets modern JavaScript/TypeScript apps, with framework-specific setup guidance in the product.",
+    a: "Path-install the local @zynteksis/sdk package (build sdk/ first). The browser SDK works in modern JavaScript/TypeScript apps, including React and Next.js client components. Server-side code uses the same HTTP ingest endpoints.",
   },
   {
     q: "Can I self-host?",
@@ -140,6 +140,7 @@ export const SDK_FRAMEWORKS = [
 const zyn = new Zynteksis({
   apiKey: "ZYN-KEY-...",
   environment: "production",
+  endpoint: "https://zynteksisv.vercel.app",
 });
 zyn.init();`,
   },
@@ -156,7 +157,7 @@ export function MonitoringProvider({ children }) {
     new Zynteksis({
       apiKey: "ZYN-KEY-XXXXXXXXXXXXXXXX",
       environment: "production",
-      endpoint: "https://your-zynteksis-host.com",
+      endpoint: "https://zynteksisv.vercel.app",
     }).init();
   }, []);
   return children;
@@ -170,24 +171,39 @@ export function MonitoringProvider({ children }) {
 new Zynteksis({
   apiKey: "ZYN-KEY-...",
   environment: "production",
+  endpoint: "https://zynteksisv.vercel.app",
 }).init();
 
-// Optional: wrap the tree with the SDK error boundary export.`,
+// Optional: wrap the tree with ErrorBoundary from @zynteksis/sdk/react.`,
   },
   {
-    id: "vue",
-    label: "Vue",
-    snippet: `import { Zynteksis } from "@zynteksis/sdk";
+    id: "browser",
+    label: "Any browser app",
+    snippet: `// Same browser init for Vue, Svelte, or plain HTML + bundler.
+import { Zynteksis } from "@zynteksis/sdk";
 
 new Zynteksis({
   apiKey: "ZYN-KEY-...",
   environment: "production",
+  endpoint: "https://zynteksisv.vercel.app",
 }).init();`,
   },
 ] as const;
 
 export const PACKAGE_MANAGERS = [
-  { id: "npm", label: "npm", command: "npm install @zynteksis/sdk" },
-  { id: "pnpm", label: "pnpm", command: "pnpm add @zynteksis/sdk" },
-  { id: "yarn", label: "yarn", command: "yarn add @zynteksis/sdk" },
+  {
+    id: "npm",
+    label: "npm",
+    command: "npm install /absolute/path/to/zynteksis/sdk",
+  },
+  {
+    id: "pnpm",
+    label: "pnpm",
+    command: "pnpm add /absolute/path/to/zynteksis/sdk",
+  },
+  {
+    id: "yarn",
+    label: "yarn",
+    command: "yarn add /absolute/path/to/zynteksis/sdk",
+  },
 ] as const;

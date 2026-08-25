@@ -157,7 +157,6 @@ export async function getProjectIntelligence(
     .from("projects")
     .select("name, framework, status, production_url, staging_url")
     .eq("id", projectId)
-    .eq("user_id", userId)
     .maybeSingle();
 
   if (!project) return null;
@@ -179,7 +178,6 @@ export async function getProjectIntelligence(
         "message, type, level, url, release, occurrences, first_seen, last_seen",
       )
       .eq("project_id", projectId)
-      .eq("user_id", userId)
       .order("last_seen", { ascending: false })
       .limit(100),
     supabase
@@ -188,14 +186,12 @@ export async function getProjectIntelligence(
         "id, title, status, severity, started_at, resolved_at, downtime_seconds",
       )
       .eq("project_id", projectId)
-      .eq("user_id", userId)
       .order("started_at", { ascending: false })
       .limit(30),
     supabase
       .from("heartbeats")
       .select("occurred_at, release, environment")
       .eq("project_id", projectId)
-      .eq("user_id", userId)
       .order("occurred_at", { ascending: false })
       .limit(1)
       .maybeSingle(),
@@ -203,20 +199,17 @@ export async function getProjectIntelligence(
       .from("heartbeats")
       .select("id", { count: "exact", head: true })
       .eq("project_id", projectId)
-      .eq("user_id", userId)
       .gte("occurred_at", new Date(now - DAY_MS).toISOString()),
     supabase
       .from("heartbeats")
       .select("id", { count: "exact", head: true })
       .eq("project_id", projectId)
-      .eq("user_id", userId)
       .gte("occurred_at", new Date(now - 2 * DAY_MS).toISOString())
       .lt("occurred_at", new Date(now - DAY_MS).toISOString()),
     supabase
       .from("performance_logs")
       .select("lcp, inp, cls, ttfb, fcp, page_load, occurred_at")
       .eq("project_id", projectId)
-      .eq("user_id", userId)
       .order("occurred_at", { ascending: false })
       .limit(1)
       .maybeSingle(),
@@ -238,7 +231,6 @@ export async function getProjectIntelligence(
       .from("api_keys")
       .select("name, status, last_used_at, created_at")
       .eq("project_id", projectId)
-      .eq("user_id", userId)
       .limit(50),
   ]);
 

@@ -6,7 +6,8 @@ import {
   INCIDENT_SEVERITIES,
   INCIDENT_STATUSES,
 } from "@/lib/constants";
-import { UnauthorizedError } from "@/lib/errors";
+import { RateLimitError, UnauthorizedError } from "@/lib/errors";
+import { rateLimit } from "@/lib/rate-limit";
 import { getAuthenticatedUser } from "@/services/auth";
 import {
   exportIncidentsCsv,
@@ -22,6 +23,11 @@ export const GET = withErrorHandling(async (request: Request) => {
   const user = await getAuthenticatedUser(supabase);
   if (!user) {
     return fail(new UnauthorizedError());
+  }
+
+  const exportLimit = rateLimit(`export:incidents:${user.id}`, 10, 60_000);
+  if (!exportLimit.allowed) {
+    throw new RateLimitError("Too many export requests. Please try again shortly.");
   }
 
   const { searchParams } = new URL(request.url);

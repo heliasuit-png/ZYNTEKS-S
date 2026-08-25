@@ -7,6 +7,7 @@ import { getAuthenticatedUser } from "@/services/auth";
 import { listProjects } from "@/services/projects";
 import { listApiKeys } from "@/services/api-keys";
 import { createSupabaseServerClient } from "@/supabase/server";
+import { ApiKeyConnectionGuide } from "@/features/api-keys/components/connection-guide";
 import { ApiKeysExplorer } from "@/features/api-keys/components/api-keys-explorer";
 import type { ApiKeyStatus } from "@/types/database";
 
@@ -65,8 +66,9 @@ export default async function ApiKeysPage({
     <div className="space-y-6">
       <PageHeader
         title="API Keys"
-        description="Generate and manage keys used to authenticate API requests."
+        description="Generate project keys for the SDK and ingest API. Plaintext is shown only once at creation."
       />
+      <ApiKeyConnectionGuide hasProjects={projects.length > 0} />
       <ApiKeysExplorer
         apiKeys={result.items}
         projects={projects}

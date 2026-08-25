@@ -13,24 +13,21 @@ active-workspace selection.
 | Audit log | Security-relevant actions |
 | Active workspace | Cookie-selected current org for the session |
 
-## Telemetry visibility (owner-scoped — v1.0.0)
+## Telemetry visibility (workspace-aware)
 
-Projects can be listed and managed through **workspace membership** (migration
-`0006`). Telemetry rows (`errors`, `error_events`, `heartbeats`,
-`performance_logs`) and many dashboard queries remain **owner-scoped** via
-`user_id = auth.uid()` (migration `0003` RLS + service filters).
+Projects are listed and managed through **workspace membership** (migration
+`0006`). After migration **`0020_workspace_telemetry_isolation.sql`**, SELECT
+policies on telemetry (`errors`, `error_events`, `heartbeats`,
+`performance_logs`), API key metadata, and incidents use
+`user_can_view_project` so workspace members can see shared project data —
+while writes remain constrained (ingest via API key / privileged paths;
+management via `user_can_manage_project` from **0019**).
 
-**Practical effect:** the member who created the project / owns the ingest
-`user_id` sees errors, health, and related telemetry. Other workspace members
-may see the project in the workspace UI but not that telemetry unless they are
-the owning user.
+**Do not** rewrite shipped baseline migrations on live databases; add new
+numbered files instead. Apply `0020` in order after `0019`.
 
-This is intentional for v1.0.0 compatibility with existing installations. A
-future migration may align telemetry RLS with workspace membership; do not
-edit shipped `0001`–`0009` on live databases.
-
-Schema: migration `0006_create_workspaces_enterprise.sql`.  
-Services: `services/workspace/*`.  
+Schema: migration `0006_create_workspaces_enterprise.sql` + `0020`.  
+Services: `services/workspace/*`, `services/projects/access.ts`.  
 UI: `features/workspace`, dashboard routes (`/organization`, `/members`,
 `/invitations`, `/audit`, `/security`).
 

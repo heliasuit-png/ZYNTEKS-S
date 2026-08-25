@@ -149,7 +149,7 @@ Buyer orientation target: **~30 minutes** via README + `docs/README.md`.
 
 | Item | Status |
 | ---- | ------ |
-| Supabase migrations `0001`–`0009` | ✅ Documented + ordered |
+| Supabase migrations `0001`…`0017`, `0019`–`0021` (skip `0018` payment) | ✅ Documented + ordered |
 | Storage buckets | ✅ `avatars`, `workspace-logos` (0009) |
 | Auth URL config | ✅ Documented |
 | Vercel + Node 20 | ✅ Documented |
@@ -191,7 +191,7 @@ Guide: [Deployment.md](./Deployment.md).
 - [x] Clone  
 - [x] Install (`npm install`)  
 - [x] Configure (`.env.example` → `.env.local`)  
-- [x] Run migrations (`0001`–`0009`)  
+- [x] Run migrations (`0001`…`0017`, `0019`–`0021`; skip `0018` payment-only)  
 - [x] Deploy (Supabase + Vercel)  
 - [x] Login  
 - [x] Create project  

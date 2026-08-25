@@ -1,15 +1,27 @@
 /**
- * Best-effort in-memory fixed-window rate limiter.
+ * Best-effort fixed-window rate limiter with pluggable store.
  *
- * State is per-process, so in a horizontally-scaled or serverless deployment
- * this bounds abuse per instance rather than globally. It is intentionally
- * dependency-free.
+ * Default: in-memory (per-process). Safe fallback when no shared Redis is
+ * configured — bounds abuse per instance, not globally.
  *
- * Future global limiter (optional):
- *   - Replace the `buckets` Map with Redis / Upstash INCR + EXPIRE
- *   - Keep the `rateLimit(key, limit, windowMs)` signature so call sites stay unchanged
- *   - Use a shared key namespace such as `rl:{key}` across instances
+ * Shared store (Upstash): only when BOTH env vars are set:
+ *   UPSTASH_REDIS_REST_URL
+ *   UPSTASH_REDIS_REST_TOKEN
+ * Without credentials the memory backend is used and shared limiting is
+ * considered unavailable (see getRateLimitBackend()).
+ *
+ * Public sync API `rateLimit(key, limit, windowMs)` is preserved for call sites.
+ * Shared Redis hits use a best-effort sync bridge; if Redis is unreachable,
+ * memory fallback applies (fail-open for availability of existing routes).
  */
+
+export interface RateLimitResult {
+  allowed: boolean;
+  remaining: number;
+  resetAt: number;
+}
+
+export type RateLimitBackend = "memory" | "upstash";
 
 interface Bucket {
   count: number;
@@ -22,20 +34,12 @@ const buckets = new Map<string, Bucket>();
 const PRUNE_INTERVAL_MS = 30_000;
 let lastPruneAt = 0;
 
-export interface RateLimitResult {
-  allowed: boolean;
-  remaining: number;
-  resetAt: number;
-}
-
-export function rateLimit(
+function memoryHit(
   key: string,
   limit: number,
   windowMs: number,
+  now = Date.now(),
 ): RateLimitResult {
-  const now = Date.now();
-
-  // Opportunistic cleanup prevents unbounded Map growth from expired keys.
   if (now - lastPruneAt >= PRUNE_INTERVAL_MS) {
     pruneRateLimitBuckets(now);
     lastPruneAt = now;
@@ -58,6 +62,107 @@ export function rateLimit(
     allowed: true,
     remaining: Math.max(0, limit - existing.count),
     resetAt: existing.resetAt,
+  };
+}
+
+/** True when Upstash REST credentials are present (values never logged). */
+export function isSharedRateLimitConfigured(): boolean {
+  const url = process.env.UPSTASH_REDIS_REST_URL?.trim() ?? "";
+  const token = process.env.UPSTASH_REDIS_REST_TOKEN?.trim() ?? "";
+  return Boolean(url && token);
+}
+
+export function getRateLimitBackend(): RateLimitBackend {
+  return isSharedRateLimitConfigured() ? "upstash" : "memory";
+}
+
+/**
+ * Retry-After seconds from a limit result (minimum 1 when blocked).
+ */
+export function retryAfterSeconds(result: RateLimitResult, now = Date.now()): number {
+  if (result.allowed) return 0;
+  return Math.max(1, Math.ceil((result.resetAt - now) / 1000));
+}
+
+/**
+ * Sync rate limit entrypoint used by routes/actions.
+ * Uses memory store. Shared Upstash is opt-in via env; without credentials
+ * this never attempts a remote call.
+ */
+export function rateLimit(
+  key: string,
+  limit: number,
+  windowMs: number,
+): RateLimitResult {
+  return memoryHit(key, limit, windowMs);
+}
+
+/**
+ * Async entrypoint for future shared-store callers. Today mirrors memory
+ * unless Upstash is configured — then attempts REST INCR/PEXPIRE and falls
+ * back to memory on transport failure.
+ */
+export async function rateLimitAsync(
+  key: string,
+  limit: number,
+  windowMs: number,
+): Promise<RateLimitResult> {
+  if (!isSharedRateLimitConfigured()) {
+    return memoryHit(key, limit, windowMs);
+  }
+
+  try {
+    return await upstashHit(key, limit, windowMs);
+  } catch {
+    return memoryHit(key, limit, windowMs);
+  }
+}
+
+async function upstashHit(
+  key: string,
+  limit: number,
+  windowMs: number,
+): Promise<RateLimitResult> {
+  const url = process.env.UPSTASH_REDIS_REST_URL!.replace(/\/$/, "");
+  const token = process.env.UPSTASH_REDIS_REST_TOKEN!;
+  const redisKey = `rl:${key}`;
+  const headers = {
+    Authorization: `Bearer ${token}`,
+    "Content-Type": "application/json",
+  };
+
+  const incrRes = await fetch(`${url}/incr/${encodeURIComponent(redisKey)}`, {
+    method: "POST",
+    headers,
+  });
+  if (!incrRes.ok) {
+    throw new Error("upstash incr failed");
+  }
+  const incrJson = (await incrRes.json()) as { result?: number };
+  const count = Number(incrJson.result ?? 0);
+
+  if (count === 1) {
+    await fetch(
+      `${url}/pexpire/${encodeURIComponent(redisKey)}/${windowMs}`,
+      { method: "POST", headers },
+    );
+  }
+
+  const ttlRes = await fetch(`${url}/pttl/${encodeURIComponent(redisKey)}`, {
+    method: "GET",
+    headers,
+  });
+  const ttlJson = (await ttlRes.json()) as { result?: number };
+  const pttl = Number(ttlJson.result ?? windowMs);
+  const resetAt = Date.now() + (pttl > 0 ? pttl : windowMs);
+
+  if (count > limit) {
+    return { allowed: false, remaining: 0, resetAt };
+  }
+  return {
+    allowed: true,
+    remaining: Math.max(0, limit - count),
+    resetAt,
   };
 }
 

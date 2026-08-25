@@ -56,7 +56,7 @@ oversized UI modules, and closing a real client-side stream leak.
 | Auth | Session middleware + Supabase Auth; SDK uses hashed API keys; cron requires non-empty `CRON_SECRET` |
 | Env / secrets | Zod-validated `lib/env.ts`; `SKIP_ENV_VALIDATION` forbidden in production; no hardcoded secrets in source |
 | API validation | Zod at SDK ingest and key mutation boundaries |
-| Migrations | Indexes + RLS present across 0001–0009; buckets/policies in 0009 |
+| Migrations | Indexes + RLS present across `0001`…`0017`, `0019`–`0021`; buckets/policies in `0009` |
 | Performance | App Router code-splitting; marketing/static routes prerender; no debug `console.log` in app services |
 | Intentional debt | Placeholder billing provider; in-memory rate limits; large domain engines (`intelligence`, `health`, `status`) |
 

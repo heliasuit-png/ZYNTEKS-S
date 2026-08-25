@@ -1,7 +1,7 @@
 import "server-only";
 
 import { aiConfig, getOpenAIClient } from "@/ai";
-import { AI } from "@/lib/constants";
+import { AI, AI_MONTHLY_MESSAGE_LIMITS } from "@/lib/constants";
 import { BadRequestError } from "@/lib/errors";
 import type { TypedSupabaseClient } from "@/supabase/client";
 import type { SubscriptionPlan } from "@/types/database";
@@ -57,7 +57,7 @@ export async function handleChat(
   params: ChatParams,
   emit: StreamEmitter,
 ): Promise<void> {
-  const { supabase, userId, signal } = params;
+  const { supabase, userId, plan, signal } = params;
 
   const { data: profilePrefs } = await supabase
     .from("profiles")
@@ -187,6 +187,7 @@ export async function handleChat(
     messageId: assistantMessage.id,
     model,
     usage,
+    planLimit: AI_MONTHLY_MESSAGE_LIMITS[plan],
   });
 
   emit({ type: "done", messageId: assistantMessage.id, usage });

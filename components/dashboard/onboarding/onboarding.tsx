@@ -9,10 +9,11 @@ import {
   Bug,
   CheckCircle2,
   ExternalLink,
-  FolderKanban,
+  Gauge,
   KeyRound,
   PartyPopper,
   Radio,
+  Sparkles,
   X,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
@@ -22,20 +23,31 @@ import { AiOrb } from "@/components/dashboard/home/ai-orb";
 import { SdkInstaller } from "@/components/dashboard/sdk/sdk-installer";
 import { Button } from "@/components/dashboard/button";
 import { DASHBOARD_ROUTES } from "@/lib/constants";
+import { SUGGESTED_ANALYSES } from "@/features/ai/prompts";
 
 const STORAGE_KEY = "zt:onboarding:done";
-const STEP_LABELS = ["Welcome", "Project", "API Key", "Install SDK", "Heartbeat"];
+const STEP_LABELS = [
+  "Welcome",
+  "Try AI",
+  "First prompt",
+  "Credits",
+  "API / SDK",
+  "Heartbeat",
+] as const;
 const TOTAL = STEP_LABELS.length;
+
+const FIRST_PROMPTS = SUGGESTED_ANALYSES.slice(0, 3);
 
 function Confetti() {
   const pieces = useMemo(
     () =>
       Array.from({ length: 28 }).map((_, i) => ({
         id: i,
-        x: (Math.random() - 0.5) * 420,
-        y: -(120 + Math.random() * 240),
-        rotate: Math.random() * 360,
-        delay: Math.random() * 0.2,
+        // Deterministic positions — avoids Math.random hydration noise if ever SSR'd.
+        x: ((i * 37) % 420) - 210,
+        y: -((i * 29) % 240) - 120,
+        rotate: (i * 48) % 360,
+        delay: (i % 5) * 0.04,
         color: ["#4f8cff", "#7c5cff", "#2ce6d1", "#22c55e", "#f59e0b"][i % 5],
       })),
     [],
@@ -102,27 +114,34 @@ export function Onboarding() {
       icon: PartyPopper,
       title: "Welcome to ZYNTEKSIS",
       description:
-        "Let's monitor your first application. In a few quick steps you'll be capturing errors, heartbeats and performance in real time.",
+        "ZYNTEKSIS helps you monitor production health and ask an AI assistant about errors, performance, and architecture — in one workspace.",
     },
     {
-      icon: FolderKanban,
-      title: "Create your first project",
+      icon: Sparkles,
+      title: "Try the AI assistant",
       description:
-        "A project groups everything we monitor for one application — errors, incidents, health and API keys.",
-      cta: { label: "Open Projects", href: DASHBOARD_ROUTES.projects },
+        "Open Code Health Assistant to ask about your projects, incidents, and code health. You can start chatting immediately — no SDK required.",
+      cta: { label: "Open AI Assistant", href: DASHBOARD_ROUTES.aiAssistant },
+    },
+    {
+      icon: Sparkles,
+      title: "Send your first prompt",
+      description:
+        "Pick a starter question, or write your own. The assistant streams an answer and keeps the conversation in your history.",
+    },
+    {
+      icon: Gauge,
+      title: "Understand your AI credits",
+      description:
+        "Your plan includes a monthly AI message allowance. Remaining usage appears in the AI sidebar. Limits are enforced automatically — nothing to configure.",
+      cta: { label: "View AI usage", href: DASHBOARD_ROUTES.aiAssistant },
     },
     {
       icon: KeyRound,
-      title: "Generate an API key",
+      title: "Connect your app (optional)",
       description:
-        "Your API key authenticates the SDK. Create one for the environment you want to monitor — you'll copy it into the snippet next.",
+        "For live monitoring, create a project, generate an API key, and install the SDK. Skip this if you only want to explore AI for now.",
       cta: { label: "Open API Keys", href: DASHBOARD_ROUTES.apiKeys },
-    },
-    {
-      icon: Bug,
-      title: "Install the SDK",
-      description:
-        "Pick your framework and drop in the snippet. It automatically captures errors, promise rejections and performance.",
     },
     {
       icon: Radio,
@@ -136,12 +155,15 @@ export function Onboarding() {
   const done = step >= TOTAL;
   const current = steps[Math.min(step, TOTAL - 1)]!;
   const Icon = current.icon;
+  // Step index 4 shows SdkInstaller (API / SDK).
+  const showSdk = step === 4;
+  const showFirstPrompts = step === 2;
 
   return (
     <AnimatePresence>
       {visible ? (
         <motion.div
-          className="fixed inset-0 z-[65] flex items-center justify-center p-4"
+          className="fixed inset-0 z-[65] flex items-center justify-center p-3 sm:p-4"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
@@ -159,14 +181,14 @@ export function Onboarding() {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 16, scale: 0.98 }}
             transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
-            className="zt-glass-strong relative flex max-h-[88vh] w-full max-w-lg flex-col overflow-hidden rounded-3xl border border-zt-border shadow-2xl shadow-black/60"
+            className="zt-glass-strong relative flex max-h-[min(88vh,40rem)] w-full max-w-lg flex-col overflow-hidden rounded-3xl border border-zt-border shadow-2xl shadow-black/60"
           >
-            {/* Progress + skip */}
-            <div className="flex items-center justify-between gap-4 px-6 pt-5">
+            <div className="flex items-center justify-between gap-4 px-4 pt-5 sm:px-6">
               <div className="flex flex-1 items-center gap-1.5">
                 {STEP_LABELS.map((label, index) => (
                   <div
                     key={label}
+                    title={label}
                     className={cn(
                       "h-1 flex-1 rounded-full transition-colors",
                       index < step || done
@@ -180,7 +202,7 @@ export function Onboarding() {
                 <button
                   type="button"
                   onClick={finish}
-                  className="flex items-center gap-1 text-xs text-zt-muted transition-colors hover:text-zt-text"
+                  className="flex shrink-0 items-center gap-1 text-xs text-zt-muted transition-colors hover:text-zt-text"
                 >
                   Skip
                   <X className="size-3.5" aria-hidden />
@@ -188,27 +210,27 @@ export function Onboarding() {
               ) : null}
             </div>
 
-            <div className="flex-1 overflow-y-auto px-6 py-6">
+            <div className="flex-1 overflow-y-auto px-4 py-6 sm:px-6">
               {done ? (
                 <div className="relative flex flex-col items-center py-6 text-center">
                   <Confetti />
                   <div className="relative mb-4">
-                    <AiOrb className="size-32" interactive={false} />
+                    <AiOrb className="size-28 sm:size-32" interactive={false} />
                   </div>
                   <h2 className="text-2xl font-semibold text-zt-text">
-                    You&apos;re all set! 🎉
+                    You&apos;re ready
                   </h2>
                   <p className="mt-2 max-w-sm text-sm text-zt-muted">
-                    Your workspace is ready. Head to the dashboard to watch your
-                    application&apos;s health in real time.
+                    Ask the AI assistant anything about your code health, or
+                    open the dashboard to monitor your applications.
                   </p>
                 </div>
               ) : (
                 <>
                   <div className="flex flex-col items-center text-center">
-                    {step === 0 ? (
+                    {step === 0 || step === 1 ? (
                       <div className="mb-4">
-                        <AiOrb className="size-32" />
+                        <AiOrb className="size-28 sm:size-32" />
                       </div>
                     ) : (
                       <span className="mb-4 flex size-14 items-center justify-center rounded-2xl bg-gradient-to-br from-zt-primary/20 to-zt-secondary/10 text-zt-primary">
@@ -226,12 +248,13 @@ export function Onboarding() {
                     </p>
 
                     {current.cta ? (
-                      <Button asChild variant="secondary" size="sm" className="mt-4">
-                        <Link
-                          href={current.cta.href}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                        >
+                      <Button
+                        asChild
+                        variant="secondary"
+                        size="sm"
+                        className="mt-4"
+                      >
+                        <Link href={current.cta.href}>
                           {current.cta.label}
                           <ExternalLink aria-hidden />
                         </Link>
@@ -239,8 +262,30 @@ export function Onboarding() {
                     ) : null}
                   </div>
 
-                  {step === 3 ? (
+                  {showFirstPrompts ? (
+                    <ul className="mt-5 space-y-2">
+                      {FIRST_PROMPTS.map((s) => (
+                        <li key={s.intent}>
+                          <Link
+                            href={`${DASHBOARD_ROUTES.aiAssistant}?intent=${encodeURIComponent(s.intent)}`}
+                            className="block rounded-xl border border-zt-border bg-zt-surface-2/60 px-3 py-2.5 text-left text-sm text-zt-text transition-colors hover:border-zt-border-strong hover:bg-zt-surface-2"
+                          >
+                            <span className="font-medium">{s.label}</span>
+                            <span className="mt-0.5 block text-xs text-zt-muted line-clamp-2">
+                              {s.prompt}
+                            </span>
+                          </Link>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : null}
+
+                  {showSdk ? (
                     <div className="mt-5">
+                      <div className="mb-3 flex items-center gap-2 text-xs text-zt-muted">
+                        <Bug className="size-3.5" aria-hidden />
+                        Install snippet (optional for AI-only use)
+                      </div>
                       <SdkInstaller />
                     </div>
                   ) : null}
@@ -248,18 +293,25 @@ export function Onboarding() {
               )}
             </div>
 
-            {/* Footer navigation */}
-            <div className="flex items-center justify-between gap-3 border-t border-zt-border px-6 py-4">
+            <div className="flex items-center justify-between gap-3 border-t border-zt-border px-4 py-4 sm:px-6">
               {done ? (
                 <>
                   <span className="flex items-center gap-1.5 text-xs text-zt-success">
                     <CheckCircle2 className="size-4" aria-hidden />
                     Setup complete
                   </span>
-                  <Button onClick={finish} size="md">
-                    Go to dashboard
-                    <ArrowRight aria-hidden />
-                  </Button>
+                  <div className="flex flex-wrap justify-end gap-2">
+                    <Button asChild variant="secondary" size="md">
+                      <Link href={DASHBOARD_ROUTES.aiAssistant}>
+                        Open AI
+                        <Sparkles aria-hidden />
+                      </Link>
+                    </Button>
+                    <Button onClick={finish} size="md">
+                      Go to dashboard
+                      <ArrowRight aria-hidden />
+                    </Button>
+                  </div>
                 </>
               ) : (
                 <>

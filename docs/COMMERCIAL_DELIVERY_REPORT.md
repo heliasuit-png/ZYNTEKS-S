@@ -11,7 +11,7 @@
 | Item | Status |
 | ---- | ------ |
 | Application source | Present and structured (App Router + features/services) |
-| SQL migrations `0001`–`0009` | Present, ordered, documented |
+| SQL migrations `0001`…`0017`, `0019`–`0021` (skip `0018` payment-only) | Present, ordered, documented |
 | `.env.example` | Complete placeholders, no real secrets |
 | Documentation set | Complete (see §2) |
 | Production build | **Pass** (`npm run build`) |
@@ -67,7 +67,8 @@
 
 1. `npm install`
 2. Copy `.env.example` → `.env.local` and fill values ([ENVIRONMENT_VARIABLES.md](../ENVIRONMENT_VARIABLES.md))
-3. Create Supabase project; apply migrations `0001`–`0009` in order ([DATABASE.md](../DATABASE.md))
+3. Create Supabase project; apply non-payment migrations `0001`…`0017`, `0019`–`0021`
+   in order (skip `0018` unless Lemon is enabled) ([DATABASE.md](../DATABASE.md))
 4. Configure Supabase Auth Site URL + redirect URLs
 5. `npm run dev` (local) or deploy to Vercel ([DEPLOYMENT.md](../DEPLOYMENT.md))
 6. Register → create project → generate API key → install SDK → confirm heartbeat ([SDK.md](../SDK.md))
@@ -109,7 +110,7 @@ Full detail: [ENVIRONMENT_VARIABLES.md](../ENVIRONMENT_VARIABLES.md).
 ## 5. Deployment checklist
 
 - [ ] Supabase project created
-- [ ] Migrations `0001`–`0009` applied successfully
+- [ ] Migrations `0001`…`0017`, `0019`–`0021` applied successfully (skip `0018` payment-only unless Lemon enabled)
 - [ ] Storage buckets `avatars`, `workspace-logos` present
 - [ ] Auth Site URL + redirect URLs set for production
 - [ ] Vercel project linked; Node ≥ 20

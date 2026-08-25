@@ -17,8 +17,10 @@ guides below. Target time-to-orientation for a new owner: **~30 minutes**.
 | [AI.md](./AI.md) | Platform engineers | OpenAI assistant, streaming, usage limits |
 | [Monitoring.md](./Monitoring.md) | SRE / backend | Ingest, heartbeats, incidents, status pages |
 | [Workspace.md](./Workspace.md) | Product / backend | Multi-tenant RBAC, invites, audit |
-| [Billing.md](./Billing.md) | Platform engineers | Plans, placeholder PaymentProvider |
+| [Billing.md](./Billing.md) | Platform engineers | Plans, PaymentProvider, Lemon Squeezy prep |
+| [LEMON_SQUEEZY.md](./LEMON_SQUEEZY.md) | Platform engineers | Test-mode Lemon Squeezy setup |
 | [Deployment.md](./Deployment.md) | DevOps | Supabase + Vercel production setup |
+| [Backup-Recovery.md](./Backup-Recovery.md) | SRE / DevOps | Backups, RPO/RTO, restore checklists |
 
 ## Release (v1.0.0)
 

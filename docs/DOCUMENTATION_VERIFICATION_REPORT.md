@@ -59,7 +59,7 @@ Executed on Windows 10, Node `v24.13.1`, npm `11.8.0`, repo root `ZYN-KEY`.
 | `npm run test:smoke` | Pass (18/18) |
 | `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"` | Pass (64 hex chars) |
 | `curl` / HTTP `GET /api/health` (dev server) | Pass (`"status":"ok"`) |
-| Migrations `0001`…`0009` present in order | Pass |
+| Migrations `0001`…`0017`, `0019`–`0021` present in order (skip `0018` payment) | Pass |
 | `.env.example` present | Pass |
 | `npm view @zynteksis/sdk` (public registry) | **404** — confirms docs correctly forbid public npm install |
 
@@ -68,7 +68,7 @@ Commands that are environment-owned (not re-run as empty-project SQL here):
 | Documented step | Notes |
 | --------------- | ----- |
 | `git clone <REPLACE_WITH_YOUR_REPOSITORY_URL>` | Requires seller-provided remote; delivery may be zip/folder instead |
-| Supabase SQL Editor apply `0001`–`0009` | Documented; requires buyer’s Supabase project |
+| Supabase SQL Editor apply non-payment migrations through `0021` | Documented; requires buyer’s Supabase project; skip `0018` unless Lemon |
 | `npx supabase link` / `db push` | Documented optional path; needs CLI login + project ref |
 | `cp .env.example .env.local` | Standard; PowerShell `Copy-Item` alternative documented |
 | Browser UI checklist (register → status page) | Documented against real routes; not re-automated in this doc pass |

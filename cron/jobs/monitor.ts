@@ -10,7 +10,8 @@ import type { CronJob } from "@/cron/types";
  */
 export const monitorJob: CronJob = {
   name: "monitor",
-  schedule: "* * * * *",
+  // Hobby: once daily. Pro can restore "* * * * *" in vercel.json.
+  schedule: "0 1 * * *",
   path: "/api/cron/monitor",
   run: async ({ invokedAt }) => {
     const admin = createSupabaseAdminClient();

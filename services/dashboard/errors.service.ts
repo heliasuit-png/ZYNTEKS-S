@@ -128,7 +128,7 @@ function mapErrorRow(row: {
 
 /**
  * Lists captured error groups for error monitoring.
- * Reads the authenticated user's `errors` table via RLS.
+ * Access is enforced by project-aware RLS on `errors`.
  */
 export async function listErrors(
   params: ListErrorsParams = {},
@@ -149,15 +149,13 @@ export async function listErrors(
       .select(
         "id, project_id, message, level, type, url, fingerprint, occurrences, environment, release, first_seen, last_seen",
         { count: "exact" },
-      )
-      .eq("user_id", user.id);
+      );
 
     const search = sanitizeSearch(params.search ?? "");
     if (search) {
       const { data: matchingProjects } = await supabase
         .from("projects")
         .select("id")
-        .eq("user_id", user.id)
         .or(`name.ilike.%${search}%,framework.ilike.%${search}%`)
         .limit(30);
       const projectIds = (matchingProjects ?? []).map((p) => p.id);
@@ -249,7 +247,6 @@ export async function getErrorAnalytics(): Promise<ErrorAnalytics> {
     const { data, error } = await supabase
       .from("errors")
       .select("level, environment, occurrences, last_seen")
-      .eq("user_id", user.id)
       .limit(2000);
 
     if (error || !data) return empty;
@@ -302,7 +299,6 @@ export async function getErrorDetail(id: string): Promise<ErrorDetailBundle> {
     .from("errors")
     .select("*")
     .eq("id", id)
-    .eq("user_id", user.id)
     .maybeSingle();
 
   if (error) throw error;
@@ -364,7 +360,6 @@ export async function getErrorDetail(id: string): Promise<ErrorDetailBundle> {
         .from("errors")
         .select("id, message, level, occurrences, last_seen, fingerprint")
         .eq("project_id", row.project_id)
-        .eq("user_id", user.id)
         .eq("fingerprint", row.fingerprint)
         .neq("id", row.id)
         .order("last_seen", { ascending: false })
@@ -374,7 +369,6 @@ export async function getErrorDetail(id: string): Promise<ErrorDetailBundle> {
             .from("errors")
             .select("id, message, level, occurrences, last_seen, fingerprint")
             .eq("project_id", row.project_id)
-            .eq("user_id", user.id)
             .eq("type", row.type)
             .neq("id", row.id)
             .order("last_seen", { ascending: false })
@@ -393,7 +387,6 @@ export async function getErrorDetail(id: string): Promise<ErrorDetailBundle> {
         .from("incidents")
         .select("id, title, status, severity, started_at, resolved_at")
         .eq("project_id", row.project_id)
-        .eq("user_id", user.id)
         .gte("started_at", fromIso)
         .lte("started_at", toIso)
         .order("started_at", { ascending: false })
@@ -402,7 +395,6 @@ export async function getErrorDetail(id: string): Promise<ErrorDetailBundle> {
         .from("api_keys")
         .select("name, key_prefix, environment, status, last_used_at")
         .eq("project_id", row.project_id)
-        .eq("user_id", user.id)
         .eq("status", "active")
         .order("last_used_at", { ascending: false, nullsFirst: false })
         .limit(5),
@@ -437,7 +429,6 @@ export async function getErrorDetail(id: string): Promise<ErrorDetailBundle> {
       .from("errors")
       .select("id, message, level, occurrences, last_seen, fingerprint")
       .eq("project_id", row.project_id)
-      .eq("user_id", user.id)
       .neq("id", row.id)
       .order("last_seen", { ascending: false })
       .limit(5);

@@ -1572,6 +1572,35 @@ export interface Database {
         Args: Record<string, never>;
         Returns: number;
       };
+      accept_workspace_invitation: {
+        Args: { p_token: string };
+        Returns: string;
+      };
+      user_can_manage_project: {
+        Args: { p_project_id: string };
+        Returns: boolean;
+      };
+      user_can_view_project: {
+        Args: { p_project_id: string };
+        Returns: boolean;
+      };
+      ai_usage_within_limit: {
+        Args: { p_user_id: string; p_limit: number };
+        Returns: boolean;
+      };
+      ai_record_usage_atomic: {
+        Args: {
+          p_user_id: string;
+          p_limit: number | null;
+          p_conversation_id: string | null;
+          p_message_id: string | null;
+          p_model: string;
+          p_prompt_tokens: number;
+          p_completion_tokens: number;
+          p_total_tokens: number;
+        };
+        Returns: string;
+      };
     };
     Enums: {
       user_role: UserRole;

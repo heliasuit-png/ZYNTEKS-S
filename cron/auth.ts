@@ -3,9 +3,15 @@ import "server-only";
 import { env } from "@/lib/env";
 
 /**
- * Verifies that an incoming request originates from Vercel Cron by comparing
- * the `Authorization: Bearer <CRON_SECRET>` header against the configured
- * secret. Uses a constant-time comparison to avoid timing attacks.
+ * Verifies that an incoming request is allowed to run a cron job.
+ *
+ * Expected header: `Authorization: Bearer <CRON_SECRET>`.
+ * Vercel Cron injects this header when `CRON_SECRET` is set in the project env.
+ *
+ * Security:
+ * - Empty / missing `CRON_SECRET` → reject (no open cron surface)
+ * - Constant-time compare to reduce timing leaks
+ * - `CRON_SECRET` must stay server-only (never `NEXT_PUBLIC_*` / client bundle)
  */
 export function isAuthorizedCronRequest(request: Request): boolean {
   const secret = env.CRON_SECRET;

@@ -1,6 +1,7 @@
 # Deployment
 
-Canonical deep guide: **[docs/Deployment.md](docs/Deployment.md)**.
+Canonical deep guide: **[docs/Deployment.md](docs/Deployment.md)**.  
+Backup / recovery: **[docs/Backup-Recovery.md](docs/Backup-Recovery.md)**.
 
 This page highlights **placeholders buyers must replace** before production.
 
@@ -41,17 +42,26 @@ Also replace Auth URL examples:
 
 **Never** set `SKIP_ENV_VALIDATION` in production.
 
+Keep `LEMON_SQUEEZY_MODE=off` unless payment is intentionally enabled.
+
 ---
 
 ## Deploy steps (short)
 
-1. Apply migrations `supabase/migrations/0001` → `0009` in order.  
-2. Set every production env var (table above — no placeholders left).  
-3. Configure Supabase Auth Site URL + redirects for the production domain.  
-4. Import the Git repo (or connect the delivery source) to Vercel; Node 20+; build `npm run build`.  
-5. Confirm [`vercel.json`](vercel.json) cron paths and the same `CRON_SECRET`.  
-6. Smoke-test: `GET /api/health`, login, SDK heartbeat, `/status/<slug>`.  
+1. **Env validation** — no placeholders; `CRON_SECRET` server-only.  
+2. **Database migrations** — apply `0001`…`0016`, `0017`, `0019`, `0020`, `0021`
+   in order. Skip **`0018`** (payment-only) unless Lemon Squeezy is intentionally
+   enabled. Apply DB migrations **before** deploying app code that depends on them.  
+3. **Schema verification** — tables, buckets, `sessions_invalidated_at`, invite
+   RPC, telemetry RLS helpers, AI quota RPCs.  
+4. Configure Supabase Auth Site URL + redirects for the production domain.  
+5. Import the Git repo to Vercel; Node 20+; build `npm run build`.  
+6. Confirm [`vercel.json`](vercel.json) cron paths (`/api/cron/health`,
+   `/api/cron/monitor`) and the same `CRON_SECRET`.  
+7. **Post-deploy smoke** — `GET /api/health`, login, SDK heartbeat, cron 401
+   without secret, `/status/<slug>`.  
 
-Full procedure, cron schedules, and rollback: [docs/Deployment.md](docs/Deployment.md).
+Full procedure, cron schedules, rollback, and 0017–0021 timing:
+[docs/Deployment.md](docs/Deployment.md).
 
 Local first-success before deploy: [BUYER_QUICK_START.md](BUYER_QUICK_START.md) · [INSTALL.md](INSTALL.md).

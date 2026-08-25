@@ -272,17 +272,17 @@ export async function getPlatformSettingsCenter(
   }
   unavailable.push("sdk_npm_downloads");
 
-  // Cron
+  // Cron — registry must stay aligned with vercel.json (health + monitor).
   const cronSecretConfigured = Boolean(env.CRON_SECRET);
-  // vercel.json ships with empty crons[]; registry still defines jobs.
-  const vercelCronsConfigured = false;
-  let cronTone: HealthTone = cronSecretConfigured ? "green" : "yellow";
+  const vercelCronsConfigured = cronJobs.length > 0;
+  let cronTone: HealthTone =
+    cronSecretConfigured && vercelCronsConfigured ? "green" : "yellow";
   let cronDetail = cronSecretConfigured
-    ? `${cronJobs.length} jobs registered · execution history not persisted`
-    : "CRON_SECRET empty — schedules may be inactive";
+    ? `${cronJobs.length} jobs registered · vercel.json schedules wired · execution history not persisted`
+    : "CRON_SECRET empty — Vercel Cron Authorization Bearer will fail";
   if (!vercelCronsConfigured) {
-    cronTone = cronSecretConfigured ? "yellow" : "yellow";
-    cronDetail = `${cronJobs.length} jobs in registry · vercel.json crons is empty · history not persisted`;
+    cronTone = "yellow";
+    cronDetail = "No jobs in cron registry";
   }
   unavailable.push("cron_history");
 
@@ -363,7 +363,7 @@ export async function getPlatformSettingsCenter(
         enabled: cronSecretConfigured,
         lastRun: null,
         health: cronSecretConfigured ? "yellow" : "yellow",
-        note: "Last run is not stored. Enabled reflects CRON_SECRET presence; Vercel schedule wiring is empty.",
+        note: "Last run is not stored. Enabled reflects CRON_SECRET presence; schedules are defined in vercel.json.",
       })),
       cronSecretConfigured,
       vercelCronsConfigured,

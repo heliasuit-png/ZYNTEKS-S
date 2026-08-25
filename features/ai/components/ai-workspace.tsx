@@ -57,6 +57,37 @@ function tempId(): string {
   return `temp-${Math.random().toString(36).slice(2)}`;
 }
 
+function friendlyAiError(status: number | null, message: string): string {
+  const lower = message.toLowerCase();
+  if (
+    lower.includes("failed to fetch") ||
+    lower.includes("networkerror") ||
+    lower.includes("network request failed") ||
+    lower.includes("load failed")
+  ) {
+    return "Network problem. Check your connection and try again.";
+  }
+  if (status === 401) {
+    return "Your session expired. Sign in again to continue.";
+  }
+  if (status === 403 || lower.includes("monthly limit")) {
+    return message.includes("monthly")
+      ? message
+      : "You do not have permission to use the assistant right now.";
+  }
+  if (status === 429 || lower.includes("too many")) {
+    return "Too many requests. Wait a moment and try again.";
+  }
+  if (status !== null && status >= 500) {
+    return "The assistant is temporarily unavailable. Please try again.";
+  }
+  // Never surface raw stack-like text
+  if (message.length > 280 || /at\s+\S+\s+\(/.test(message)) {
+    return "The assistant request failed. Please try again.";
+  }
+  return message || "The assistant request failed.";
+}
+
 function updateAssistant(
   messages: ChatMessageView[],
   id: string,
@@ -374,7 +405,12 @@ export function AiWorkspace({
         const data = (await response.json().catch(() => null)) as
           | { error?: { message?: string } }
           | null;
-        throw new Error(data?.error?.message ?? "The assistant request failed.");
+        throw Object.assign(
+          new Error(
+            data?.error?.message ?? "The assistant request failed.",
+          ),
+          { status: response.status },
+        );
       }
 
       const reader = response.body.getReader();
@@ -518,8 +554,13 @@ export function AiWorkspace({
           }));
         });
       } else {
-        aiDebug("error", { assistantId, message: err.message });
-        setError(err.message);
+        const status =
+          typeof (caught as { status?: number }).status === "number"
+            ? (caught as { status: number }).status
+            : null;
+        const raw = err.message || "The assistant request failed.";
+        aiDebug("error", { assistantId, message: raw, status });
+        setError(friendlyAiError(status, raw));
         setMessages((prev) =>
           prev.filter(
             (m) =>
@@ -583,7 +624,7 @@ export function AiWorkspace({
           <p className="px-2 py-6 text-center text-sm text-zt-muted">
             {searching
               ? `No conversations match “${search.trim()}”.`
-              : "No conversations yet."}
+              : "No conversations yet. Send a message to start — history appears here."}
           </p>
         ) : null}
 
@@ -623,11 +664,19 @@ export function AiWorkspace({
       </div>
 
       <div className="border-t border-zt-border p-3 text-xs text-zt-muted">
-        <p>
+        <p className="font-medium text-zt-text/80">AI credits this month</p>
+        <p className="mt-1">
           {usage.limit === null
-            ? `${usage.used} messages this month · Unlimited`
-            : `${usage.used} / ${usage.limit} messages this month`}
+            ? `${usage.used} messages · Unlimited on your plan`
+            : `${usage.used} / ${usage.limit} messages used`}
         </p>
+        {usage.limit !== null && usage.remaining !== null ? (
+          <p className="mt-0.5">
+            {usage.remaining <= 0
+              ? "Quota reached — upgrade to continue."
+              : `${usage.remaining} remaining`}
+          </p>
+        ) : null}
         <p className="mt-1">
           ~{usage.tokensThisMonth.toLocaleString()} tokens used
         </p>
@@ -761,13 +810,36 @@ export function AiWorkspace({
 
         <div className="border-t border-zt-border p-3">
           {error ? (
-            <p className="mb-2 text-xs text-zt-danger" role="alert">
-              {error}
-            </p>
+            <div
+              className="mb-2 flex flex-wrap items-start justify-between gap-2 rounded-lg border border-zt-danger/30 bg-zt-danger/10 px-3 py-2"
+              role="alert"
+            >
+              <p className="min-w-0 flex-1 text-xs text-zt-danger">{error}</p>
+              <button
+                type="button"
+                onClick={() => {
+                  setError(null);
+                  if (canRegenerate) {
+                    void runChat(true);
+                  } else if (input.trim()) {
+                    void runChat(false, input);
+                  }
+                }}
+                className="shrink-0 rounded-md border border-zt-border px-2 py-0.5 text-xs text-zt-text hover:bg-zt-surface-2"
+              >
+                {canRegenerate || input.trim() ? "Retry" : "Dismiss"}
+              </button>
+            </div>
           ) : null}
           {blocked ? (
             <p className="mb-2 text-xs text-zt-warning" role="status">
-              You have reached your monthly AI message limit. Upgrade your plan
+              You have reached your monthly AI message limit.{" "}
+              <Link
+                href={DASHBOARD_ROUTES.billing}
+                className="font-medium underline underline-offset-2 hover:text-zt-text"
+              >
+                Review your plan
+              </Link>{" "}
               to continue.
             </p>
           ) : null}

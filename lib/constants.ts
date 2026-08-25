@@ -165,6 +165,13 @@ export const API_ROUTES = {
   aiChat: "/api/ai/chat",
 } as const;
 
+/**
+ * Canonical production origin for cross-origin SDK / ingest clients.
+ * Keep in sync with NEXT_PUBLIC_APP_URL in production.
+ */
+export const ZYNTEKSIS_PRODUCTION_ENDPOINT =
+  "https://zynteksisv.vercel.app" as const;
+
 /** Public status page base path: `/status/<slug>`. */
 export const STATUS_PAGE_BASE_PATH = "/status" as const;
 

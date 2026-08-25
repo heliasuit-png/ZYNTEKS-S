@@ -70,8 +70,8 @@ monitor cron job (`GET /api/cron/monitor` with `Authorization: Bearer <CRON_SECR
 
 ## Operational checklist
 
-- [ ] Migrations through `0009`  
-- [ ] `CRON_SECRET` set; monitor cron running  
+- [ ] Non-payment migrations through `0017` and `0019` (see [Database.md](./Database.md)); skip `0018` unless Lemon is enabled  
+- [ ] `CRON_SECRET` set; `vercel.json` schedules health + monitor; unauthorized cron → 401  
 - [ ] Project API key active  
 - [ ] Heartbeats arriving  
 - [ ] Status slug resolves when `is_public`  
@@ -79,4 +79,4 @@ monitor cron job (`GET /api/cron/monitor` with `Authorization: Bearer <CRON_SECR
 
 ## Related
 
-[API.md](./API.md) · [SDK.md](./SDK.md) · [Database.md](./Database.md) · [Deployment.md](./Deployment.md)
+[API.md](./API.md) · [SDK.md](./SDK.md) · [Database.md](./Database.md) · [Deployment.md](./Deployment.md) · [Backup-Recovery.md](./Backup-Recovery.md)

@@ -1,6 +1,11 @@
 import { NextResponse } from "next/server";
 
+import {
+  AUTH_CALLBACK_ERROR,
+  sanitizeAuthCallbackError,
+} from "@/lib/auth-callback-errors";
 import { ROUTES } from "@/lib/constants";
+import { logger } from "@/lib/logger";
 import { safeNextPath } from "@/lib/safe-redirect";
 import {
   exchangeCodeForSession,
@@ -32,6 +37,15 @@ function methodFromProvider(provider: string | undefined): AuthLoginMethod {
   }
 }
 
+function redirectLoginError(
+  origin: string,
+  code: (typeof AUTH_CALLBACK_ERROR)[keyof typeof AUTH_CALLBACK_ERROR],
+): NextResponse {
+  return NextResponse.redirect(
+    `${origin}${ROUTES.login}?error=${encodeURIComponent(code)}`,
+  );
+}
+
 /**
  * PKCE / email-link / OAuth callback. Exchanges the `code` returned by Supabase
  * for a session and records login telemetry.
@@ -42,7 +56,7 @@ export async function GET(request: Request): Promise<NextResponse> {
   const next = safeNextPath(searchParams.get("next"), ROUTES.dashboard);
 
   if (!code) {
-    return NextResponse.redirect(`${origin}${ROUTES.login}?error=missing_code`);
+    return redirectLoginError(origin, AUTH_CALLBACK_ERROR.missing_code);
   }
 
   const supabase = await createSupabaseServerClient();
@@ -73,7 +87,9 @@ export async function GET(request: Request): Promise<NextResponse> {
         country,
         userAgent,
         metadata: {
-          identities: (user.identities ?? []).map((identity) => identity.provider),
+          identities: (user.identities ?? []).map(
+            (identity) => identity.provider,
+          ),
         },
       });
 
@@ -89,7 +105,6 @@ export async function GET(request: Request): Promise<NextResponse> {
         // Session touch is best-effort.
       }
 
-      // Fill sparse profile fields from OAuth identity metadata (never overwrite).
       try {
         const meta = user.user_metadata ?? {};
         const fullName =
@@ -122,22 +137,12 @@ export async function GET(request: Request): Promise<NextResponse> {
       }
     }
   } catch (error) {
-    // TEMPORARY diagnostics — remove after OAuth callback investigation.
-    console.error(error);
-    console.error("[auth/callback] exchange failed", {
-      message: error instanceof Error ? error.message : String(error),
-      name: error instanceof Error ? error.name : undefined,
-      stack: error instanceof Error ? error.stack : undefined,
-      cause:
-        error instanceof Error && "cause" in error
-          ? error.cause
-          : undefined,
+    const sanitized = sanitizeAuthCallbackError(error);
+    logger.warn("Auth callback exchange failed", {
+      code: sanitized.code,
+      reason: sanitized.logMessage,
     });
-    const message =
-      error instanceof Error ? error.message : String(error);
-    return NextResponse.redirect(
-      `${origin}${ROUTES.login}?error=${encodeURIComponent(message)}`,
-    );
+    return redirectLoginError(origin, sanitized.code);
   }
 
   return NextResponse.redirect(`${origin}${next}`);

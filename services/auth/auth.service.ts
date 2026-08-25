@@ -1,7 +1,7 @@
 import type { AuthError, Session, User } from "@supabase/supabase-js";
 
 import { ERROR_CODE, HTTP_STATUS } from "@/lib/constants";
-import { AppError } from "@/lib/errors";
+import { AppError, ForbiddenError } from "@/lib/errors";
 import type { TypedSupabaseClient } from "@/supabase/client";
 
 /**
@@ -77,6 +77,34 @@ export interface SignInParams {
   password: string;
 }
 
+/**
+ * Rejects banned/suspended product accounts after Auth succeeds.
+ * Does not alter SUPER_ADMIN / admin_users role logic.
+ */
+async function assertAccountNotBanned(
+  supabase: Supabase,
+  userId: string,
+): Promise<void> {
+  const { data, error } = await supabase
+    .from("profiles")
+    .select("status")
+    .eq("id", userId)
+    .maybeSingle();
+
+  if (error) {
+    throw new AppError(error.message, {
+      code: ERROR_CODE.BAD_REQUEST,
+      statusCode: HTTP_STATUS.BAD_REQUEST,
+      cause: error,
+    });
+  }
+
+  if (data?.status === "banned") {
+    await supabase.auth.signOut();
+    throw new ForbiddenError("This account has been suspended.");
+  }
+}
+
 export async function signInWithPassword(
   supabase: Supabase,
   { email, password }: SignInParams,
@@ -90,6 +118,14 @@ export async function signInWithPassword(
     throw mapAuthError(error);
   }
 
+  if (!data.session?.user) {
+    throw new AppError("Sign-in did not return a session.", {
+      code: ERROR_CODE.UNAUTHORIZED,
+      statusCode: HTTP_STATUS.UNAUTHORIZED,
+    });
+  }
+
+  await assertAccountNotBanned(supabase, data.session.user.id);
   return data.session;
 }
 
@@ -194,6 +230,13 @@ export async function exchangeCodeForSession(
   if (error) {
     throw mapAuthError(error);
   }
+  if (!data.session?.user) {
+    throw new AppError("OAuth exchange did not return a session.", {
+      code: ERROR_CODE.UNAUTHORIZED,
+      statusCode: HTTP_STATUS.UNAUTHORIZED,
+    });
+  }
+  await assertAccountNotBanned(supabase, data.session.user.id);
   return data.session;
 }
 

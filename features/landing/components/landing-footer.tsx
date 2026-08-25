@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { Github, Linkedin, Twitter } from "lucide-react";
 
 import { APP_NAME, ROUTES } from "@/lib/constants";
 
@@ -31,14 +30,6 @@ export function LandingFooter() {
             Production monitoring, AI analysis, and status pages — packaged as
             complete SaaS source for teams that want ownership.
           </p>
-          <div className="mt-5 flex gap-3">
-            <SocialChip label="GitHub" icon={Github} />
-            <SocialChip label="X / Twitter" icon={Twitter} />
-            <SocialChip label="LinkedIn" icon={Linkedin} />
-          </div>
-          <p className="mt-2 text-[11px] text-zt-muted">
-            Social profiles are not linked yet — add your URLs before launch.
-          </p>
         </div>
 
         <FooterColumn title="Product" links={PRODUCT} />
@@ -47,7 +38,8 @@ export function LandingFooter() {
 
       <div className="mx-auto mt-12 flex max-w-6xl flex-col gap-2 border-t border-zt-border pt-6 text-xs text-zt-muted sm:flex-row sm:items-center sm:justify-between">
         <p>
-          © {year} {APP_NAME}. All rights reserved.
+          © <span suppressHydrationWarning>{year}</span> {APP_NAME}. All rights
+          reserved.
         </p>
         <p>
           <Link href={ROUTES.login} className="hover:text-zt-text">
@@ -95,24 +87,5 @@ function FooterColumn({
         ))}
       </ul>
     </div>
-  );
-}
-
-function SocialChip({
-  label,
-  icon: Icon,
-}: {
-  label: string;
-  icon: typeof Github;
-}) {
-  return (
-    <span
-      role="img"
-      aria-label={`${label} (not linked yet)`}
-      title={`${label} — add your profile URL before launch`}
-      className="inline-flex size-10 items-center justify-center rounded-xl border border-zt-border text-zt-muted"
-    >
-      <Icon className="size-4" aria-hidden />
-    </span>
   );
 }

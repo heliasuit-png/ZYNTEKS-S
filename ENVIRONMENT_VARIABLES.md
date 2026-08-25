@@ -69,6 +69,18 @@ Vercel Cron invokes the routes; the app expects `Authorization: Bearer <CRON_SEC
 
 ---
 
+## Optional shared rate limiter (Upstash)
+
+| Variable | Required | Exposed to browser | Description | Where to get it |
+| -------- | -------- | ------------------ | ----------- | --------------- |
+| `UPSTASH_REDIS_REST_URL` | No | No | Upstash Redis REST URL | Upstash console |
+| `UPSTASH_REDIS_REST_TOKEN` | No | No | Upstash Redis REST token | Upstash console |
+
+Leave both unset to keep the default in-memory per-process limiter. Shared
+limiting is only attempted when **both** are set (`lib/rate-limit.ts`).
+
+---
+
 ## Logging
 
 | Variable | Required | Exposed to browser | Description | Where to get it |

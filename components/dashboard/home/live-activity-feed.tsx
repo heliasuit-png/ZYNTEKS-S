@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { TerminalSquare } from "lucide-react";
 
@@ -23,13 +24,20 @@ const typeMeta: Record<ActivityType, { tag: string; className: string }> = {
   member: { tag: "member", className: "text-zt-muted" },
 };
 
-function timeLabel(value: string): string {
+/** UTC clock — identical on server and client (avoids locale/TZ hydration #418). */
+function timeLabelUtc(value: string): string {
   const d = new Date(value);
   if (Number.isNaN(d.getTime())) return "--:--:--";
-  return d.toLocaleTimeString("en-US", { hour12: false });
+  return d.toISOString().slice(11, 19);
 }
 
 export function LiveActivityFeed({ activity }: { activity: ActivityItem[] }) {
+  // Relative labels use "now" — only compute after mount to match client clock.
+  const [relativeReady, setRelativeReady] = useState(false);
+  useEffect(() => {
+    setRelativeReady(true);
+  }, []);
+
   return (
     <Panel className="h-full">
       <PanelHeader>
@@ -64,8 +72,8 @@ export function LiveActivityFeed({ activity }: { activity: ActivityItem[] }) {
                   transition={{ delay: index * 0.05, duration: 0.28 }}
                   className="group flex flex-wrap items-baseline gap-x-2 py-1"
                 >
-                  <span className="text-zt-muted/70">
-                    {timeLabel(item.createdAt)}
+                  <span className="text-zt-muted/70" title="UTC">
+                    {timeLabelUtc(item.createdAt)}
                   </span>
                   <span className="text-zt-primary/80">▸</span>
                   <span className={cn("font-semibold", meta.className)}>
@@ -73,7 +81,10 @@ export function LiveActivityFeed({ activity }: { activity: ActivityItem[] }) {
                   </span>
                   <span className="text-zt-text/90">{item.title}</span>
                   <span className="w-full pl-[4.5rem] text-xs text-zt-muted/70 sm:w-auto sm:pl-0">
-                    — {item.description} · {formatRelativeTime(item.createdAt)}
+                    — {item.description}
+                    {relativeReady ? (
+                      <> · {formatRelativeTime(item.createdAt)}</>
+                    ) : null}
                   </span>
                 </motion.div>
               );

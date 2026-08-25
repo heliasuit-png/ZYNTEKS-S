@@ -4,6 +4,7 @@ import { useState } from "react";
 
 import { cn } from "@/lib/utils";
 import { CopyButton } from "@/components/dashboard/copy-button";
+import { ZYNTEKSIS_PRODUCTION_ENDPOINT } from "@/lib/constants";
 
 interface Step {
   title: string;
@@ -17,13 +18,16 @@ interface Framework {
   steps: Step[];
 }
 
-const INSTALL = "npm install @zynteksis/sdk";
+const INSTALL_PRIMARY = `# Build the commercial SDK package, then path-install:
+#   cd sdk && npm install && npm run build
+npm install /absolute/path/to/zynteksis/sdk`;
 
 function config(release = "1.0.0"): string {
   return `{
   apiKey: "ZYN-KEY-XXXXXXXXXXXXXXXXXXXXXXXX",
   environment: "production",
   release: "${release}",
+  endpoint: "${ZYNTEKSIS_PRODUCTION_ENDPOINT}",
 }`;
 }
 
@@ -32,7 +36,7 @@ const frameworks: Framework[] = [
     id: "nextjs",
     label: "Next.js",
     steps: [
-      { title: "Install the SDK", code: INSTALL },
+      { title: "Install the SDK", code: INSTALL_PRIMARY },
       {
         title: "Create a client initializer",
         file: "app/zynteksis-init.tsx",
@@ -70,7 +74,7 @@ export default function RootLayout({ children }) {
     id: "react",
     label: "React",
     steps: [
-      { title: "Install the SDK", code: INSTALL },
+      { title: "Install the SDK", code: INSTALL_PRIMARY },
       {
         title: "Initialize before rendering",
         file: "src/main.tsx",
@@ -84,7 +88,7 @@ new Zynteksis(${config()}).init();`,
     id: "vue",
     label: "Vue",
     steps: [
-      { title: "Install the SDK", code: INSTALL },
+      { title: "Install the SDK", code: INSTALL_PRIMARY },
       {
         title: "Initialize in your entry file",
         file: "src/main.ts",
@@ -98,7 +102,7 @@ new Zynteksis(${config()}).init();`,
     id: "angular",
     label: "Angular",
     steps: [
-      { title: "Install the SDK", code: INSTALL },
+      { title: "Install the SDK", code: INSTALL_PRIMARY },
       {
         title: "Initialize before bootstrap",
         file: "src/main.ts",
@@ -112,7 +116,7 @@ new Zynteksis(${config()}).init();`,
     id: "laravel",
     label: "Laravel (Vite)",
     steps: [
-      { title: "Install the SDK via npm", code: INSTALL },
+      { title: "Install the SDK via npm", code: INSTALL_PRIMARY },
       {
         title: "Initialize in your browser bundle",
         file: "resources/js/app.js",
@@ -140,7 +144,12 @@ export function SdkInstaller({
 
   return (
     <div className={cn("space-y-4", className)}>
-      {/* Framework tabs */}
+      <p className="rounded-xl border border-zt-warning/30 bg-zt-warning/10 px-3 py-2 text-xs text-zt-warning">
+        Use only your project <code className="rounded bg-black/20 px-1">ZYN-KEY-…</code>{" "}
+        API key. Never use Supabase <code className="rounded bg-black/20 px-1">service_role</code>,
+        anon keys, or database passwords in the SDK.
+      </p>
+
       <div className="flex flex-wrap gap-1.5" role="tablist" aria-label="Framework">
         {frameworks.map((framework) => {
           const isActive = framework.id === activeId;
@@ -164,7 +173,6 @@ export function SdkInstaller({
         })}
       </div>
 
-      {/* Steps */}
       <ol className="space-y-3">
         {active.steps.map((step, index) => (
           <li key={step.title} className="rounded-xl border border-zt-border bg-white/[0.02] p-3">
@@ -196,7 +204,11 @@ export function SdkInstaller({
         <code className="rounded bg-white/[0.05] px-1 py-0.5 text-zt-text">
           ZYN-KEY-XXXX…
         </code>{" "}
-        with the key generated on your API Keys page.
+        with the key generated on your API Keys page. Cross-origin apps must set{" "}
+        <code className="rounded bg-white/[0.05] px-1 py-0.5 text-zt-text">
+          endpoint
+        </code>{" "}
+        to <code className="text-zt-text">{ZYNTEKSIS_PRODUCTION_ENDPOINT}</code>.
       </p>
 
       {onVerify ? (
