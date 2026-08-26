@@ -4,12 +4,15 @@ import type { Metadata } from "next";
 import { ROUTES } from "@/lib/constants";
 import { safeNextPath } from "@/lib/safe-redirect";
 import { AuthCard } from "@/features/auth/components/auth-card";
+import { AuthLegalLinks } from "@/features/auth/components/auth-legal-links";
 import { AuthMethodPanel } from "@/features/auth/components/auth-method-panel";
+import { getDictionary } from "@/lib/i18n/get-dictionary";
 import { getOAuthProviderConfigs } from "@/services/auth/providers";
 
-export const metadata: Metadata = {
-  title: "Sign in",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const { dict } = await getDictionary();
+  return { title: dict.auth.loginTitle };
+}
 
 export const dynamic = "force-dynamic";
 
@@ -31,6 +34,7 @@ export default async function LoginPage({
   } = await searchParams;
   const redirectTo = safeNextPath(redirectParam, "");
   const providers = await getOAuthProviderConfigs();
+  const { dict } = await getDictionary();
 
   return (
     <AuthCard
@@ -77,6 +81,7 @@ export default async function LoginPage({
         providers={providers}
         redirectTo={redirectTo || undefined}
       />
+      <AuthLegalLinks dict={dict} />
     </AuthCard>
   );
 }

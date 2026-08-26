@@ -22,8 +22,9 @@ import type { LucideIcon } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { DASHBOARD_ROUTES } from "@/lib/constants";
-import { navItems } from "@/components/dashboard/shell/nav-config";
+import { resolveNavItems } from "@/components/dashboard/shell/nav-config";
 import { useCommandPalette } from "@/components/dashboard/command-palette/command-palette-context";
+import { useDashboard } from "@/features/dashboard/hooks/use-dashboard";
 
 type CommandGroup =
   | "Actions"
@@ -115,6 +116,7 @@ const actionEntries: CommandEntry[] = [
 
 export function CommandPalette({ workspaceId }: { workspaceId?: string }) {
   const { open, closePalette } = useCommandPalette();
+  const { navLabels } = useDashboard();
   const router = useRouter();
   const inputRef = useRef<HTMLInputElement>(null);
   const [query, setQuery] = useState("");
@@ -124,15 +126,17 @@ export function CommandPalette({ workspaceId }: { workspaceId?: string }) {
   const [remoteHits, setRemoteHits] = useState<CommandEntry[]>([]);
 
   const entries = useMemo<CommandEntry[]>(() => {
-    const navEntries: CommandEntry[] = navItems.map((item) => ({
-      id: `nav-${item.href}`,
-      label: item.label,
-      href: item.href,
-      group: "Navigation",
-      icon: item.icon,
-    }));
+    const navEntries: CommandEntry[] = resolveNavItems(navLabels).map(
+      (item) => ({
+        id: `nav-${item.href}`,
+        label: item.label,
+        href: item.href,
+        group: "Navigation",
+        icon: item.icon,
+      }),
+    );
     return [...actionEntries, ...navEntries];
-  }, []);
+  }, [navLabels]);
 
   // Reset state and load recents when the palette opens.
   useEffect(() => {

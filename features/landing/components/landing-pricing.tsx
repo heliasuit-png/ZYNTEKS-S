@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-import { DASHBOARD_ROUTES, ROUTES } from "@/lib/constants";
+import { ROUTES } from "@/lib/constants";
 import { comparePlans } from "@/services/billing/catalog";
 import { PlanComparison } from "@/components/billing/plan-comparison";
 import { LandingSection } from "@/features/landing/components/section";
@@ -14,7 +14,7 @@ export function LandingPricing() {
       id="pricing"
       eyebrow="Pricing"
       title="Clear plans. Local limits. Pluggable billing."
-      description="Compare plan limits and features. Purchase and upgrade flows open the billing placeholders — no payment vendor is bundled."
+      description="Compare plan limits and features. Checkout is not bundled yet — start free to explore, or review the full pricing page."
     >
       <Reveal>
         <PlanComparison comparison={comparison} />
@@ -28,16 +28,16 @@ export function LandingPricing() {
             Start free
           </Link>
           <Link
-            href={DASHBOARD_ROUTES.billing}
+            href={ROUTES.pricing}
             className="inline-flex h-11 items-center rounded-xl border border-zt-border px-5 text-sm font-medium text-zt-text transition-colors hover:border-zt-border-strong"
           >
-            Open billing placeholders
+            View all plans
           </Link>
           <Link
-            href={ROUTES.pricing}
+            href={ROUTES.contact}
             className="inline-flex h-11 items-center rounded-xl px-3 text-sm text-zt-muted transition-colors hover:text-zt-text"
           >
-            Full pricing page
+            Contact sales
           </Link>
         </div>
       </Reveal>

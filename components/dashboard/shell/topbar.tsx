@@ -3,7 +3,9 @@
 import Link from "next/link";
 import { Menu, Sparkles, Users } from "lucide-react";
 
+import { LanguageSwitcher } from "@/components/i18n/language-switcher";
 import { DASHBOARD_ROUTES } from "@/lib/constants";
+import type { Locale } from "@/lib/i18n/config";
 import { useDashboard } from "@/features/dashboard/hooks/use-dashboard";
 import { SearchBox } from "@/components/dashboard/shell/search-box";
 import { Breadcrumbs } from "@/components/dashboard/shell/breadcrumbs";
@@ -21,6 +23,8 @@ interface TopbarProps {
   workspace: DashboardWorkspaceContext;
   unreadCount: number;
   notifications: NotificationItem[];
+  locale: Locale;
+  localeLabels: { english: string; turkish: string; language: string };
 }
 
 const PLAN_LABELS: Record<string, string> = {
@@ -34,6 +38,8 @@ export function Topbar({
   workspace,
   unreadCount,
   notifications,
+  locale,
+  localeLabels,
 }: TopbarProps) {
   const { openMobileNav } = useDashboard();
   const planLabel = PLAN_LABELS[workspace.active.plan] ?? workspace.active.plan;
@@ -72,6 +78,11 @@ export function Topbar({
           {planLabel}
         </Link>
         <AppearanceMenu />
+        <LanguageSwitcher
+          locale={locale}
+          labels={localeLabels}
+          className="hidden sm:inline-flex"
+        />
         <NotificationsButton
           unreadCount={unreadCount}
           notifications={notifications}

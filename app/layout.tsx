@@ -2,18 +2,22 @@ import type { Metadata, Viewport } from "next";
 
 import { APP_DESCRIPTION, APP_NAME } from "@/lib/constants";
 import { env } from "@/lib/env";
+import { getDictionary } from "@/lib/i18n/get-dictionary";
 import { APPEARANCE_BOOTSTRAP_SCRIPT } from "@/features/settings/lib/appearance";
 import "@/styles/globals.css";
 
-export const metadata: Metadata = {
-  metadataBase: new URL(env.NEXT_PUBLIC_APP_URL),
-  title: {
-    default: APP_NAME,
-    template: `%s | ${APP_NAME}`,
-  },
-  description: APP_DESCRIPTION,
-  applicationName: APP_NAME,
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const { dict } = await getDictionary();
+  return {
+    metadataBase: new URL(env.NEXT_PUBLIC_APP_URL),
+    title: {
+      default: APP_NAME,
+      template: `%s | ${APP_NAME}`,
+    },
+    description: dict.meta.description || APP_DESCRIPTION,
+    applicationName: APP_NAME,
+  };
+}
 
 export const viewport: Viewport = {
   themeColor: [
@@ -24,11 +28,13 @@ export const viewport: Viewport = {
   initialScale: 1,
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
+  const { locale } = await getDictionary();
+
   return (
-    <html lang="en" className="dark" suppressHydrationWarning>
+    <html lang={locale} className="dark" suppressHydrationWarning>
       <head>
         <script
           dangerouslySetInnerHTML={{ __html: APPEARANCE_BOOTSTRAP_SCRIPT }}

@@ -4,8 +4,9 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion } from "framer-motion";
 
+import { resolveNavItems } from "@/components/dashboard/shell/nav-config";
+import { useDashboard } from "@/features/dashboard/hooks/use-dashboard";
 import { cn } from "@/lib/utils";
-import { navItems } from "@/components/dashboard/shell/nav-config";
 
 interface NavListProps {
   onNavigate?: () => void;
@@ -14,10 +15,12 @@ interface NavListProps {
 
 export function NavList({ onNavigate, collapsed = false }: NavListProps) {
   const pathname = usePathname();
+  const { navLabels } = useDashboard();
+  const items = resolveNavItems(navLabels);
 
   return (
     <nav className="flex flex-col gap-1" aria-label="Dashboard">
-      {navItems.map((item) => {
+      {items.map((item) => {
         const isActive =
           pathname === item.href || pathname.startsWith(`${item.href}/`);
         const Icon = item.icon;

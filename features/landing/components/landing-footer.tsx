@@ -1,53 +1,71 @@
 import Link from "next/link";
 
+import { LanguageSwitcher } from "@/components/i18n/language-switcher";
 import { APP_NAME, ROUTES } from "@/lib/constants";
+import { getDictionary } from "@/lib/i18n/get-dictionary";
 
-const PRODUCT = [
-  { href: "#features", label: "Features" },
-  { href: "#sdk", label: "SDK" },
-  { href: "#pricing", label: "Pricing" },
-  { href: ROUTES.pricing, label: "Plans" },
-] as const;
-
-const COMPANY = [
-  { href: ROUTES.docs, label: "Documentation" },
-  { href: ROUTES.privacy, label: "Privacy" },
-  { href: ROUTES.terms, label: "Terms" },
-  { href: ROUTES.contact, label: "Contact" },
-] as const;
-
-export function LandingFooter() {
+export async function LandingFooter() {
+  const { locale, dict } = await getDictionary();
   const year = new Date().getFullYear();
+
+  const PRODUCT = [
+    { href: "#features", label: dict.nav.features },
+    { href: "#sdk", label: dict.nav.sdk },
+    { href: "#pricing", label: dict.nav.pricing },
+    { href: ROUTES.pricing, label: dict.nav.pricing },
+  ] as const;
+
+  const COMPANY = [
+    { href: ROUTES.docs, label: dict.footer.documentation },
+    { href: ROUTES.contact, label: dict.footer.contact },
+  ] as const;
+
+  const LEGAL = [
+    { href: ROUTES.legalPrivacy, label: dict.footer.privacy },
+    { href: ROUTES.legalTerms, label: dict.footer.terms },
+    { href: ROUTES.legalCookie, label: dict.footer.cookie },
+    { href: ROUTES.legalKvkk, label: dict.footer.kvkk },
+  ] as const;
 
   return (
     <footer className="border-t border-zt-border px-5 pt-14 pb-10 sm:px-8">
-      <div className="mx-auto grid max-w-6xl gap-10 md:grid-cols-[1.4fr_1fr_1fr]">
+      <div className="mx-auto grid max-w-6xl gap-10 sm:grid-cols-2 lg:grid-cols-[1.4fr_1fr_1fr_1fr]">
         <div>
           <p className="font-[family-name:var(--font-landing-display)] text-lg font-semibold text-zt-text">
             {APP_NAME}
           </p>
           <p className="mt-3 max-w-sm text-sm leading-relaxed text-zt-muted">
-            Production monitoring, AI analysis, and status pages — packaged as
-            complete SaaS source for teams that want ownership.
+            {dict.meta.description}
           </p>
+          <div className="mt-4">
+            <LanguageSwitcher
+              locale={locale}
+              labels={{
+                english: dict.common.english,
+                turkish: dict.common.turkish,
+                language: dict.common.language,
+              }}
+            />
+          </div>
         </div>
 
-        <FooterColumn title="Product" links={PRODUCT} />
-        <FooterColumn title="Company" links={COMPANY} />
+        <FooterColumn title={dict.footer.product} links={PRODUCT} />
+        <FooterColumn title={dict.footer.company} links={COMPANY} />
+        <FooterColumn title={dict.footer.legal} links={LEGAL} />
       </div>
 
       <div className="mx-auto mt-12 flex max-w-6xl flex-col gap-2 border-t border-zt-border pt-6 text-xs text-zt-muted sm:flex-row sm:items-center sm:justify-between">
         <p>
-          © <span suppressHydrationWarning>{year}</span> {APP_NAME}. All rights
-          reserved.
+          © <span suppressHydrationWarning>{year}</span> {APP_NAME}.{" "}
+          {dict.footer.rights}
         </p>
         <p>
           <Link href={ROUTES.login} className="hover:text-zt-text">
-            Sign in
+            {dict.common.signIn}
           </Link>
           {" · "}
           <Link href={ROUTES.register} className="hover:text-zt-text">
-            Start free
+            {dict.common.startFree}
           </Link>
         </p>
       </div>

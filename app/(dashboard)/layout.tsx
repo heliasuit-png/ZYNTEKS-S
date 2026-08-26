@@ -20,6 +20,7 @@ import { createSupabaseServerClient } from "@/supabase/server";
 import { DashboardShell } from "@/components/dashboard/shell/dashboard-shell";
 import { AppearanceBootstrap } from "@/features/settings/components/appearance-bootstrap";
 import { parsePreferences } from "@/features/settings/lib/preferences";
+import { getDictionary } from "@/lib/i18n/get-dictionary";
 import type { AppearancePreferences } from "@/features/settings/types";
 import type {
   DashboardUser,
@@ -129,6 +130,8 @@ export default async function DashboardLayout({
     getUnreadNotificationCount(),
   ]);
 
+  const { locale, dict } = await getDictionary();
+
   return (
     <>
       <AppearanceBootstrap preferences={appearance} />
@@ -137,6 +140,13 @@ export default async function DashboardLayout({
         workspace={workspaceContext}
         unreadCount={unreadCount}
         notifications={notifications}
+        locale={locale}
+        localeLabels={{
+          english: dict.common.english,
+          turkish: dict.common.turkish,
+          language: dict.common.language,
+        }}
+        navLabels={dict.dashboardNav}
       >
         {children}
       </DashboardShell>

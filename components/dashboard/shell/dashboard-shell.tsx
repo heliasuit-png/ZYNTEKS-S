@@ -15,12 +15,17 @@ import type {
   DashboardWorkspaceContext,
 } from "@/features/dashboard/types";
 import type { NotificationItem } from "@/types/dashboard";
+import type { Locale } from "@/lib/i18n/config";
+import type { Dictionary } from "@/lib/i18n/dictionaries";
 
 interface DashboardShellProps {
   user: DashboardUser;
   workspace: DashboardWorkspaceContext;
   unreadCount: number;
   notifications: NotificationItem[];
+  locale: Locale;
+  localeLabels: { english: string; turkish: string; language: string };
+  navLabels: Dictionary["dashboardNav"];
   children: ReactNode;
 }
 
@@ -29,10 +34,13 @@ export function DashboardShell({
   workspace,
   unreadCount,
   notifications,
+  locale,
+  localeLabels,
+  navLabels,
   children,
 }: DashboardShellProps) {
   return (
-    <DashboardProvider>
+    <DashboardProvider navLabels={navLabels}>
       <CommandPaletteProvider>
         <AuroraBackground />
         <div className="min-h-screen text-zt-text">
@@ -45,6 +53,8 @@ export function DashboardShell({
                 unreadCount={unreadCount}
                 notifications={notifications}
                 workspace={workspace}
+                locale={locale}
+                localeLabels={localeLabels}
               />
               <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-6 lg:px-8">
                 {children}

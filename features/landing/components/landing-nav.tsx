@@ -4,18 +4,37 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { Menu, X } from "lucide-react";
 
-import { APP_NAME, DASHBOARD_ROUTES, ROUTES } from "@/lib/constants";
+import { LanguageSwitcher } from "@/components/i18n/language-switcher";
+import { APP_NAME, ROUTES } from "@/lib/constants";
+import type { Locale } from "@/lib/i18n/config";
 import { cn } from "@/lib/utils";
 
-const LINKS = [
-  { href: "#features", label: "Features" },
-  { href: "#how-it-works", label: "How it works" },
-  { href: "#sdk", label: "SDK" },
-  { href: "#pricing", label: "Pricing" },
-  { href: "#faq", label: "FAQ" },
-] as const;
+export function LandingNav({
+  locale,
+  labels,
+}: {
+  locale: Locale;
+  labels: {
+    features: string;
+    howItWorks: string;
+    sdk: string;
+    pricing: string;
+    faq: string;
+    signIn: string;
+    startFree: string;
+    english: string;
+    turkish: string;
+    language: string;
+  };
+}) {
+  const links = [
+    { href: "#features", label: labels.features },
+    { href: "#how-it-works", label: labels.howItWorks },
+    { href: "#sdk", label: labels.sdk },
+    { href: "#pricing", label: labels.pricing },
+    { href: "#faq", label: labels.faq },
+  ] as const;
 
-export function LandingNav() {
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
 
@@ -32,6 +51,17 @@ export function LandingNav() {
       document.body.style.overflow = "";
     };
   }, [open]);
+
+  const switcher = (
+    <LanguageSwitcher
+      locale={locale}
+      labels={{
+        english: labels.english,
+        turkish: labels.turkish,
+        language: labels.language,
+      }}
+    />
+  );
 
   return (
     <header
@@ -51,7 +81,7 @@ export function LandingNav() {
         </Link>
 
         <nav className="hidden items-center gap-7 md:flex" aria-label="Primary">
-          {LINKS.map((link) => (
+          {links.map((link) => (
             <a
               key={link.href}
               href={link.href}
@@ -63,17 +93,18 @@ export function LandingNav() {
         </nav>
 
         <div className="hidden items-center gap-3 md:flex">
+          {switcher}
           <Link
             href={ROUTES.login}
             className="text-sm text-zt-muted transition-colors hover:text-zt-text"
           >
-            Sign in
+            {labels.signIn}
           </Link>
           <Link
             href={ROUTES.register}
             className="inline-flex h-9 items-center rounded-xl bg-zt-primary px-3.5 text-sm font-medium text-[#041018] transition-colors hover:bg-zt-primary/90"
           >
-            Start free
+            {labels.startFree}
           </Link>
         </div>
 
@@ -95,7 +126,7 @@ export function LandingNav() {
           className="border-t border-zt-border bg-[#070b16]/95 px-5 py-4 backdrop-blur-xl md:hidden"
         >
           <nav className="flex flex-col gap-3" aria-label="Mobile">
-            {LINKS.map((link) => (
+            {links.map((link) => (
               <a
                 key={link.href}
                 href={link.href}
@@ -105,26 +136,20 @@ export function LandingNav() {
                 {link.label}
               </a>
             ))}
+            <div className="py-2">{switcher}</div>
             <Link
               href={ROUTES.login}
               className="py-2 text-sm text-zt-muted"
               onClick={() => setOpen(false)}
             >
-              Sign in
+              {labels.signIn}
             </Link>
             <Link
               href={ROUTES.register}
               className="inline-flex h-10 items-center justify-center rounded-xl bg-zt-primary text-sm font-medium text-[#041018]"
               onClick={() => setOpen(false)}
             >
-              Start free
-            </Link>
-            <Link
-              href={DASHBOARD_ROUTES.billing}
-              className="py-2 text-sm text-zt-muted"
-              onClick={() => setOpen(false)}
-            >
-              Billing
+              {labels.startFree}
             </Link>
           </nav>
         </div>

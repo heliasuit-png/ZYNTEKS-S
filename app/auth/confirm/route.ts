@@ -2,7 +2,12 @@ import { NextResponse } from "next/server";
 
 import type { EmailOtpType } from "@supabase/supabase-js";
 
+import {
+  AUTH_CALLBACK_ERROR,
+  sanitizeAuthCallbackError,
+} from "@/lib/auth-callback-errors";
 import { ROUTES } from "@/lib/constants";
+import { logger } from "@/lib/logger";
 import { safeNextPath } from "@/lib/safe-redirect";
 import { createSupabaseServerClient } from "@/supabase/server";
 
@@ -22,7 +27,7 @@ export async function GET(request: Request): Promise<NextResponse> {
 
   if (!tokenHash || !type) {
     return NextResponse.redirect(
-      `${origin}${ROUTES.login}?error=invalid_link`,
+      `${origin}${ROUTES.login}?error=${AUTH_CALLBACK_ERROR.missing_code}`,
     );
   }
 
@@ -33,7 +38,14 @@ export async function GET(request: Request): Promise<NextResponse> {
   });
 
   if (error) {
-    return NextResponse.redirect(`${origin}${ROUTES.login}?error=auth`);
+    const sanitized = sanitizeAuthCallbackError(error);
+    logger.warn("Auth confirm verifyOtp failed", {
+      code: sanitized.code,
+      reason: sanitized.logMessage,
+    });
+    return NextResponse.redirect(
+      `${origin}${ROUTES.login}?error=${sanitized.code}`,
+    );
   }
 
   return NextResponse.redirect(`${origin}${next}`);

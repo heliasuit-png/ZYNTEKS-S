@@ -8,7 +8,15 @@ import { PlanComparison } from "@/components/billing/plan-comparison";
 
 export const metadata: Metadata = {
   title: `Pricing | ${APP_NAME}`,
-  description: "Compare ZYNTEKSIS plans, limits and features.",
+  description:
+    "Compare ZYNTEKSIS plans, project limits, API keys, and AI message quotas. Checkout is pluggable and not bundled.",
+  alternates: { canonical: "/pricing" },
+  openGraph: {
+    title: `Pricing | ${APP_NAME}`,
+    description:
+      "Compare ZYNTEKSIS plans, limits, and features. Start free — payment checkout is not bundled.",
+    url: "/pricing",
+  },
 };
 
 export default function PricingPage() {

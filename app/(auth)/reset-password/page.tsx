@@ -1,19 +1,25 @@
 import type { Metadata } from "next";
 
 import { AuthCard } from "@/features/auth/components/auth-card";
+import { AuthLegalLinks } from "@/features/auth/components/auth-legal-links";
 import { ResetPasswordForm } from "@/features/auth/components/reset-password-form";
+import { getDictionary } from "@/lib/i18n/get-dictionary";
 
-export const metadata: Metadata = {
-  title: "Reset password",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const { dict } = await getDictionary();
+  return { title: dict.auth.resetTitle };
+}
 
-export default function ResetPasswordPage() {
+export default async function ResetPasswordPage() {
+  const { dict } = await getDictionary();
+
   return (
     <AuthCard
       title="Set a new password"
       description="Choose a strong password for your account"
     >
       <ResetPasswordForm />
+      <AuthLegalLinks dict={dict} />
     </AuthCard>
   );
 }

@@ -5,8 +5,9 @@ import { usePathname } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
 import { ChevronRight, Home } from "lucide-react";
 
+import { resolveNavItems } from "@/components/dashboard/shell/nav-config";
+import { useDashboard } from "@/features/dashboard/hooks/use-dashboard";
 import { DASHBOARD_ROUTES } from "@/lib/constants";
-import { navItems } from "@/components/dashboard/shell/nav-config";
 
 function titleize(segment: string): string {
   return segment
@@ -26,6 +27,8 @@ interface Crumb {
  */
 export function Breadcrumbs() {
   const pathname = usePathname();
+  const { navLabels } = useDashboard();
+  const navItems = resolveNavItems(navLabels);
   const segments = pathname.split("/").filter(Boolean);
 
   if (segments.length === 0) return null;
