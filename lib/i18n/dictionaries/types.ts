@@ -6,6 +6,14 @@ export type { ActionMessagesDictionary } from "@/lib/i18n/dictionaries/action-me
 export type { AdminDictionary } from "@/lib/i18n/dictionaries/admin-types";
 export type { DashDictionary } from "@/lib/i18n/dictionaries/dash-types";
 
+export type PricingPresentationPlanCopy = {
+  name: string;
+  description: string;
+  cta: string;
+  limits: readonly string[];
+  features: readonly string[];
+};
+
 export type Dictionary = {
   meta: {
     description: string;
@@ -224,6 +232,23 @@ export type Dictionary = {
       pageTitle: string;
       pageDesc: string;
       metaDescription: string;
+      popular: string;
+      perMonth: string;
+      limitsLabel: string;
+      featuresLabel: string;
+      moreFeatures: string;
+      showLess: string;
+      comingSoonTitle: string;
+      comingSoonBody: string;
+      comingSoonClose: string;
+      paymentMethodsNote: string;
+      paymentSecureNote: string;
+      plans: {
+        free: PricingPresentationPlanCopy;
+        developer: PricingPresentationPlanCopy;
+        pro: PricingPresentationPlanCopy;
+        business: PricingPresentationPlanCopy;
+      };
     };
     seo: {
       starterPlanAvailable: string;

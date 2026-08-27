@@ -48,15 +48,19 @@ describe("i18n surface coverage + payment methods UI", () => {
     assert.match(src, /MastercardMark|mastercard/i);
     assert.match(src, /AmexMark|AMEX/);
     assert.match(src, /DiscoverMark|DISCOVER/);
-    assert.match(src, /DinersMark|DINERS/);
+    assert.match(src, /DinersMark/);
+    assert.match(src, /DINERS CLUB/);
     assert.match(src, /flex-wrap/);
     assert.doesNotMatch(src, /PCI DSS|256-bit SSL|lemonsqueezy\.com|createCheckout/i);
+    assert.equal(dictionaries.en.footer.paymentDiners, "Diners Club");
+    assert.equal(dictionaries.tr.footer.paymentDiners, "Diners Club");
 
     const footer = readFileSync(
       "features/landing/components/landing-footer.tsx",
       "utf8",
     );
     assert.match(footer, /PaymentMethodsRow/);
+    assert.match(footer, /variant=\"cards\"/);
     assert.doesNotMatch(footer, /lemonsqueezy\.com|createCheckout/i);
   });
 

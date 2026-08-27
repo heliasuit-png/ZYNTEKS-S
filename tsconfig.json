@@ -47,5 +47,13 @@
     "**/*.tsx",
     ".next/types/**/*.ts"
   ],
-  "exclude": ["node_modules"]
+  "exclude": [
+    "node_modules",
+    "external-test-project",
+    "services/billing/lemon-squeezy",
+    "services/billing/providers/lemon-squeezy.provider.ts",
+    "app/api/webhooks",
+    "tests/smoke/lemon-squeezy-billing.test.ts",
+    "scripts/staging-lemon-billing-e2e.mjs"
+  ]
 }

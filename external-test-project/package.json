@@ -1,0 +1,13 @@
+{
+  "name": "zynteksis-external-test-project",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Disposable consumer app proving @zynteksis/sdk can ingest against a non-production ZYNTEKSIS host.",
+  "scripts": {
+    "ingest": "node ./run-ingest.mjs"
+  },
+  "dependencies": {
+    "@zynteksis/sdk": "file:../sdk"
+  }
+}

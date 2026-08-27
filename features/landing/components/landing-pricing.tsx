@@ -4,15 +4,13 @@ import Link from "next/link";
 
 import { useDictionary } from "@/components/i18n/locale-provider";
 import { ROUTES } from "@/lib/constants";
-import { comparePlans } from "@/services/billing/catalog";
-import { PlanComparison } from "@/components/billing/plan-comparison";
+import { MarketingPricingCards } from "@/features/billing/components/marketing-pricing-cards";
 import { LandingSection } from "@/features/landing/components/section";
 import { Reveal } from "@/features/landing/components/reveal";
 
 export function LandingPricing() {
   const { dict } = useDictionary();
   const copy = dict.landing.pricing;
-  const comparison = comparePlans();
 
   return (
     <LandingSection
@@ -22,7 +20,7 @@ export function LandingPricing() {
       description={copy.desc}
     >
       <Reveal>
-        <PlanComparison comparison={comparison} />
+        <MarketingPricingCards showPaymentMethods={false} compact />
       </Reveal>
       <Reveal delay={0.08}>
         <div className="mt-8 flex flex-wrap items-center justify-center gap-3">

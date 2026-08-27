@@ -56,6 +56,8 @@ export async function LandingFooter() {
       </div>
 
       <PaymentMethodsRow
+        variant="cards"
+        className="mx-auto mt-12 max-w-6xl border-t border-zt-border pt-10"
         title={dict.footer.paymentMethods}
         labels={{
           visa: dict.footer.paymentVisa,
@@ -65,6 +67,9 @@ export async function LandingFooter() {
           diners: dict.footer.paymentDiners,
         }}
       />
+      <p className="mx-auto mt-4 max-w-6xl text-center text-xs text-zt-muted sm:text-left">
+        {dict.landing.pricing.paymentMethodsNote}
+      </p>
 
       <div className="mx-auto mt-8 flex max-w-6xl flex-col gap-2 border-t border-zt-border pt-6 text-xs text-zt-muted sm:flex-row sm:items-center sm:justify-between">
         <p>
