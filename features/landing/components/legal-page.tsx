@@ -2,11 +2,13 @@ import type { ReactNode } from "react";
 
 export function LegalPage({
   title,
+  lastUpdatedLabel,
   lastUpdated,
   children,
 }: {
   title: string;
-  /** Exact document "Last Updated" date value, e.g. August 27, 2026 */
+  lastUpdatedLabel?: string;
+  /** Localized document last-updated date value */
   lastUpdated?: string;
   children: ReactNode;
 }) {
@@ -17,7 +19,7 @@ export function LegalPage({
       </h1>
       {lastUpdated ? (
         <p className="mt-3 text-sm text-zt-muted">
-          Last Updated: {lastUpdated}
+          {lastUpdatedLabel ?? "Last Updated"}: {lastUpdated}
         </p>
       ) : null}
       <div className="prose-invert mt-8 space-y-4 text-sm leading-relaxed text-zt-muted sm:text-base">

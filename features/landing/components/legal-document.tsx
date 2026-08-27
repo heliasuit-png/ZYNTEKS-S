@@ -11,12 +11,16 @@ import type { Dictionary } from "@/lib/i18n/dictionaries";
 export type LegalKind = LegalDocumentKind;
 
 export async function LegalDocument({ kind }: { kind: LegalKind }) {
-  const { dict } = await getDictionary();
+  const { locale, dict } = await getDictionary();
   const title = titleFor(kind, dict.legal);
-  const doc = getLegalDocument(kind);
+  const doc = getLegalDocument(kind, locale);
 
   return (
-    <LegalPage title={title} lastUpdated={doc.lastUpdated}>
+    <LegalPage
+      title={title}
+      lastUpdatedLabel={dict.legal.lastUpdatedLabel}
+      lastUpdated={doc.lastUpdated}
+    >
       {doc.intro.map((paragraph, index) => (
         <p key={`intro-${index}`}>{paragraph}</p>
       ))}

@@ -123,6 +123,7 @@ export type Dictionary = {
     distanceSalesTitle: string;
     preliminaryInformationTitle: string;
     refundCancellationTitle: string;
+    lastUpdatedLabel: string;
   };
   dashboardNav: {
     dashboard: string;

@@ -118,6 +118,7 @@ export const tr: Dictionary = {
     distanceSalesTitle: "Mesafeli Satış Sözleşmesi",
     preliminaryInformationTitle: "Ön Bilgilendirme Formu",
     refundCancellationTitle: "İade ve İptal Politikası",
+    lastUpdatedLabel: "Son Güncelleme",
   },
   dashboardNav: {
     dashboard: "Panel",

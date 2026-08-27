@@ -7,6 +7,7 @@ import {
   LEGAL_OPERATOR,
   getLegalDocument,
 } from "@/features/landing/data/legal-content";
+import { LEGAL_LAST_UPDATED_TR } from "@/features/landing/data/legal/tr/terms";
 
 describe("legal routes and canonical content", () => {
   it("exposes canonical /legal/* paths", () => {
@@ -38,7 +39,7 @@ describe("legal routes and canonical content", () => {
     assert.equal(LEGAL_LAST_UPDATED, "August 27, 2026");
   });
 
-  it("loads all seven legal documents with Last Updated date", () => {
+  it("loads EN and TR bodies for all seven documents", () => {
     const kinds = [
       "terms",
       "distance-sales",
@@ -50,12 +51,19 @@ describe("legal routes and canonical content", () => {
     ] as const;
 
     for (const kind of kinds) {
-      const doc = getLegalDocument(kind);
-      assert.equal(doc.lastUpdated, LEGAL_LAST_UPDATED);
-      assert.ok(doc.intro.length > 0);
-      assert.ok(doc.sections.length > 0);
-      assert.match(JSON.stringify(doc), /Aysel Nur Akıncı/);
-      assert.doesNotMatch(JSON.stringify(doc), /TODO/i);
+      const en = getLegalDocument(kind, "en");
+      const tr = getLegalDocument(kind, "tr");
+      assert.equal(en.lastUpdated, LEGAL_LAST_UPDATED);
+      assert.equal(tr.lastUpdated, LEGAL_LAST_UPDATED_TR);
+      assert.ok(en.intro.length > 0);
+      assert.ok(tr.intro.length > 0);
+      assert.ok(en.sections.length > 0);
+      assert.ok(tr.sections.length > 0);
+      assert.notEqual(en.intro[0], tr.intro[0]);
+      assert.match(JSON.stringify(en), /Aysel Nur Akıncı/);
+      assert.match(JSON.stringify(tr), /Aysel Nur Akıncı/);
+      assert.doesNotMatch(JSON.stringify(en), /TODO/i);
+      assert.doesNotMatch(JSON.stringify(tr), /TODO/i);
     }
   });
 });

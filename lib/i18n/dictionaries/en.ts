@@ -118,6 +118,7 @@ export const en: Dictionary = {
     distanceSalesTitle: "Distance Sales Agreement",
     preliminaryInformationTitle: "Preliminary Information Form",
     refundCancellationTitle: "Refund & Cancellation Policy",
+    lastUpdatedLabel: "Last Updated",
   },
   dashboardNav: {
     dashboard: "Dashboard",
