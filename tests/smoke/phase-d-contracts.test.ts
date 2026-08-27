@@ -227,13 +227,18 @@ describe("SDK auth contract shapes", () => {
 });
 
 describe("SDK native guidance docs", () => {
-  it("docs discourage React Native browser SDK init", () => {
+  it("docs discourage React Native browser SDK init", async () => {
+    const { dictionaries } = await import("@/lib/i18n/dictionaries");
     const sdkDoc = readSrc("docs/SDK.md");
     const readme = readSrc("sdk/README.md");
     const guide = readSrc("features/api-keys/components/connection-guide.tsx");
     assert.match(sdkDoc, /React Native/);
     assert.match(sdkDoc, /X-Zynteksis-Key/);
     assert.match(readme, /React Native/);
-    assert.match(guide, /React Native/);
+    assert.match(guide, /useDictionary|dict\.dash\.apiKeys/);
+    assert.match(
+      dictionaries.en.dash.apiKeys.connectionGuide.browserNative,
+      /React Native/,
+    );
   });
 });

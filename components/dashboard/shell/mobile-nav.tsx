@@ -6,6 +6,7 @@ import { X } from "lucide-react";
 import { Brand } from "@/components/dashboard/shell/brand";
 import { NavList } from "@/components/dashboard/shell/nav-list";
 import { WorkspaceSwitcher } from "@/components/dashboard/shell/workspace-switcher";
+import { useDictionary } from "@/components/i18n/locale-provider";
 import { useDashboard } from "@/features/dashboard/hooks/use-dashboard";
 import type {
   DashboardUser,
@@ -20,6 +21,7 @@ export function MobileNav({
   workspace: DashboardWorkspaceContext;
 }) {
   const { isMobileNavOpen, closeMobileNav } = useDashboard();
+  const { dict } = useDictionary();
   const displayName = user.fullName?.trim() || user.email;
 
   return (
@@ -46,7 +48,7 @@ export function MobileNav({
               <button
                 type="button"
                 onClick={closeMobileNav}
-                aria-label="Close navigation"
+                aria-label={dict.dash.shell.closeNavigation}
                 className="rounded-lg p-1 text-zt-muted transition-colors hover:text-zt-text"
               >
                 <X className="size-5" aria-hidden />

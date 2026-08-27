@@ -2,6 +2,7 @@ import "server-only";
 
 import { AI } from "@/lib/constants";
 import { NotFoundError } from "@/lib/errors";
+import { getDictionary } from "@/lib/i18n/get-dictionary";
 import type { TypedSupabaseClient } from "@/supabase/client";
 import type {
   AiConversation,
@@ -73,12 +74,16 @@ export async function createConversation(
   userId: string,
   input: CreateConversationInput,
 ): Promise<AiConversation> {
+  const title =
+    input.title ??
+    (await getDictionary()).dict.dash.ai.newChat;
+
   const { data, error } = await supabase
     .from("ai_conversations")
     .insert({
       user_id: userId,
       project_id: input.projectId ?? null,
-      title: input.title ?? "New conversation",
+      title,
       model: input.model,
     })
     .select("*")

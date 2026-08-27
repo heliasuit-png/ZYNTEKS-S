@@ -1,13 +1,14 @@
 "use client";
 
+import { useDictionary } from "@/components/i18n/locale-provider";
 import type { UsageSeriesPoint } from "@/services/admin/executive-dashboard.types";
 
-const SERIES = [
-  { key: "users" as const, label: "Users", color: "#60a5fa" },
-  { key: "errors" as const, label: "Errors", color: "#f87171" },
-  { key: "aiRequests" as const, label: "AI", color: "#a78bfa" },
-  { key: "projects" as const, label: "Projects", color: "#34d399" },
-  { key: "apiCalls" as const, label: "API Calls", color: "#fbbf24" },
+const SERIES_META = [
+  { key: "users" as const, color: "#60a5fa", labelKey: "users" as const },
+  { key: "errors" as const, color: "#f87171", labelKey: "errors" as const },
+  { key: "aiRequests" as const, color: "#a78bfa", labelKey: "ai" as const },
+  { key: "projects" as const, color: "#34d399", labelKey: "projects" as const },
+  { key: "apiCalls" as const, color: "#fbbf24", labelKey: "apiCalls" as const },
 ];
 
 interface UsageChartProps {
@@ -15,6 +16,14 @@ interface UsageChartProps {
 }
 
 export function UsageChart({ data }: UsageChartProps) {
+  const { dict } = useDictionary();
+  const t = dict.admin.executive.chart;
+
+  const series = SERIES_META.map((item) => ({
+    ...item,
+    label: t[item.labelKey],
+  }));
+
   const width = 720;
   const height = 220;
   const pad = { top: 16, right: 12, bottom: 28, left: 36 };
@@ -23,27 +32,24 @@ export function UsageChart({ data }: UsageChartProps) {
 
   const max = Math.max(
     1,
-    ...data.flatMap((point) =>
-      SERIES.map((series) => point[series.key]),
-    ),
+    ...data.flatMap((point) => series.map((s) => point[s.key])),
   );
 
   const x = (index: number) =>
     pad.left + (data.length <= 1 ? innerW / 2 : (index / (data.length - 1)) * innerW);
-  const y = (value: number) =>
-    pad.top + innerH - (value / max) * innerH;
+  const y = (value: number) => pad.top + innerH - (value / max) * innerH;
 
   return (
     <div className="space-y-3">
       <div className="flex flex-wrap gap-3 text-xs text-[var(--admin-muted)]">
-        {SERIES.map((series) => (
-          <span key={series.key} className="inline-flex items-center gap-1.5">
+        {series.map((s) => (
+          <span key={s.key} className="inline-flex items-center gap-1.5">
             <span
               className="h-2 w-2 rounded-full"
-              style={{ background: series.color }}
+              style={{ background: s.color }}
               aria-hidden
             />
-            {series.label}
+            {s.label}
           </span>
         ))}
       </div>
@@ -52,7 +58,7 @@ export function UsageChart({ data }: UsageChartProps) {
           viewBox={`0 0 ${width} ${height}`}
           className="min-w-full"
           role="img"
-          aria-label="Usage chart over the selected range"
+          aria-label={t.ariaLabel}
         >
           {[0, 0.25, 0.5, 0.75, 1].map((tick) => {
             const yy = pad.top + innerH * (1 - tick);
@@ -78,19 +84,19 @@ export function UsageChart({ data }: UsageChartProps) {
             );
           })}
 
-          {SERIES.map((series) => {
+          {series.map((s) => {
             const path = data
               .map((point, index) => {
                 const command = index === 0 ? "M" : "L";
-                return `${command}${x(index)} ${y(point[series.key])}`;
+                return `${command}${x(index)} ${y(point[s.key])}`;
               })
               .join(" ");
             return (
               <path
-                key={series.key}
+                key={s.key}
                 d={path}
                 fill="none"
-                stroke={series.color}
+                stroke={s.color}
                 strokeWidth="2"
                 strokeLinejoin="round"
                 strokeLinecap="round"
@@ -115,9 +121,7 @@ export function UsageChart({ data }: UsageChartProps) {
                 fill="rgba(139,151,168,0.9)"
                 fontSize="10"
               >
-                {point.label.length > 10
-                  ? point.label.slice(5)
-                  : point.label}
+                {point.label.length > 10 ? point.label.slice(5) : point.label}
               </text>
             );
           })}

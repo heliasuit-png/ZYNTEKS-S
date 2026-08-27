@@ -3,6 +3,7 @@
 import { useState, useTransition, type ReactNode } from "react";
 import { Loader2 } from "lucide-react";
 
+import { useDictionary } from "@/components/i18n/locale-provider";
 import { startOAuthAction } from "@/features/auth/actions";
 import type { OAuthProviderConfig } from "@/services/auth/provider-types";
 
@@ -40,11 +41,18 @@ interface OAuthButtonsProps {
 }
 
 export function OAuthButtons({ providers, redirectTo }: OAuthButtonsProps) {
+  const { dict } = useDictionary();
+  const f = dict.authForms;
   const [pendingKey, setPendingKey] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
   const visible = providers.filter((provider) => provider.enabled);
+
+  const labelByKey: Record<OAuthProviderConfig["key"], string> = {
+    google: f.continueWithGoogle,
+    github: f.continueWithGitHub,
+  };
 
   function onContinue(provider: OAuthProviderConfig) {
     setError(null);
@@ -52,7 +60,7 @@ export function OAuthButtons({ providers, redirectTo }: OAuthButtonsProps) {
     startTransition(async () => {
       const result = await startOAuthAction(provider.key, redirectTo);
       if (result?.status === "error") {
-        setError(result.message ?? "Unable to start OAuth sign-in.");
+        setError(result.message ?? f.oauthStartFailed);
         setPendingKey(null);
       }
     });
@@ -63,7 +71,7 @@ export function OAuthButtons({ providers, redirectTo }: OAuthButtonsProps) {
   }
 
   return (
-    <div className="space-y-2" role="group" aria-label="Sign in with a provider">
+    <div className="space-y-2" role="group" aria-label={f.oauthGroupAria}>
       {error ? (
         <p
           role="alert"
@@ -87,7 +95,7 @@ export function OAuthButtons({ providers, redirectTo }: OAuthButtonsProps) {
             ) : (
               ICONS[provider.key]
             )}
-            <span>{provider.label}</span>
+            <span>{labelByKey[provider.key]}</span>
           </button>
         );
       })}

@@ -25,8 +25,11 @@ import { DASHBOARD_ROUTES } from "@/lib/constants";
 import { resolveNavItems } from "@/components/dashboard/shell/nav-config";
 import { useCommandPalette } from "@/components/dashboard/command-palette/command-palette-context";
 import { useDashboard } from "@/features/dashboard/hooks/use-dashboard";
+import { useDictionary } from "@/components/i18n/locale-provider";
+import { fillTemplate } from "@/lib/i18n/fill-template";
 
-type CommandGroup =
+/** Stable group ids — match API / search payload English keys. */
+type CommandGroupId =
   | "Actions"
   | "Navigation"
   | "Members"
@@ -42,7 +45,7 @@ interface CommandEntry {
   id: string;
   label: string;
   href: string;
-  group: CommandGroup;
+  group: CommandGroupId;
   icon: LucideIcon;
   keywords?: string;
 }
@@ -79,42 +82,9 @@ function writeIds(key: string, ids: string[]) {
   }
 }
 
-const actionEntries: CommandEntry[] = [
-  {
-    id: "action-create-project",
-    label: "Create Project",
-    href: DASHBOARD_ROUTES.projects,
-    group: "Actions",
-    icon: Plus,
-    keywords: "new add project",
-  },
-  {
-    id: "action-generate-key",
-    label: "Generate API Key",
-    href: DASHBOARD_ROUTES.apiKeys,
-    group: "Actions",
-    icon: KeyRound,
-    keywords: "api key token secret",
-  },
-  {
-    id: "action-open-ai",
-    label: "Open AI Assistant",
-    href: DASHBOARD_ROUTES.aiAssistant,
-    group: "Actions",
-    icon: Sparkles,
-    keywords: "ai chat assistant analyze",
-  },
-  {
-    id: "action-view-errors",
-    label: "View Errors",
-    href: DASHBOARD_ROUTES.errors,
-    group: "Actions",
-    icon: Bug,
-    keywords: "errors monitoring logs",
-  },
-];
-
 export function CommandPalette({ workspaceId }: { workspaceId?: string }) {
+  const { dict } = useDictionary();
+  const cp = dict.dash.commandPalette;
   const { open, closePalette } = useCommandPalette();
   const { navLabels } = useDashboard();
   const router = useRouter();
@@ -124,6 +94,60 @@ export function CommandPalette({ workspaceId }: { workspaceId?: string }) {
   const [recentIds, setRecentIds] = useState<string[]>([]);
   const [pinnedIds, setPinnedIds] = useState<string[]>([]);
   const [remoteHits, setRemoteHits] = useState<CommandEntry[]>([]);
+
+  const groupLabel = useMemo(
+    (): Record<CommandGroupId, string> => ({
+      Actions: cp.actions,
+      Navigation: cp.navigation,
+      Members: cp.members,
+      Workspaces: cp.workspaces,
+      Projects: cp.projects,
+      Errors: cp.errors,
+      Incidents: cp.incidents,
+      Notifications: cp.notifications,
+      "API Keys": cp.apiKeys,
+      "AI Chats": cp.aiChats,
+    }),
+    [cp],
+  );
+
+  const actionEntries = useMemo<CommandEntry[]>(
+    () => [
+      {
+        id: "action-create-project",
+        label: cp.createProject,
+        href: DASHBOARD_ROUTES.projects,
+        group: "Actions",
+        icon: Plus,
+        keywords: "new add project",
+      },
+      {
+        id: "action-generate-key",
+        label: cp.generateApiKey,
+        href: DASHBOARD_ROUTES.apiKeys,
+        group: "Actions",
+        icon: KeyRound,
+        keywords: "api key token secret",
+      },
+      {
+        id: "action-open-ai",
+        label: cp.openAiAssistant,
+        href: DASHBOARD_ROUTES.aiAssistant,
+        group: "Actions",
+        icon: Sparkles,
+        keywords: "ai chat assistant analyze",
+      },
+      {
+        id: "action-view-errors",
+        label: cp.viewErrors,
+        href: DASHBOARD_ROUTES.errors,
+        group: "Actions",
+        icon: Bug,
+        keywords: "errors monitoring logs",
+      },
+    ],
+    [cp],
+  );
 
   const entries = useMemo<CommandEntry[]>(() => {
     const navEntries: CommandEntry[] = resolveNavItems(navLabels).map(
@@ -136,7 +160,7 @@ export function CommandPalette({ workspaceId }: { workspaceId?: string }) {
       }),
     );
     return [...actionEntries, ...navEntries];
-  }, [navLabels]);
+  }, [actionEntries, navLabels]);
 
   // Reset state and load recents when the palette opens.
   useEffect(() => {
@@ -173,7 +197,7 @@ export function CommandPalette({ workspaceId }: { workspaceId?: string }) {
               id: string;
               label: string;
               href: string;
-              group: CommandGroup;
+              group: CommandGroupId;
               keywords?: string;
             }>;
           };
@@ -181,7 +205,7 @@ export function CommandPalette({ workspaceId }: { workspaceId?: string }) {
             id: string;
             label: string;
             href: string;
-            group: CommandGroup;
+            group: CommandGroupId;
             keywords?: string;
           }>;
         };
@@ -233,7 +257,7 @@ export function CommandPalette({ workspaceId }: { workspaceId?: string }) {
         .map((id) => entries.find((entry) => entry.id === id))
         .filter((entry): entry is CommandEntry => Boolean(entry));
       if (pinned.length > 0) {
-        result.push({ label: "Pinned", items: pinned });
+        result.push({ label: cp.pinned, items: pinned });
       }
 
       const recents = recentIds
@@ -241,14 +265,14 @@ export function CommandPalette({ workspaceId }: { workspaceId?: string }) {
         .map((id) => entries.find((entry) => entry.id === id))
         .filter((entry): entry is CommandEntry => Boolean(entry));
       if (recents.length > 0) {
-        result.push({ label: "Recent", items: recents });
+        result.push({ label: cp.recent, items: recents });
       }
     }
 
     const actions = entries.filter((e) => e.group === "Actions" && matches(e));
     const nav = entries.filter((e) => e.group === "Navigation" && matches(e));
-    if (actions.length > 0) result.push({ label: "Actions", items: actions });
-    if (nav.length > 0) result.push({ label: "Go to", items: nav });
+    if (actions.length > 0) result.push({ label: cp.actions, items: actions });
+    if (nav.length > 0) result.push({ label: cp.goTo, items: nav });
 
     if (q.length >= 2 && remoteHits.length > 0) {
       const byGroup = new Map<string, CommandEntry[]>();
@@ -257,13 +281,16 @@ export function CommandPalette({ workspaceId }: { workspaceId?: string }) {
         list.push(hit);
         byGroup.set(hit.group, list);
       }
-      for (const [label, items] of byGroup) {
-        result.push({ label, items });
+      for (const [groupId, items] of byGroup) {
+        result.push({
+          label: groupLabel[groupId as CommandGroupId] ?? groupId,
+          items,
+        });
       }
     }
 
     return result;
-  }, [entries, q, recentIds, pinnedIds, remoteHits]);
+  }, [entries, q, recentIds, pinnedIds, remoteHits, cp, groupLabel]);
 
   const flat = useMemo(
     () => sections.flatMap((section) => section.items),
@@ -328,7 +355,7 @@ export function CommandPalette({ workspaceId }: { workspaceId?: string }) {
           <motion.div
             role="dialog"
             aria-modal="true"
-            aria-label="Command palette"
+            aria-label={cp.ariaLabel}
             initial={{ opacity: 0, y: -12, scale: 0.98 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -12, scale: 0.98 }}
@@ -345,8 +372,8 @@ export function CommandPalette({ workspaceId }: { workspaceId?: string }) {
                   setQuery(event.target.value);
                   setActive(0);
                 }}
-                placeholder="Search or jump to…"
-                aria-label="Search commands"
+                placeholder={cp.searchPlaceholder}
+                aria-label={cp.searchAria}
                 className="h-12 w-full bg-transparent text-sm text-zt-text placeholder:text-zt-muted focus:outline-none"
               />
               <kbd className="hidden shrink-0 rounded-md border border-zt-border bg-white/[0.03] px-1.5 py-0.5 text-[10px] font-medium text-zt-muted sm:block">
@@ -356,12 +383,12 @@ export function CommandPalette({ workspaceId }: { workspaceId?: string }) {
 
             <div
               role="listbox"
-              aria-label="Commands"
+              aria-label={cp.commandsAria}
               className="max-h-[52vh] overflow-y-auto p-2"
             >
               {flat.length === 0 ? (
                 <p className="px-3 py-8 text-center text-sm text-zt-muted">
-                  No results for “{query}”.
+                  {fillTemplate(cp.noResults, { query })}
                 </p>
               ) : (
                 sections.map((section) => (
@@ -414,7 +441,11 @@ export function CommandPalette({ workspaceId }: { workspaceId?: string }) {
                             <button
                               type="button"
                               onClick={(event) => togglePin(event, entry.id)}
-                              aria-label={isPinned ? "Unpin" : "Pin"}
+                              aria-label={
+                                isPinned
+                                  ? dict.dash.ai.unpin
+                                  : dict.dash.ai.pin
+                              }
                               aria-pressed={isPinned}
                               className={cn(
                                 "pointer-events-auto rounded-md p-1 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zt-primary/50",
@@ -454,15 +485,15 @@ export function CommandPalette({ workspaceId }: { workspaceId?: string }) {
                 <kbd className="rounded border border-zt-border bg-white/[0.03] px-1.5 py-0.5">
                   ↑↓
                 </kbd>
-                navigate
+                {cp.navigate}
                 <kbd className="rounded border border-zt-border bg-white/[0.03] px-1.5 py-0.5">
                   ↵
                 </kbd>
-                open
+                {cp.open}
               </span>
               <span className="flex items-center gap-1.5">
                 <Sparkles className="size-3.5 text-zt-primary" aria-hidden />
-                ZYNTEKSIS Command
+                {cp.brandLabel}
               </span>
             </div>
           </motion.div>

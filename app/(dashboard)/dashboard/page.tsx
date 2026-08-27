@@ -1,5 +1,3 @@
-import type { Metadata } from "next";
-
 import { FadeIn } from "@/components/dashboard/motion";
 import { Onboarding } from "@/components/dashboard/onboarding/onboarding";
 import { DashboardHero } from "@/components/dashboard/home/hero";
@@ -23,16 +21,11 @@ import {
   resolveActiveWorkspace,
 } from "@/services/workspace";
 import { createSupabaseServerClient } from "@/supabase/server";
+import { dashboardPageMetadata } from "@/lib/i18n/dashboard-metadata";
+import { getDictionary } from "@/lib/i18n/get-dictionary";
+import { fillTemplate } from "@/lib/i18n/fill-template";
 
-export const metadata: Metadata = {
-  title: "Dashboard",
-};
-
-const PLAN_LABELS: Record<string, string> = {
-  free: "Starter",
-  pro: "Pro",
-  enterprise: "Enterprise",
-};
+export const generateMetadata = () => dashboardPageMetadata("dashboard");
 
 function firstName(fullName: string | null, email: string): string {
   const name = fullName?.trim();
@@ -45,12 +38,17 @@ function firstName(fullName: string | null, email: string): string {
 }
 
 export default async function DashboardPage() {
+  const { dict } = await getDictionary();
+  const usageCopy = dict.dash.billingUi;
+  const planNames = usageCopy.planNames;
   const overview = await getDashboardOverview();
 
   // Read-only lookup of the signed-in user for a personalised hero.
   let userName = "";
-  let planLabel = "Starter";
-  let workspaceLabel = `${planLabel} workspace`;
+  let planLabel = planNames.free;
+  let workspaceLabel = fillTemplate(dict.dash.shell.planWorkspace, {
+    plan: planLabel,
+  });
   let workspaceUsage: {
     memberCount: number;
     projectCount: number;
@@ -65,7 +63,12 @@ export default async function DashboardPage() {
       try {
         const profile = await getProfileById(supabase, user.id);
         userName = firstName(profile.full_name, user.email ?? "");
-        planLabel = PLAN_LABELS[profile.subscription_plan] ?? planLabel;
+        planLabel =
+          planNames[profile.subscription_plan as keyof typeof planNames] ??
+          planLabel;
+        workspaceLabel = fillTemplate(dict.dash.shell.planWorkspace, {
+          plan: planLabel,
+        });
       } catch {
         // Profile not ready yet; fall back to the email-derived name.
       }
@@ -75,7 +78,8 @@ export default async function DashboardPage() {
           user.id,
           user.email,
         );
-        planLabel = PLAN_LABELS[active.plan] ?? planLabel;
+        planLabel =
+          planNames[active.plan as keyof typeof planNames] ?? planLabel;
         workspaceLabel = active.name;
         workspaceUsage = await getWorkspaceUsage(supabase, active.id);
       } catch {
@@ -102,12 +106,24 @@ export default async function DashboardPage() {
       {workspaceUsage ? (
         <FadeIn>
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
-            <WorkspaceStat label="Members" value={workspaceUsage.memberCount} />
-            <WorkspaceStat label="Projects" value={workspaceUsage.projectCount} />
-            <WorkspaceStat label="API keys" value={workspaceUsage.apiKeyCount} />
-            <WorkspaceStat label="AI usage (30d)" value={workspaceUsage.aiMessageCount} />
             <WorkspaceStat
-              label="Health"
+              label={usageCopy.usageMembers}
+              value={workspaceUsage.memberCount}
+            />
+            <WorkspaceStat
+              label={usageCopy.usageProjects}
+              value={workspaceUsage.projectCount}
+            />
+            <WorkspaceStat
+              label={usageCopy.usageApiKeys}
+              value={workspaceUsage.apiKeyCount}
+            />
+            <WorkspaceStat
+              label={usageCopy.usageAiMessages}
+              value={workspaceUsage.aiMessageCount}
+            />
+            <WorkspaceStat
+              label={usageCopy.usageHealth}
               value={stats.healthScore}
               suffix="%"
             />

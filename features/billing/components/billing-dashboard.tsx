@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 
+import { useDictionary } from "@/components/i18n/locale-provider";
 import { PageHeader } from "@/components/dashboard/page-header";
 import { BillingSettings } from "@/features/billing/components/billing-settings";
 import { InvoiceHistory } from "@/features/billing/components/invoice-history";
@@ -12,38 +13,48 @@ import { UsageDashboard } from "@/features/billing/components/usage-dashboard";
 import type { comparePlans } from "@/services/billing/catalog";
 import type { BillingOverview, PlanDefinition } from "@/services/billing/types";
 
-const tabs = [
-  { id: "overview", label: "Overview" },
-  { id: "plans", label: "Plans" },
-  { id: "usage", label: "Usage" },
-  { id: "invoices", label: "Invoices" },
-  { id: "settings", label: "Settings" },
-] as const;
-
-type TabId = (typeof tabs)[number]["id"];
+type TabId = "overview" | "plans" | "usage" | "invoices" | "settings";
 
 export function BillingDashboard({
   overview,
   catalog,
   comparison,
+  checkoutNotice,
 }: {
   overview: BillingOverview;
   catalog: readonly PlanDefinition[];
   comparison: ReturnType<typeof comparePlans>;
+  checkoutNotice?: string | null;
 }) {
+  const { dict } = useDictionary();
+  const t = dict.dash.billingUi;
   const [tab, setTab] = useState<TabId>("overview");
+
+  const tabs: { id: TabId; label: string }[] = [
+    { id: "overview", label: t.overview },
+    { id: "plans", label: t.plans },
+    { id: "usage", label: t.usage },
+    { id: "invoices", label: t.invoices },
+    { id: "settings", label: t.settings },
+  ];
 
   return (
     <div className="space-y-6">
-      <PageHeader
-        title="Billing"
-        description="Subscription, usage, plan comparison and invoice history. Payment checkout is provider-pluggable."
-      />
+      <PageHeader title={t.pageTitle} description={t.pageDesc} />
+
+      {checkoutNotice ? (
+        <p
+          role="status"
+          className="rounded-xl border border-zt-border bg-zt-surface-2 px-4 py-3 text-sm text-zt-muted"
+        >
+          {checkoutNotice}
+        </p>
+      ) : null}
 
       <div
         className="flex flex-wrap gap-2 border-b border-zt-border pb-3"
         role="tablist"
-        aria-label="Billing sections"
+        aria-label={t.sectionsAria}
       >
         {tabs.map((item) => (
           <button

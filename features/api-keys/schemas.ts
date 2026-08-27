@@ -9,17 +9,17 @@ const environmentValues = [...API_KEY_ENVIRONMENTS] as [
 ];
 
 export const createApiKeySchema = z.object({
-  projectId: z.string().uuid("Select a project."),
+  projectId: z.string().uuid("select_project"),
   name: z
     .string()
     .trim()
-    .min(1, "Name is required.")
-    .max(60, "Name must be 60 characters or fewer."),
+    .min(1, "name_required")
+    .max(60, "name_max_60"),
   environment: z.enum(environmentValues),
 });
 
 export const apiKeyIdSchema = z.object({
-  id: z.string().uuid("Invalid API key id."),
+  id: z.string().uuid("invalid_api_key_id"),
 });
 
 export type CreateApiKeyValues = z.infer<typeof createApiKeySchema>;

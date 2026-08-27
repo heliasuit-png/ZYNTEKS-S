@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { DASHBOARD_ROUTES } from "@/lib/constants";
 import { requireApiUser } from "@/lib/api-auth";
 import { NotFoundError } from "@/lib/errors";
+import { getDictionary } from "@/lib/i18n/get-dictionary";
 import {
   deleteConversation,
   renameConversation,
@@ -28,12 +29,15 @@ export type AiActionResult = { ok: true } | { ok: false; error: string };
 export async function renameConversationAction(
   formData: FormData,
 ): Promise<AiActionResult> {
+  const { dict } = await getDictionary();
+  const am = dict.actionMessages;
+
   const parsed = renameConversationSchema.safeParse({
     id: formData.get("id"),
     title: formData.get("title"),
   });
   if (!parsed.success) {
-    return { ok: false, error: "Enter a valid title." };
+    return { ok: false, error: am.aiInvalidTitle };
   }
   try {
     const { supabase, user } = await requireApiUser();
@@ -48,7 +52,7 @@ export async function renameConversationAction(
   } catch (error) {
     return {
       ok: false,
-      error: error instanceof Error ? error.message : "Rename failed.",
+      error: error instanceof Error ? error.message : am.aiRenameFailed,
     };
   }
 }
@@ -56,12 +60,15 @@ export async function renameConversationAction(
 export async function pinConversationAction(
   formData: FormData,
 ): Promise<AiActionResult> {
+  const { dict } = await getDictionary();
+  const am = dict.actionMessages;
+
   const parsed = pinConversationSchema.safeParse({
     id: formData.get("id"),
     pinned: formData.get("pinned"),
   });
   if (!parsed.success) {
-    return { ok: false, error: "Invalid pin request." };
+    return { ok: false, error: am.aiInvalidPin };
   }
   try {
     const { supabase, user } = await requireApiUser();
@@ -76,7 +83,7 @@ export async function pinConversationAction(
   } catch (error) {
     return {
       ok: false,
-      error: error instanceof Error ? error.message : "Pin failed.",
+      error: error instanceof Error ? error.message : am.aiPinFailed,
     };
   }
 }
@@ -84,9 +91,12 @@ export async function pinConversationAction(
 export async function deleteConversationAction(
   formData: FormData,
 ): Promise<AiActionResult> {
+  const { dict } = await getDictionary();
+  const am = dict.actionMessages;
+
   const parsed = conversationIdSchema.safeParse({ id: formData.get("id") });
   if (!parsed.success) {
-    return { ok: false, error: "Invalid conversation." };
+    return { ok: false, error: am.aiInvalidConversation };
   }
   try {
     const { supabase, user } = await requireApiUser();
@@ -96,7 +106,7 @@ export async function deleteConversationAction(
   } catch (error) {
     return {
       ok: false,
-      error: error instanceof Error ? error.message : "Delete failed.",
+      error: error instanceof Error ? error.message : am.aiDeleteFailed,
     };
   }
 }
@@ -104,12 +114,15 @@ export async function deleteConversationAction(
 export async function setConversationProjectAction(
   formData: FormData,
 ): Promise<AiActionResult> {
+  const { dict } = await getDictionary();
+  const am = dict.actionMessages;
+
   const parsed = setConversationProjectSchema.safeParse({
     id: formData.get("id"),
     projectId: formData.get("projectId") || null,
   });
   if (!parsed.success) {
-    return { ok: false, error: "Invalid project selection." };
+    return { ok: false, error: am.aiInvalidProject };
   }
   try {
     const { supabase, user } = await requireApiUser();
@@ -124,7 +137,7 @@ export async function setConversationProjectAction(
   } catch (error) {
     return {
       ok: false,
-      error: error instanceof Error ? error.message : "Could not update project.",
+      error: error instanceof Error ? error.message : am.aiProjectUpdateFailed,
     };
   }
 }
@@ -132,12 +145,15 @@ export async function setConversationProjectAction(
 export async function submitFeedbackAction(
   formData: FormData,
 ): Promise<AiActionResult> {
+  const { dict } = await getDictionary();
+  const am = dict.actionMessages;
+
   const parsed = feedbackSchema.safeParse({
     messageId: formData.get("messageId"),
     rating: formData.get("rating"),
   });
   if (!parsed.success) {
-    return { ok: false, error: "Invalid feedback." };
+    return { ok: false, error: am.aiInvalidFeedback };
   }
   try {
     const { supabase, user } = await requireApiUser();
@@ -154,7 +170,7 @@ export async function submitFeedbackAction(
       throw messageError;
     }
     if (!message) {
-      throw new NotFoundError("Message not found.");
+      throw new NotFoundError(am.notFound);
     }
 
     const { error } = await supabase.from("ai_feedback").upsert(
@@ -175,7 +191,7 @@ export async function submitFeedbackAction(
   } catch (error) {
     return {
       ok: false,
-      error: error instanceof Error ? error.message : "Feedback failed.",
+      error: error instanceof Error ? error.message : am.aiFeedbackFailed,
     };
   }
 }

@@ -1,3 +1,7 @@
+"use client";
+
+import { useDictionary } from "@/components/i18n/locale-provider";
+import { fillTemplate } from "@/lib/i18n/fill-template";
 import {
   Panel,
   PanelContent,
@@ -10,25 +14,31 @@ import { formatLimit, usagePercent } from "@/utils/billing";
 import type { BillingUsageSnapshot } from "@/services/billing/types";
 
 export function UsageDashboard({ usage }: { usage: BillingUsageSnapshot }) {
+  const { dict } = useDictionary();
+  const t = dict.dash.billingUi;
+
   const rows = [
     {
-      label: "Projects",
+      label: t.usageProjects,
       used: usage.projects,
       limit: usage.projectLimit,
     },
     {
-      label: "API keys (workspace)",
+      label: t.usageApiKeys,
       used: usage.apiKeys,
       limit: null as number | null,
-      hint: `≤ ${usage.apiKeysPerProject} per project`,
+      hint: t.perProjectHint.replace(
+        "{count}",
+        String(usage.apiKeysPerProject),
+      ),
     },
     {
-      label: "Members",
+      label: t.usageMembers,
       used: usage.members,
       limit: usage.memberLimit,
     },
     {
-      label: "AI messages (30d)",
+      label: t.usageAiMessages,
       used: usage.aiMessages30d,
       limit: usage.aiMessageLimit,
     },
@@ -39,10 +49,8 @@ export function UsageDashboard({ usage }: { usage: BillingUsageSnapshot }) {
       <Panel>
         <PanelHeader>
           <div>
-            <PanelTitle>Usage dashboard</PanelTitle>
-            <PanelDescription>
-              Live workspace consumption against your plan limits.
-            </PanelDescription>
+            <PanelTitle>{t.usageDashboard}</PanelTitle>
+            <PanelDescription>{t.usageDashboardDesc}</PanelDescription>
           </div>
         </PanelHeader>
         <PanelContent className="grid gap-4 sm:grid-cols-2">
@@ -57,7 +65,9 @@ export function UsageDashboard({ usage }: { usage: BillingUsageSnapshot }) {
                   <p className="text-xs text-zt-muted">{row.label}</p>
                   <p className="text-sm font-semibold text-zt-text">
                     {row.used.toLocaleString()}
-                    {row.limit !== null ? ` / ${formatLimit(row.limit)}` : ""}
+                    {row.limit !== null
+                      ? ` / ${formatLimit(row.limit, t.unlimited)}`
+                      : ""}
                   </p>
                 </div>
                 {row.hint ? (
@@ -70,7 +80,9 @@ export function UsageDashboard({ usage }: { usage: BillingUsageSnapshot }) {
                     aria-valuenow={pct}
                     aria-valuemin={0}
                     aria-valuemax={100}
-                    aria-label={`${row.label} usage`}
+                    aria-label={fillTemplate(t.usageAria, {
+                      label: row.label,
+                    })}
                   >
                     <div
                       className={`h-full rounded-full transition-all ${

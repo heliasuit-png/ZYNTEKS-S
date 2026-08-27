@@ -1,10 +1,13 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { z } from "zod";
 
 import { DASHBOARD_ROUTES, STATUS_PAGE_BASE_PATH } from "@/lib/constants";
-import { isAppError } from "@/lib/errors";
+import { getDictionary } from "@/lib/i18n/get-dictionary";
+import {
+  fieldErrorsFromZod,
+  toLocalizedErrorMessage,
+} from "@/lib/i18n/localize-action";
 import { createSupabaseServerClient } from "@/supabase/server";
 import { getAuthenticatedUser } from "@/services/auth";
 import {
@@ -25,22 +28,6 @@ import {
   updateStatusPageSchema,
 } from "@/features/status/schemas";
 import type { StatusPageFormState } from "@/features/status/types";
-
-function fieldErrorsFrom(error: z.ZodError): Record<string, string[]> {
-  const flattened = error.flatten().fieldErrors;
-  const result: Record<string, string[]> = {};
-  for (const [key, messages] of Object.entries(flattened)) {
-    if (messages && messages.length > 0) {
-      result[key] = messages;
-    }
-  }
-  return result;
-}
-
-function toErrorMessage(error: unknown): string {
-  if (isAppError(error)) return error.message;
-  return "Something went wrong. Please try again.";
-}
 
 function checkbox(formData: FormData, name: string): boolean {
   const value = formData.get(name);
@@ -65,6 +52,9 @@ export async function createStatusPageAction(
   _prevState: StatusPageFormState,
   formData: FormData,
 ): Promise<StatusPageFormState> {
+  const { dict } = await getDictionary();
+  const am = dict.actionMessages;
+
   const parsed = createStatusPageSchema.safeParse({
     projectId: formData.get("projectId"),
     name: formData.get("name") ?? "",
@@ -74,12 +64,12 @@ export async function createStatusPageAction(
   });
 
   if (!parsed.success) {
-    return { status: "error", fieldErrors: fieldErrorsFrom(parsed.error) };
+    return { status: "error", fieldErrors: fieldErrorsFromZod(parsed.error, am) };
   }
 
   const { supabase, user } = await resolveUser();
   if (!user) {
-    return { status: "error", message: "You must be signed in." };
+    return { status: "error", message: am.mustSignIn };
   }
 
   try {
@@ -91,9 +81,9 @@ export async function createStatusPageAction(
       isPublic: parsed.data.isPublic,
     });
     revalidateStatus(page.slug);
-    return { status: "success", message: "Status page created." };
+    return { status: "success", message: am.statusPageCreated };
   } catch (error) {
-    return { status: "error", message: toErrorMessage(error) };
+    return { status: "error", message: toLocalizedErrorMessage(error, am) };
   }
 }
 
@@ -101,6 +91,9 @@ export async function updateStatusPageAction(
   _prevState: StatusPageFormState,
   formData: FormData,
 ): Promise<StatusPageFormState> {
+  const { dict } = await getDictionary();
+  const am = dict.actionMessages;
+
   const parsed = updateStatusPageSchema.safeParse({
     id: formData.get("id"),
     name: formData.get("name"),
@@ -115,12 +108,12 @@ export async function updateStatusPageAction(
   });
 
   if (!parsed.success) {
-    return { status: "error", fieldErrors: fieldErrorsFrom(parsed.error) };
+    return { status: "error", fieldErrors: fieldErrorsFromZod(parsed.error, am) };
   }
 
   const { supabase, user } = await resolveUser();
   if (!user) {
-    return { status: "error", message: "You must be signed in." };
+    return { status: "error", message: am.mustSignIn };
   }
 
   try {
@@ -136,9 +129,9 @@ export async function updateStatusPageAction(
       footerText: parsed.data.footerText || null,
     });
     revalidateStatus(page.slug);
-    return { status: "success", message: "Status page updated." };
+    return { status: "success", message: am.statusPageUpdated };
   } catch (error) {
-    return { status: "error", message: toErrorMessage(error) };
+    return { status: "error", message: toLocalizedErrorMessage(error, am) };
   }
 }
 

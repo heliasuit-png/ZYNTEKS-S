@@ -1,3 +1,5 @@
+"use client";
+
 import Link from "next/link";
 import { Bug } from "lucide-react";
 
@@ -9,24 +11,24 @@ import {
 } from "@/components/dashboard/panel";
 import { EmptyState } from "@/components/dashboard/empty-state";
 import { Badge } from "@/components/dashboard/badge";
+import { useDictionary } from "@/components/i18n/locale-provider";
 import { DASHBOARD_ROUTES } from "@/lib/constants";
 import { ERROR_LEVEL_TONE } from "@/features/errors/lib/level-tone";
 import { formatRelativeTime } from "@/utils/format";
 import type { ErrorEvent } from "@/types/dashboard";
 
 export function RecentErrors({ errors }: { errors: ErrorEvent[] }) {
+  const { dict, locale } = useDictionary();
+  const t = dict.dash.home.recentErrors;
+
   return (
     <Panel className="h-full">
       <PanelHeader>
-        <PanelTitle>Recent Errors</PanelTitle>
+        <PanelTitle>{t.title}</PanelTitle>
       </PanelHeader>
       <PanelContent>
         {errors.length === 0 ? (
-          <EmptyState
-            icon={Bug}
-            title="No errors reported"
-            description="Errors captured across your projects will appear here."
-          />
+          <EmptyState icon={Bug} title={t.empty} description={t.emptyDesc} />
         ) : (
           <ul className="space-y-3">
             {errors.map((error) => (
@@ -41,7 +43,7 @@ export function RecentErrors({ errors }: { errors: ErrorEvent[] }) {
                     </p>
                     <p className="truncate text-xs text-zt-muted">
                       {error.projectName} · {error.occurrences}× ·{" "}
-                      {formatRelativeTime(error.lastSeenAt)}
+                      {formatRelativeTime(error.lastSeenAt, undefined, locale)}
                     </p>
                   </div>
                   <Badge tone={ERROR_LEVEL_TONE[error.level]}>

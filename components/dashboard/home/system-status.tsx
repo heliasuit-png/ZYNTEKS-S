@@ -1,3 +1,5 @@
+"use client";
+
 import { cn } from "@/lib/utils";
 import {
   Panel,
@@ -5,33 +7,37 @@ import {
   PanelHeader,
   PanelTitle,
 } from "@/components/dashboard/panel";
+import { useDictionary } from "@/components/i18n/locale-provider";
+import { fillTemplate } from "@/lib/i18n/fill-template";
 import { formatDate } from "@/utils/format";
 import type { HealthState, SystemStatus } from "@/types/dashboard";
 
-const stateMeta: Record<
-  HealthState,
-  { label: string; dot: string; text: string }
-> = {
+const stateStyles: Record<HealthState, { dot: string; text: string }> = {
   operational: {
-    label: "Operational",
     dot: "bg-zt-success",
     text: "text-zt-success",
   },
   degraded: {
-    label: "Degraded",
     dot: "bg-zt-warning",
     text: "text-zt-warning",
   },
-  down: { label: "Down", dot: "bg-zt-danger", text: "text-zt-danger" },
+  down: { dot: "bg-zt-danger", text: "text-zt-danger" },
 };
 
 export function SystemStatusPanel({ status }: { status: SystemStatus }) {
-  const meta = stateMeta[status.overall];
+  const { dict } = useDictionary();
+  const t = dict.dash.home.systemHealth;
+  const labels: Record<HealthState, string> = {
+    operational: t.operational,
+    degraded: t.degraded,
+    down: t.down,
+  };
+  const meta = stateStyles[status.overall];
 
   return (
     <Panel className="h-full">
       <PanelHeader>
-        <PanelTitle>System Status</PanelTitle>
+        <PanelTitle>{t.statusTitle}</PanelTitle>
         <span
           className={cn(
             "flex items-center gap-2 text-xs font-medium",
@@ -40,15 +46,13 @@ export function SystemStatusPanel({ status }: { status: SystemStatus }) {
         >
           <span className={cn("size-2 rounded-full", meta.dot)} aria-hidden />
           {status.overall === "operational"
-            ? "All systems operational"
-            : meta.label}
+            ? t.allOperational
+            : labels[status.overall]}
         </span>
       </PanelHeader>
       <PanelContent>
         {status.components.length === 0 ? (
-          <p className="text-sm text-zt-muted">
-            All monitored systems are operating normally.
-          </p>
+          <p className="text-sm text-zt-muted">{t.allNormal}</p>
         ) : (
           <ul className="space-y-2">
             {status.components.map((component) => (
@@ -60,24 +64,24 @@ export function SystemStatusPanel({ status }: { status: SystemStatus }) {
                 <span
                   className={cn(
                     "flex items-center gap-2 text-xs",
-                    stateMeta[component.state].text,
+                    stateStyles[component.state].text,
                   )}
                 >
                   <span
                     className={cn(
                       "size-2 rounded-full",
-                      stateMeta[component.state].dot,
+                      stateStyles[component.state].dot,
                     )}
                     aria-hidden
                   />
-                  {stateMeta[component.state].label}
+                  {labels[component.state]}
                 </span>
               </li>
             ))}
           </ul>
         )}
         <p className="mt-4 text-xs text-zt-muted">
-          Updated {formatDate(status.updatedAt)}
+          {fillTemplate(t.updatedAt, { date: formatDate(status.updatedAt) })}
         </p>
       </PanelContent>
     </Panel>

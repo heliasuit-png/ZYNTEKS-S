@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { Menu, X } from "lucide-react";
 
+import { useDictionary } from "@/components/i18n/locale-provider";
 import { LanguageSwitcher } from "@/components/i18n/language-switcher";
 import { APP_NAME, ROUTES } from "@/lib/constants";
 import type { Locale } from "@/lib/i18n/config";
@@ -27,6 +28,7 @@ export function LandingNav({
     language: string;
   };
 }) {
+  const { dict } = useDictionary();
   const links = [
     { href: "#features", label: labels.features },
     { href: "#how-it-works", label: labels.howItWorks },
@@ -80,7 +82,10 @@ export function LandingNav({
           {APP_NAME}
         </Link>
 
-        <nav className="hidden items-center gap-7 md:flex" aria-label="Primary">
+        <nav
+          className="hidden items-center gap-7 md:flex"
+          aria-label={dict.common.primaryNav}
+        >
           {links.map((link) => (
             <a
               key={link.href}
@@ -113,7 +118,7 @@ export function LandingNav({
           className="inline-flex size-10 items-center justify-center rounded-xl border border-zt-border text-zt-text md:hidden"
           aria-expanded={open}
           aria-controls="landing-mobile-nav"
-          aria-label={open ? "Close menu" : "Open menu"}
+          aria-label={open ? dict.common.closeMenu : dict.common.openMenu}
           onClick={() => setOpen((v) => !v)}
         >
           {open ? <X className="size-5" /> : <Menu className="size-5" />}
@@ -125,7 +130,10 @@ export function LandingNav({
           id="landing-mobile-nav"
           className="border-t border-zt-border bg-[#070b16]/95 px-5 py-4 backdrop-blur-xl md:hidden"
         >
-          <nav className="flex flex-col gap-3" aria-label="Mobile">
+          <nav
+            className="flex flex-col gap-3"
+            aria-label={dict.common.mobileNav}
+          >
             {links.map((link) => (
               <a
                 key={link.href}

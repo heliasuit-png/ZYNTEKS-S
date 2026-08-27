@@ -1,0 +1,693 @@
+import type { Dictionary } from "@/lib/i18n/dictionaries/types";
+import { actionMessagesEn } from "@/lib/i18n/dictionaries/action-messages-en";
+import { adminEn } from "@/lib/i18n/dictionaries/admin-en";
+import { dashEn } from "@/lib/i18n/dictionaries/dash-en";
+
+export const en: Dictionary = {
+  meta: {
+    description:
+      "Production-ready SaaS platform powered by ZYNTEKSIS.",
+  },
+  common: {
+    signIn: "Sign in",
+    startFree: "Start free",
+    language: "Language",
+    english: "English",
+    turkish: "Türkçe",
+    openMenu: "Open menu",
+    closeMenu: "Close menu",
+    primaryNav: "Primary",
+    mobileNav: "Mobile",
+  },
+  nav: {
+    features: "Features",
+    howItWorks: "How it works",
+    sdk: "SDK",
+    pricing: "Pricing",
+    faq: "FAQ",
+  },
+  footer: {
+    product: "Product",
+    company: "Company",
+    legal: "Legal",
+    documentation: "Documentation",
+    contact: "Contact",
+    privacy: "Privacy Policy",
+    terms: "Terms of Use",
+    cookie: "Cookie Policy",
+    kvkk: "KVKK / Privacy Notice",
+    rights: "All rights reserved.",
+    paymentMethods: "Payment methods",
+    paymentVisa: "Visa",
+    paymentMastercard: "Mastercard",
+    paymentAmex: "American Express",
+    paymentDiscover: "Discover",
+    paymentDiners: "Diners Club",
+  },
+  auth: {
+    createAccount: "Create your account",
+    createAccountDesc:
+      "Join ZYNTEKSIS with SSO or email — one identity, no duplicates",
+    registrationClosed: "Registration closed",
+    registrationClosedDesc: "New accounts are not being accepted right now.",
+    alreadyHaveAccount: "Already have an account?",
+    signInLink: "Sign in",
+    legalNotice: "By continuing you acknowledge our",
+    terms: "Terms of Use",
+    privacy: "Privacy Policy",
+    kvkk: "KVKK notice",
+    forgotTitle: "Forgot password",
+    forgotDesc: "Enter your email and we'll send you a reset link",
+    resetTitle: "Reset password",
+    resetDesc: "Choose a strong password for your account",
+    loginTitle: "Sign in",
+    welcomeBack: "Welcome back",
+    welcomeBackDesc: "Enterprise access to your ZYNTEKSIS workspace",
+    noAccount: "Don't have an account?",
+    createOne: "Create one",
+    signedOut: "You signed out. Sign in again to continue.",
+    passwordUpdated:
+      "Your password has been updated. Sign in with your new password.",
+    authError: "Authentication could not be completed. Please try again.",
+    rememberedIt: "Remembered it?",
+    backToSignIn: "Back to sign in",
+    orDivider: "or",
+    passwordTab: "Password",
+    emailPasswordTab: "Email & password",
+    magicLinkTab: "Magic link",
+    methodAria: "Email authentication method",
+  },
+  authForms: {
+    email: "Email",
+    password: "Password",
+    fullName: "Full name",
+    confirmPassword: "Confirm password",
+    newPassword: "New password",
+    confirmNewPassword: "Confirm new password",
+    workEmail: "Work email",
+    emailPlaceholder: "you@example.com",
+    emailCompanyPlaceholder: "you@company.com",
+    fullNamePlaceholder: "Ada Lovelace",
+    forgotPassword: "Forgot password?",
+    signIn: "Sign in",
+    createAccount: "Create account",
+    sendReset: "Send reset link",
+    updatePassword: "Update password",
+    magicLink: "Magic link",
+    continueWithEmail: "Continue with Email",
+    continueWithGoogle: "Continue with Google",
+    continueWithGitHub: "Continue with GitHub",
+    oauthGroupAria: "Sign in with a provider",
+    oauthStartFailed: "Unable to start OAuth sign-in.",
+    magicLinkHint:
+      "We'll email a one-time magic link. No password required.",
+    backToLogin: "Back to login",
+    checkEmail: "Check your email",
+  },
+  legal: {
+    privacyTitle: "Privacy Policy",
+    termsTitle: "Terms of Use",
+    cookieTitle: "Cookie Policy",
+    kvkkTitle: "KVKK Clarification Text",
+    draftNotice:
+      "This text is a product template for operators of ZYNTEKSIS. It is not legal advice. Have counsel review and replace TODO placeholders before relying on it in production.",
+  },
+  dashboardNav: {
+    dashboard: "Dashboard",
+    projects: "Projects",
+    apiKeys: "API Keys",
+    errors: "Error Monitoring",
+    incidents: "Incidents",
+    health: "Health Monitor",
+    insights: "Intelligence",
+    ai: "AI Assistant",
+    notifications: "Notifications",
+    statusPages: "Status Pages",
+    members: "Members",
+    audit: "Audit Log",
+    security: "Security Center",
+    organization: "Organization",
+    billing: "Billing",
+    settings: "Settings",
+    profile: "Profile",
+  },
+  landing: {
+    hero: {
+      brand: "ZYNTEKSIS",
+      headline: "Observe. Analyze. Ship with confidence.",
+      subheadline:
+        "Production monitoring, AI analysis, and status pages in one platform — built for teams that ship software every day.",
+      primaryCta: "Start free",
+      secondaryCta: "See how it works",
+    },
+    features: {
+      eyebrow: "Features",
+      title: "Everything your production stack needs",
+      desc: "Monitoring, AI analysis, projects, keys, health, notifications, and status pages — one coherent operations surface.",
+      items: {
+        monitoring: {
+          title: "Monitoring",
+          description:
+            "Capture errors, performance signals, and release health across every project environment.",
+        },
+        ai: {
+          title: "AI Analysis",
+          description:
+            "Ask the assistant about incidents, stack traces, and trends without leaving your workspace.",
+        },
+        projects: {
+          title: "Projects",
+          description:
+            "Organize services by project, environment, and ownership with workspace-level control.",
+        },
+        "api-keys": {
+          title: "API Keys",
+          description:
+            "Issue scoped SDK keys, rotate secrets, and revoke access instantly from one place.",
+        },
+        health: {
+          title: "Health Monitoring",
+          description:
+            "Track uptime, latency, and endpoint checks with clear timelines for every service.",
+        },
+        notifications: {
+          title: "Notifications",
+          description:
+            "Route alerts to email, dashboard, Slack, and Discord with per-category preferences.",
+        },
+        status: {
+          title: "Status Pages",
+          description:
+            "Publish branded public status pages so customers always know what is happening.",
+        },
+      },
+    },
+    howItWorks: {
+      eyebrow: "How it works",
+      title: "Live in three steps",
+      desc: "From empty workspace to streaming telemetry without a complicated onboarding maze.",
+      steps: [
+        {
+          title: "Create Project",
+          description:
+            "Spin up a project for each service, set the environment, and invite your team.",
+        },
+        {
+          title: "Generate API Key",
+          description:
+            "Create a scoped key for production or staging — copy once, rotate anytime.",
+        },
+        {
+          title: "Install SDK",
+          description:
+            "Drop the SDK into your app and start streaming errors, heartbeats, and performance data.",
+        },
+      ],
+    },
+    ai: {
+      eyebrow: "AI Assistant",
+      title: "Ask your stack what just broke",
+      desc: "An in-product assistant that understands projects, incidents, and monitoring context — not a generic chatbot bolted on the side.",
+      points: [
+        {
+          title: "Conversation history",
+          text: "Keep operational context across threads with pinned and project-scoped chats.",
+        },
+        {
+          title: "Plan-aware usage",
+          text: "Monthly limits follow your subscription so AI stays predictable in production.",
+        },
+        {
+          title: "Streaming responses",
+          text: "Prefer streaming or buffered replies from AI settings — your choice.",
+        },
+      ],
+      cta: "Open AI Assistant after sign-in →",
+      mockHeader: "AI · Project context",
+      mockUser: "Why did checkout latency spike after release 1.8.2?",
+      mockAssistant:
+        "Error group TimeoutError climbed 4× on the payments service. Health checks show elevated p95 on /api/charge. Related incident is still investigating.",
+    },
+    monitoring: {
+      eyebrow: "Monitoring",
+      title: "See failures before your users do",
+      desc: "Errors, health, and incidents share one narrative — so debugging starts with signal, not noise.",
+      items: [
+        {
+          title: "Error monitoring",
+          text: "Group, fingerprint, and explore stack traces with environment and release context.",
+        },
+        {
+          title: "Health & uptime",
+          text: "Endpoint checks, latency windows, and clear timelines for every critical path.",
+        },
+        {
+          title: "Incident management",
+          text: "Track severity, status, and updates so on-call stays aligned with customers.",
+        },
+      ],
+    },
+    sdk: {
+      eyebrow: "SDK",
+      title: "Connect the SDK",
+      desc: "Path-install the local @zynteksis/sdk package (build sdk/ first), generate a project key, then init in the browser.",
+      copy: "Copy",
+      copyInstallAria: "Copy install command",
+      copySnippetAria: "Copy code snippet",
+      anyBrowserApp: "Any browser app",
+    },
+    status: {
+      eyebrow: "Status Pages",
+      title: "Keep customers informed without a second product",
+      desc: "Publish branded public pages with component health, incident history, and uptime windows.",
+      items: [
+        {
+          title: "Component health",
+          text: "Show API, dashboard, and third-party systems in one glance.",
+        },
+        {
+          title: "Incident updates",
+          text: "Post investigating → resolved updates that match your internal timeline.",
+        },
+        {
+          title: "Uptime windows",
+          text: "Share 24h, 7d, 30d, and 90d availability without exporting spreadsheets.",
+        },
+      ],
+      demoHost: "status.yourproduct.com",
+      allOperational: "All systems operational",
+      operational: "Operational",
+      degraded: "Degraded",
+      components: {
+        api: "API",
+        dashboard: "Dashboard",
+        notifications: "Notifications",
+        statusPage: "Status page",
+      },
+    },
+    pricing: {
+      eyebrow: "Pricing",
+      title: "Clear plans. Local limits. Pluggable billing.",
+      desc: "Compare plan limits and features. Checkout is not bundled yet — start free to explore, or review the full pricing page.",
+      startFree: "Start free",
+      viewAllPlans: "View all plans",
+      contactSales: "Contact sales",
+      pageTitle: "Plans that scale with your product",
+      pageDesc:
+        "Transparent limits for projects, API keys and AI. Checkout connects through a replaceable PaymentProvider — no payment vendor is bundled.",
+      metaDescription:
+        "Compare ZYNTEKSIS plans, project limits, API keys, and AI message quotas. Checkout is pluggable and not bundled.",
+    },
+    seo: {
+      starterPlanAvailable: "Starter plan available",
+    },
+    faq: {
+      eyebrow: "FAQ",
+      title: "Answers before you ask sales",
+      desc: "Straight answers about the platform, billing architecture, SDK, and self-hosting.",
+      items: [
+        {
+          q: "What is ZYNTEKSIS?",
+          a: "ZYNTEKSIS is a production-ready SaaS platform for error monitoring, health checks, AI-assisted analysis, notifications, and public status pages — delivered as complete source code.",
+        },
+        {
+          q: "Do I need a payment provider to use billing UI?",
+          a: "No. Plan limits and the billing interface ship ready. Checkout, portals, and invoices activate when you connect a PaymentProvider implementation — no vendor is bundled.",
+        },
+        {
+          q: "Which frameworks does the SDK support?",
+          a: "Path-install the local @zynteksis/sdk package (build sdk/ first). The browser SDK works in modern JavaScript/TypeScript apps, including React and Next.js client components. Server-side code uses the same HTTP ingest endpoints.",
+        },
+        {
+          q: "Can I self-host?",
+          a: "Yes. The repository is designed to run against Supabase and your own environment variables, so you control hosting, data, and integrations.",
+        },
+        {
+          q: "Is there an AI assistant?",
+          a: "Yes. Workspace members can chat with an AI assistant that uses project context for incidents, errors, and operational questions, with plan-based usage limits.",
+        },
+        {
+          q: "How do status pages work?",
+          a: "Create a public status page, attach components and incidents, and share a branded URL with customers. Uptime windows and incident history are included.",
+        },
+      ],
+    },
+    testimonials: {
+      eyebrow: "Outcomes",
+      title: "What teams get with ZYNTEKSIS",
+      desc: "Concrete outcomes the platform is designed to deliver — not fabricated customer quotes.",
+      items: [
+        {
+          quote:
+            "One workspace for errors, health, incidents, and public status — without stitching five tools together.",
+          name: "Operations",
+          role: "Built for on-call teams",
+          company: "ZYNTEKSIS",
+        },
+        {
+          quote:
+            "Scoped API keys, SDK ingest, and AI analysis on the same project context keep debugging grounded in real telemetry.",
+          name: "Engineering",
+          role: "Built for product teams",
+          company: "ZYNTEKSIS",
+        },
+        {
+          quote:
+            "Ship the complete source, connect your own payment provider when ready, and keep ownership of data and infrastructure.",
+          name: "Platform owners",
+          role: "Built for source buyers",
+          company: "ZYNTEKSIS",
+        },
+      ],
+    },
+    heroIllustration: {
+      consoleLabel: "ZYNTEKSIS · Operations console",
+      navDashboard: "Dashboard",
+      navErrors: "Errors",
+      navHealth: "Health",
+      navAi: "AI",
+      navStatus: "Status",
+      uptime: "Uptime",
+      errors: "Errors",
+      latency: "Latency",
+      incidentTimeline: "Incident timeline",
+      stable: "Stable",
+      chartAria: "Decorative monitoring chart",
+    },
+  },
+  docs: {
+    title: "Documentation",
+    intro:
+      "Go from a fresh workspace to live telemetry. Full engineer reference: repository files docs/SDK.md and sdk/README.md.",
+    createAccountTitle: "1. Create an account",
+    createAccountOr: "or",
+    createAccountBody:
+      "A default workspace is created for you. Start with the AI assistant — you do not need a project for chat.",
+    createProjectTitle: "2. Create a project",
+    createProjectBody:
+      "Open Projects and create a project for each service you monitor. Each API key belongs to exactly one project (project isolation).",
+    generateKeyTitle: "3. Generate an API key",
+    generateKeyBody:
+      "In API Keys, create a key for production or staging. Copy the secret once — only the prefix is stored for display afterward. Keys are ZYN-KEY-… project ingest keys, not Supabase service_role secrets.",
+    installSdkTitle: "4. Install the SDK",
+    installSdkBody:
+      "Build the local package, then path-install it (not published to public npm with the commercial delivery):",
+    installSdkInit:
+      "Browser init: new Zynteksis({ apiKey, endpoint }).init(). See the connection guide on the API Keys page and the landing",
+    serverIngestTitle: "5. Server / HTTP ingest",
+    serverIngestBody:
+      "init() is browser-only. From servers, POST to /api/sdk/heartbeat, /api/sdk/error, /api/sdk/performance, and /api/sdk/events with header X-Zynteksis-Key (or Bearer).",
+    operateTitle: "6. Operate",
+    operateErrors: "Errors, Health, and Incidents for monitoring",
+    operateAi: "AI Assistant for telemetry-backed analysis (plan message quotas)",
+    operateStatus: "Status Pages for public communication",
+    operateBilling:
+      "for plan limits (checkout provider is pluggable and not bundled)",
+    troubleshootingTitle: "Troubleshooting",
+    trouble401Title: "401 on ingest",
+    trouble401Body:
+      "key missing, wrong, or revoked; regenerate on API Keys.",
+    troubleNoDataTitle: "No data in dashboard",
+    troubleNoDataBody:
+      "confirm the key's project and that endpoint points at your ZYNTEKSIS origin.",
+    troubleRateTitle: "Rate limits",
+    troubleRateBody:
+      "ingest is limited (default 240 requests / minute / key). Back off and retry.",
+    registerLink: "Register",
+    signInLink: "sign in",
+    projectsLink: "Projects",
+    apiKeysLink: "API Keys",
+    billingLink: "Billing",
+    sdkSectionLink: "SDK section",
+  },
+  contact: {
+    title: "Contact",
+    intro:
+      "Questions about the platform, licensing, or deployment? Reach the team below.",
+    general: "General:",
+    billing: "Billing architecture:",
+    productAccess: "Product access:",
+    createAccount: "Create an account",
+  },
+  dashboard: {
+    pageTitles: {
+      dashboard: {
+        title: "Dashboard",
+        description: "Workspace overview, live activity, and quick actions.",
+      },
+      projects: {
+        title: "Projects",
+        description: "Organize services by project, environment, and ownership.",
+      },
+      apiKeys: {
+        title: "API Keys",
+        description: "Issue, rotate, and revoke scoped SDK ingest keys.",
+      },
+      errors: {
+        title: "Error Monitoring",
+        description: "Group, explore, and resolve production errors.",
+      },
+      incidents: {
+        title: "Incidents",
+        description: "Track severity, status, and customer-facing updates.",
+      },
+      health: {
+        title: "Health Monitor",
+        description: "Uptime, latency, and endpoint checks for every service.",
+      },
+      insights: {
+        title: "Intelligence",
+        description: "Trends and signals across errors, health, and releases.",
+      },
+      ai: {
+        title: "AI Assistant",
+        description: "Ask about incidents, stack traces, and operational context.",
+      },
+      settings: {
+        title: "Settings",
+        description: "Workspace preferences, AI options, and appearance.",
+      },
+      members: {
+        title: "Members",
+        description: "Invite teammates and manage workspace roles.",
+      },
+      billing: {
+        title: "Billing",
+        description: "Plan limits, usage, and subscription management.",
+      },
+      notifications: {
+        title: "Notifications",
+        description: "Alert routing and per-category delivery preferences.",
+      },
+      statusPages: {
+        title: "Status Pages",
+        description: "Public branded pages for component health and incidents.",
+      },
+      audit: {
+        title: "Audit Log",
+        description: "Review security-relevant actions across the workspace.",
+      },
+      security: {
+        title: "Security Center",
+        description: "Sessions, access controls, and security posture.",
+      },
+      organization: {
+        title: "Organization",
+        description: "Workspace profile, branding, and org-level settings.",
+      },
+      profile: {
+        title: "Profile",
+        description: "Your account details and personal preferences.",
+      },
+    },
+    settingsSections: {
+      profile: {
+        title: "Profile",
+        description:
+          "Avatar, display name, email, password, language and timezone.",
+      },
+      workspace: {
+        title: "Workspace",
+        description: "Name, logo, brand color, timezone, URL and ownership.",
+      },
+      team: {
+        title: "Team",
+        description: "Members, roles, invitations and permissions.",
+      },
+      security: {
+        title: "Security",
+        description: "Sessions, devices, recent logins and 2FA policy.",
+      },
+      notifications: {
+        title: "Notifications",
+        description: "Email, dashboard, Slack, Discord and per-category prefs.",
+      },
+      appearance: {
+        title: "Appearance",
+        description:
+          "Dark/light/system theme, accent, motion, sidebar and density.",
+      },
+      ai: {
+        title: "AI settings",
+        description: "Usage, history, default model and streaming.",
+      },
+      api: {
+        title: "API settings",
+        description: "API keys, SDK keys, webhooks and rate limits.",
+      },
+      billing: {
+        title: "Billing",
+        description: "Current plan, usage and subscription management.",
+      },
+    },
+  },
+  dashboardCommon: {
+    save: "Save",
+    cancel: "Cancel",
+    create: "Create",
+    delete: "Delete",
+    edit: "Edit",
+    update: "Update",
+    close: "Close",
+    confirm: "Confirm",
+    back: "Back",
+    next: "Next",
+    previous: "Previous",
+    view: "View",
+    actions: "Actions",
+    loading: "Loading…",
+    empty: "Nothing here yet",
+    noRecords: "No records to display.",
+    error: "Something went wrong",
+    retry: "Retry",
+    search: "Search",
+    filter: "Filter",
+    members: "Members",
+    status: "Status",
+    all: "All",
+    none: "None",
+    yes: "Yes",
+    no: "No",
+    saving: "Saving…",
+    searching: "Searching…",
+    previousPage: "Previous page",
+    nextPage: "Next page",
+    dismiss: "Dismiss",
+    copy: "Copy",
+    copied: "Copied",
+    regenerate: "Regenerate",
+    revoke: "Revoke",
+    invite: "Invite",
+    accept: "Accept",
+    decline: "Decline",
+    clearFilters: "Clear filters",
+    exportCsv: "Export CSV",
+    copyJson: "Copy JSON",
+    downloadJson: "Download JSON",
+    copyLink: "Copy link",
+    allProjects: "All projects",
+    allStatuses: "All statuses",
+    allSeverities: "All severities",
+    allEnvironments: "All environments",
+    from: "From",
+    to: "To",
+    project: "Project",
+    environment: "Environment",
+    severity: "Severity",
+    matchingFilters: " matching filters",
+    goToProjects: "Go to Projects",
+    never: "Never",
+    newestFirst: "Newest first",
+    oldestFirst: "Oldest first",
+    timeline: "Timeline",
+    details: "Details",
+    comment: "Comment",
+    environments: {
+      production: "Production",
+      staging: "Staging",
+      development: "Development",
+    },
+    loadingStates: {
+      generic: "Loading…",
+      errors: "Loading errors…",
+      errorDetails: "Loading error details…",
+      profile: "Loading profile…",
+      notifications: "Loading notifications…",
+      health: "Loading health monitoring…",
+      billing: "Loading billing…",
+      settings: "Loading settings…",
+      apiSettings: "Loading API settings…",
+      aiSettings: "Loading AI settings…",
+      appearance: "Loading appearance settings…",
+      incidents: "Loading incidents…",
+      incident: "Loading incident…",
+      statusPages: "Loading status pages…",
+      dashboard: "Loading dashboard…",
+      status: "Loading status…",
+      initializing: "Initializing {app}",
+      adminModule: "Loading admin module",
+      adminAi: "Loading AI operations",
+      adminAnalytics: "Loading analytics",
+      adminAudit: "Loading audit",
+      adminDashboard: "Loading dashboard",
+      adminMonitoring: "Loading monitoring",
+      adminSecurity: "Loading security",
+      adminSettings: "Loading settings",
+      adminUsers: "Loading users",
+      adminWorkspaces: "Loading workspaces",
+    },
+  },
+  system: {
+    somethingWrong: "Something went wrong",
+    unexpectedError: "An unexpected error occurred. Please try again.",
+    tryAgain: "Try again",
+    sectionLoadFailed: "We couldn't load this section. Please try again.",
+    notFoundTitle: "Lost in the network",
+    notFoundDesc:
+      "The page you are looking for drifted off the grid or has been moved.",
+    backHome: "Back to home",
+    maintenanceTitle: "Maintenance",
+    maintenanceInactive: "Platform is online",
+    maintenanceActive: "Maintenance mode is not active.",
+    continueDashboard: "Continue to dashboard",
+    scheduledMaintenance: "Scheduled maintenance",
+    maintenanceDesc:
+      "The product dashboard is temporarily unavailable while we perform platform maintenance.",
+    operatorsContinue: "Platform operators can continue via",
+    adminControlCenter: "Admin Control Center",
+    copyCode: "Copy code",
+    copy: "Copy",
+    copied: "Copied",
+    errorDetails: "Error Details",
+    incident: "Incident",
+    status: "Status",
+    applicationError: "Application error",
+    criticalError: "A critical error occurred. Please reload the page.",
+    reload: "Reload",
+  },
+  emails: {
+    invite: {
+      subjectTemplate: "You're invited to {workspace} on {app}",
+      teammateFallback: "A teammate",
+      heading: "Workspace invitation",
+      invitedYou: "invited you to join",
+      asRole: "as",
+      instructions:
+        "Sign in or create an account with this email address, then open Invitations to accept.",
+      cta: "View invitation",
+      orPaste: "Or paste this link:",
+      textOpen: "Open",
+      textSignIn:
+        "Sign in with the invited email, then accept from Invitations.",
+    },
+    notification: {
+      footerNotice:
+        "You are receiving this email because notifications are enabled for your {app} account. Manage your preferences in the dashboard.",
+      copyrightTemplate: "© {year} {app}",
+      openLabel: "Open",
+    },
+  },
+  actionMessages: actionMessagesEn,
+  dash: dashEn,
+  admin: adminEn,
+};

@@ -24,4 +24,7 @@ export interface NotificationEmailInput {
   actionUrl?: string;
   actionLabel?: string;
   appName: string;
+  footerNotice: string;
+  copyrightTemplate: string;
+  openLabel: string;
 }

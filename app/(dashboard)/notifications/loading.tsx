@@ -1,4 +1,8 @@
-export default function NotificationsLoading() {
+import { getDictionary } from "@/lib/i18n/get-dictionary";
+
+export default async function NotificationsLoading() {
+  const { dict } = await getDictionary();
+
   return (
     <div className="space-y-6" role="status" aria-live="polite">
       <div className="space-y-2">
@@ -24,7 +28,7 @@ export default function NotificationsLoading() {
           />
         ))}
       </div>
-      <span className="sr-only">Loading notifications…</span>
+      <span className="sr-only">{dict.dashboardCommon.loadingStates.notifications}</span>
     </div>
   );
 }

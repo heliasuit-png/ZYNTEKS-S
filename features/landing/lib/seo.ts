@@ -1,20 +1,24 @@
 import type { Metadata } from "next";
 
 import { APP_NAME } from "@/lib/constants";
-import { LANDING_COPY } from "@/features/landing/data/content";
+import { dictionaries } from "@/lib/i18n/dictionaries";
+import type { Locale } from "@/lib/i18n/config";
 
-const TITLE = `${APP_NAME} — Observe. Analyze. Ship with confidence.`;
-const DESCRIPTION = LANDING_COPY.subheadline;
-
-export function buildLandingMetadata(appUrl: string): Metadata {
+export function buildLandingMetadata(
+  appUrl: string,
+  locale: Locale = "en",
+): Metadata {
+  const dict = dictionaries[locale] ?? dictionaries.en;
+  const title = `${APP_NAME} — ${dict.landing.hero.headline}`;
+  const description = dict.landing.hero.subheadline;
   const base = appUrl.replace(/\/$/, "");
   const ogImage = `${base}/opengraph-image`;
 
   return {
     title: {
-      absolute: TITLE,
+      absolute: title,
     },
-    description: DESCRIPTION,
+    description,
     applicationName: APP_NAME,
     keywords: [
       "SaaS monitoring",
@@ -35,8 +39,8 @@ export function buildLandingMetadata(appUrl: string): Metadata {
       type: "website",
       url: base,
       siteName: APP_NAME,
-      title: TITLE,
-      description: DESCRIPTION,
+      title,
+      description,
       images: [
         {
           url: ogImage,
@@ -45,12 +49,12 @@ export function buildLandingMetadata(appUrl: string): Metadata {
           alt: `${APP_NAME} — production monitoring platform`,
         },
       ],
-      locale: "en_US",
+      locale: locale === "tr" ? "tr_TR" : "en_US",
     },
     twitter: {
       card: "summary_large_image",
-      title: TITLE,
-      description: DESCRIPTION,
+      title,
+      description,
       images: [ogImage],
     },
     robots: {
@@ -67,7 +71,10 @@ export function buildLandingMetadata(appUrl: string): Metadata {
   };
 }
 
-export function buildLandingJsonLd(appUrl: string) {
+export function buildLandingJsonLd(appUrl: string, locale: Locale = "en") {
+  const dict = dictionaries[locale] ?? dictionaries.en;
+  const description = dict.landing.hero.subheadline;
+  const faq = dict.landing.faq.items;
   const base = appUrl.replace(/\/$/, "");
   return {
     "@context": "https://schema.org",
@@ -77,51 +84,41 @@ export function buildLandingJsonLd(appUrl: string) {
         "@id": `${base}/#organization`,
         name: APP_NAME,
         url: base,
-        description: DESCRIPTION,
+        description,
       },
       {
         "@type": "WebSite",
         "@id": `${base}/#website`,
         url: base,
         name: APP_NAME,
-        description: DESCRIPTION,
+        description,
         publisher: { "@id": `${base}/#organization` },
-        inLanguage: "en",
+        inLanguage: locale,
       },
       {
         "@type": "SoftwareApplication",
         name: APP_NAME,
         applicationCategory: "BusinessApplication",
         operatingSystem: "Web",
-        description: DESCRIPTION,
+        description,
         url: base,
         offers: {
           "@type": "Offer",
           price: "0",
           priceCurrency: "USD",
-          description: "Starter plan available",
+          description: dict.landing.seo.starterPlanAvailable,
         },
       },
       {
         "@type": "FAQPage",
-        mainEntity: [
-          {
-            "@type": "Question",
-            name: "What is ZYNTEKSIS?",
-            acceptedAnswer: {
-              "@type": "Answer",
-              text: "ZYNTEKSIS is a production-ready SaaS platform for error monitoring, health checks, AI-assisted analysis, notifications, and public status pages.",
-            },
+        mainEntity: faq.slice(0, 2).map((item) => ({
+          "@type": "Question",
+          name: item.q,
+          acceptedAnswer: {
+            "@type": "Answer",
+            text: item.a,
           },
-          {
-            "@type": "Question",
-            name: "Do I need a payment provider?",
-            acceptedAnswer: {
-              "@type": "Answer",
-              text: "No payment vendor is bundled. Billing UI and plan limits ship ready; connect a PaymentProvider when you want checkout.",
-            },
-          },
-        ],
+        })),
       },
     ],
   };

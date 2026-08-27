@@ -4,8 +4,12 @@ import { ROUTES } from "@/lib/constants";
 import { AuroraBackground } from "@/components/dashboard/shell/aurora-background";
 import { LogoMark } from "@/components/brand/logo-mark";
 import { Button } from "@/components/dashboard/button";
+import { getDictionary } from "@/lib/i18n/get-dictionary";
 
-export default function NotFound() {
+export default async function NotFound() {
+  const { dict } = await getDictionary();
+  const { system } = dict;
+
   return (
     <main className="dark relative flex min-h-screen flex-col items-center justify-center overflow-hidden bg-zt-bg px-6 text-center text-zt-text">
       <AuroraBackground />
@@ -20,15 +24,15 @@ export default function NotFound() {
             404
           </p>
           <h1 className="text-xl font-semibold text-zt-text">
-            Lost in the network
+            {system.notFoundTitle}
           </h1>
           <p className="mx-auto max-w-md text-sm text-zt-muted">
-            The page you are looking for drifted off the grid or has been moved.
+            {system.notFoundDesc}
           </p>
         </div>
 
         <Button asChild size="lg">
-          <Link href={ROUTES.home}>Back to home</Link>
+          <Link href={ROUTES.home}>{system.backHome}</Link>
         </Button>
       </div>
     </main>

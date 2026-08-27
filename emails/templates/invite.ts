@@ -9,19 +9,34 @@ function escapeHtml(value: string): string {
     .replace(/'/g, "&#39;");
 }
 
+export type InviteEmailCopy = {
+  subjectTemplate: string;
+  teammateFallback: string;
+  heading: string;
+  invitedYou: string;
+  asRole: string;
+  instructions: string;
+  cta: string;
+  orPaste: string;
+  textOpen: string;
+  textSignIn: string;
+};
+
 export function renderInviteEmail(input: {
   workspaceName: string;
   roleLabel: string;
   inviterEmail: string | null;
   acceptUrl: string;
+  copy: InviteEmailCopy;
 }): { subject: string; html: string; text: string } {
   const workspace = escapeHtml(input.workspaceName);
   const role = escapeHtml(input.roleLabel);
-  const inviter = input.inviterEmail
-    ? escapeHtml(input.inviterEmail)
-    : "A teammate";
+  const inviterRaw = input.inviterEmail ?? input.copy.teammateFallback;
+  const inviter = escapeHtml(inviterRaw);
   const url = escapeHtml(input.acceptUrl);
-  const subject = `You're invited to ${input.workspaceName} on ${APP_NAME}`;
+  const subject = input.copy.subjectTemplate
+    .replaceAll("{workspace}", input.workspaceName)
+    .replaceAll("{app}", APP_NAME);
 
   const html = `<!DOCTYPE html>
 <html lang="en">
@@ -32,18 +47,18 @@ export function renderInviteEmail(input: {
       <table role="presentation" width="100%" style="max-width:560px;background:#0d1324;border:1px solid rgba(255,255,255,0.08);border-radius:16px;overflow:hidden;">
         <tr><td style="background:#00e5ff;padding:20px 28px;color:#041018;font-weight:700;font-size:18px;">${escapeHtml(APP_NAME)}</td></tr>
         <tr><td style="padding:28px;">
-          <h1 style="margin:0 0 12px;font-size:22px;color:#ffffff;">Workspace invitation</h1>
+          <h1 style="margin:0 0 12px;font-size:22px;color:#ffffff;">${escapeHtml(input.copy.heading)}</h1>
           <p style="margin:0 0 16px;line-height:1.55;color:#cbd5e1;">
-            ${inviter} invited you to join <strong style="color:#ffffff;">${workspace}</strong> as <strong style="color:#ffffff;">${role}</strong>.
+            ${inviter} ${escapeHtml(input.copy.invitedYou)} <strong style="color:#ffffff;">${workspace}</strong> ${escapeHtml(input.copy.asRole)} <strong style="color:#ffffff;">${role}</strong>.
           </p>
           <p style="margin:0 0 24px;line-height:1.55;color:#cbd5e1;">
-            Sign in or create an account with this email address, then open Invitations to accept.
+            ${escapeHtml(input.copy.instructions)}
           </p>
           <a href="${url}" style="display:inline-block;background:#00e5ff;color:#041018;text-decoration:none;font-weight:600;padding:12px 18px;border-radius:10px;">
-            View invitation
+            ${escapeHtml(input.copy.cta)}
           </a>
           <p style="margin:24px 0 0;font-size:12px;line-height:1.5;color:#94a3b8;word-break:break-all;">
-            Or paste this link: ${url}
+            ${escapeHtml(input.copy.orPaste)} ${url}
           </p>
         </td></tr>
       </table>
@@ -55,11 +70,11 @@ export function renderInviteEmail(input: {
   const text = [
     subject,
     "",
-    `${inviter} invited you to join ${input.workspaceName} as ${input.roleLabel}.`,
+    `${inviterRaw} ${input.copy.invitedYou} ${input.workspaceName} ${input.copy.asRole} ${input.roleLabel}.`,
     "",
-    `Open: ${input.acceptUrl}`,
+    `${input.copy.textOpen}: ${input.acceptUrl}`,
     "",
-    `Sign in with the invited email, then accept from Invitations.`,
+    input.copy.textSignIn,
   ].join("\n");
 
   return { subject, html, text };

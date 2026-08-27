@@ -3,6 +3,7 @@
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useTransition } from "react";
 
+import { useDictionary } from "@/components/i18n/locale-provider";
 import { ADMIN_ROUTES } from "@/lib/constants";
 import type { MonitoringMissionData } from "@/services/admin/monitoring-mission.types";
 
@@ -11,6 +12,9 @@ export function MonitoringFilters({
 }: {
   options: MonitoringMissionData["filterOptions"];
 }) {
+  const { dict } = useDictionary();
+  const t = dict.admin.monitoring.filters;
+  const common = dict.admin.common;
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -34,16 +38,18 @@ export function MonitoringFilters({
   return (
     <div className="admin-glass admin-panel space-y-3 rounded-2xl p-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <p className="admin-eyebrow">Mission filters</p>
+        <p className="admin-eyebrow">{t.title}</p>
         <div className="flex items-center gap-3">
           {pending ? (
-            <span className="text-[10px] text-[var(--admin-muted)]">Updating…</span>
+            <span className="text-[10px] text-[var(--admin-muted)]">
+              {common.updating}
+            </span>
           ) : null}
           <a
             href={ADMIN_ROUTES.monitoring}
             className="text-xs text-[var(--admin-muted)] hover:text-[var(--admin-accent-text)]"
           >
-            Reset
+            {common.reset}
           </a>
         </div>
       </div>
@@ -52,9 +58,9 @@ export function MonitoringFilters({
           className="admin-select"
           value={workspaceId}
           onChange={(e) => update("workspaceId", e.target.value)}
-          aria-label="Filter by workspace"
+          aria-label={t.ariaWorkspace}
         >
-          <option value="">Workspace</option>
+          <option value="">{common.workspace}</option>
           {options.workspaces.map((ws) => (
             <option key={ws.id} value={ws.id}>
               {ws.name}
@@ -65,9 +71,9 @@ export function MonitoringFilters({
           className="admin-select"
           value={searchParams.get("projectId") ?? ""}
           onChange={(e) => update("projectId", e.target.value)}
-          aria-label="Filter by project"
+          aria-label={t.ariaProject}
         >
-          <option value="">Project</option>
+          <option value="">{common.project}</option>
           {projects.map((project) => (
             <option key={project.id} value={project.id}>
               {project.name}
@@ -76,54 +82,54 @@ export function MonitoringFilters({
         </select>
         <input
           className="admin-select"
-          placeholder="Country"
+          placeholder={common.country}
           defaultValue={searchParams.get("country") ?? ""}
           onBlur={(e) => update("country", e.target.value.trim())}
-          aria-label="Filter by country"
+          aria-label={t.ariaCountry}
         />
         <select
           className="admin-select"
           value={searchParams.get("environment") ?? ""}
           onChange={(e) => update("environment", e.target.value)}
-          aria-label="Filter by environment"
+          aria-label={t.ariaEnvironment}
         >
-          <option value="">Environment</option>
-          <option value="production">Production</option>
-          <option value="staging">Staging</option>
-          <option value="development">Development</option>
+          <option value="">{common.environment}</option>
+          <option value="production">{common.envProduction}</option>
+          <option value="staging">{common.envStaging}</option>
+          <option value="development">{common.envDevelopment}</option>
         </select>
         <select
           className="admin-select"
           value={searchParams.get("range") ?? "24h"}
           onChange={(e) => update("range", e.target.value)}
-          aria-label="Date range"
+          aria-label={common.dateRange}
         >
-          <option value="1h">Last 1h</option>
-          <option value="24h">Last 24h</option>
-          <option value="7d">Last 7d</option>
-          <option value="30d">Last 30d</option>
+          <option value="1h">{common.range1h}</option>
+          <option value="24h">{common.range24h}</option>
+          <option value="7d">{common.range7d}</option>
+          <option value="30d">{common.range30d}</option>
         </select>
         <input
           className="admin-select"
           type="date"
           value={searchParams.get("from") ?? ""}
           onChange={(e) => update("from", e.target.value)}
-          aria-label="From date"
+          aria-label={common.fromDate}
         />
         <select
           className="admin-select"
           value={searchParams.get("severity") ?? ""}
           onChange={(e) => update("severity", e.target.value)}
-          aria-label="Filter by severity"
+          aria-label={t.ariaSeverity}
         >
-          <option value="">Severity / level</option>
-          <option value="critical">Critical</option>
-          <option value="high">High</option>
-          <option value="medium">Medium</option>
-          <option value="low">Low</option>
-          <option value="fatal">Fatal (errors)</option>
-          <option value="error">Error</option>
-          <option value="warning">Warning</option>
+          <option value="">{common.severityLevel}</option>
+          <option value="critical">{common.severityCritical}</option>
+          <option value="high">{common.severityHigh}</option>
+          <option value="medium">{common.severityMedium}</option>
+          <option value="low">{common.severityLow}</option>
+          <option value="fatal">{common.severityFatal}</option>
+          <option value="error">{common.severityError}</option>
+          <option value="warning">{common.severityWarning}</option>
         </select>
       </div>
     </div>

@@ -5,6 +5,7 @@ import { Activity, Bug, FolderKanban, HeartPulse, Rocket, Siren } from "lucide-r
 import { FadeIn } from "@/components/dashboard/motion";
 import { StatCard } from "@/components/dashboard/stat-card";
 import type { StatTone } from "@/components/dashboard/stat-card";
+import { useDictionary } from "@/components/i18n/locale-provider";
 import type { DashboardStats } from "@/types/dashboard";
 
 interface StatItem {
@@ -24,62 +25,63 @@ function healthTone(score: number): StatTone {
 }
 
 export function StatsGrid({ stats }: { stats: DashboardStats }) {
+  const { dict } = useDictionary();
+  const t = dict.dash.home.stats;
+
   const items: StatItem[] = [
     {
-      label: "Total Projects",
+      label: t.totalProjects,
       count: stats.totalProjects,
       icon: FolderKanban,
       tone: "secondary",
-      status: "All workspaces",
-      explanation: "Every project connected to this workspace.",
+      status: t.allWorkspaces,
+      explanation: t.totalProjectsHint,
     },
     {
-      label: "Active Projects",
+      label: t.activeProjects,
       count: stats.activeProjects,
       icon: Rocket,
       tone: "success",
-      status: "Live now",
-      explanation: "Projects currently sending heartbeats or traffic.",
+      status: t.liveNow,
+      explanation: t.activeProjectsHint,
     },
     {
-      label: "SDK Events Today",
+      label: t.sdkEventsToday,
       count: stats.apiRequestsToday,
       icon: Activity,
       tone: "accent",
-      status: "Last 24h",
-      explanation:
-        "Heartbeats, performance samples, and errors ingested in the last 24 hours.",
+      status: t.last24h,
+      explanation: t.sdkEventsHint,
     },
     {
-      label: "Errors Today",
+      label: t.errorsToday,
       count: stats.errorsToday,
       icon: Bug,
       tone: stats.errorsToday > 0 ? "danger" : "muted",
-      status: stats.errorsToday > 0 ? "Action needed" : "All clear",
-      explanation: "Distinct errors captured across your projects today.",
+      status: stats.errorsToday > 0 ? t.actionNeeded : t.allClear,
+      explanation: t.errorsTodayHint,
     },
     {
-      label: "Health Score",
+      label: t.healthScore,
       count: stats.healthScore,
       suffix: "%",
       icon: HeartPulse,
       tone: healthTone(stats.healthScore),
       status:
         stats.healthScore >= 90
-          ? "Excellent"
+          ? t.excellent
           : stats.healthScore >= 70
-            ? "Fair"
-            : "Degraded",
-      explanation:
-        "Composite score from uptime, errors, incidents and response time.",
+            ? t.fair
+            : t.degraded,
+      explanation: t.healthScoreHint,
     },
     {
-      label: "Open Incidents",
+      label: t.openIncidents,
       count: stats.openIncidents,
       icon: Siren,
       tone: stats.openIncidents > 0 ? "warning" : "muted",
-      status: stats.openIncidents > 0 ? "Investigating" : "None open",
-      explanation: "Incidents that are not yet resolved.",
+      status: stats.openIncidents > 0 ? t.investigating : t.noneOpen,
+      explanation: t.openIncidentsHint,
     },
   ];
 

@@ -6,6 +6,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { ChevronRight, Home } from "lucide-react";
 
 import { resolveNavItems } from "@/components/dashboard/shell/nav-config";
+import { useDictionary } from "@/components/i18n/locale-provider";
 import { useDashboard } from "@/features/dashboard/hooks/use-dashboard";
 import { DASHBOARD_ROUTES } from "@/lib/constants";
 
@@ -28,6 +29,8 @@ interface Crumb {
 export function Breadcrumbs() {
   const pathname = usePathname();
   const { navLabels } = useDashboard();
+  const { dict } = useDictionary();
+  const shell = dict.dash.shell;
   const navItems = resolveNavItems(navLabels);
   const segments = pathname.split("/").filter(Boolean);
 
@@ -45,12 +48,12 @@ export function Breadcrumbs() {
   }
 
   return (
-    <nav aria-label="Breadcrumb" className="hidden min-w-0 md:flex">
+    <nav aria-label={shell.breadcrumb} className="hidden min-w-0 md:flex">
       <ol className="flex items-center gap-1 text-sm">
         <li>
           <Link
             href={DASHBOARD_ROUTES.dashboard}
-            aria-label="Dashboard home"
+            aria-label={shell.dashboardHome}
             className="flex size-7 items-center justify-center rounded-lg text-zt-muted transition-colors hover:bg-white/[0.04] hover:text-zt-text"
           >
             <Home className="size-4" aria-hidden />

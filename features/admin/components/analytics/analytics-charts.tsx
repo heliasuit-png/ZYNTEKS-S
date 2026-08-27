@@ -1,14 +1,15 @@
 "use client";
 
+import { useDictionary } from "@/components/i18n/locale-provider";
 import type { SeriesPoint } from "@/services/admin/analytics-intelligence.types";
 
-const SERIES = [
-  { key: "activeUsers" as const, label: "Active users", color: "#67e8f9" },
-  { key: "newUsers" as const, label: "New users", color: "#34d399" },
-  { key: "apiEvents" as const, label: "API", color: "#fbbf24" },
-  { key: "aiRequests" as const, label: "AI", color: "#a78bfa" },
-  { key: "errors" as const, label: "Errors", color: "#f87171" },
-  { key: "heartbeats" as const, label: "Heartbeats", color: "#60a5fa" },
+const SERIES_META = [
+  { key: "activeUsers" as const, color: "#67e8f9", labelKey: "activeUsers" as const },
+  { key: "newUsers" as const, color: "#34d399", labelKey: "newUsers" as const },
+  { key: "apiEvents" as const, color: "#fbbf24", labelKey: "api" as const },
+  { key: "aiRequests" as const, color: "#a78bfa", labelKey: "ai" as const },
+  { key: "errors" as const, color: "#f87171", labelKey: "errors" as const },
+  { key: "heartbeats" as const, color: "#60a5fa", labelKey: "heartbeats" as const },
 ];
 
 export function MultiSeriesChart({
@@ -18,14 +19,21 @@ export function MultiSeriesChart({
   data: SeriesPoint[];
   title: string;
 }) {
+  const { dict } = useDictionary();
+  const seriesLabels = dict.admin.analytics.series;
+  const series = SERIES_META.map((item) => ({
+    ...item,
+    label: seriesLabels[item.labelKey],
+  }));
+
   const width = 720;
-  const height = 220;
-  const pad = { top: 16, right: 12, bottom: 28, left: 36 };
+  const height = 180;
+  const pad = { top: 12, right: 8, bottom: 24, left: 32 };
   const innerW = width - pad.left - pad.right;
   const innerH = height - pad.top - pad.bottom;
   const max = Math.max(
     1,
-    ...data.flatMap((point) => SERIES.map((series) => point[series.key])),
+    ...data.flatMap((point) => series.map((s) => point[s.key])),
   );
   const x = (index: number) =>
     pad.left +
@@ -35,60 +43,39 @@ export function MultiSeriesChart({
   return (
     <div className="space-y-2">
       <div className="flex flex-wrap gap-3 text-[10px] text-[var(--admin-muted)]">
-        {SERIES.map((series) => (
-          <span key={series.key} className="inline-flex items-center gap-1.5">
+        {series.map((s) => (
+          <span key={s.key} className="inline-flex items-center gap-1.5">
             <span
-              className="h-1.5 w-1.5 rounded-full"
-              style={{ background: series.color }}
+              className="h-2 w-2 rounded-full"
+              style={{ background: s.color }}
+              aria-hidden
             />
-            {series.label}
+            {s.label}
           </span>
         ))}
       </div>
       <svg
         viewBox={`0 0 ${width} ${height}`}
-        className="w-full"
+        className="min-w-full"
         role="img"
         aria-label={title}
       >
-        {[0, 0.25, 0.5, 0.75, 1].map((tick) => {
-          const yy = pad.top + innerH * (1 - tick);
-          return (
-            <g key={tick}>
-              <line
-                x1={pad.left}
-                x2={width - pad.right}
-                y1={yy}
-                y2={yy}
-                stroke="rgba(255,255,255,0.06)"
-              />
-              <text
-                x={pad.left - 8}
-                y={yy + 3}
-                textAnchor="end"
-                fill="rgba(139,151,168,0.9)"
-                fontSize="10"
-              >
-                {Math.round(max * tick)}
-              </text>
-            </g>
-          );
-        })}
-        {SERIES.map((series) => {
-          const d = data
-            .map(
-              (point, index) =>
-                `${index === 0 ? "M" : "L"} ${x(index)} ${y(point[series.key])}`,
-            )
+        {series.map((s) => {
+          const path = data
+            .map((point, index) => {
+              const command = index === 0 ? "M" : "L";
+              return `${command}${x(index)} ${y(point[s.key])}`;
+            })
             .join(" ");
           return (
             <path
-              key={series.key}
-              d={d}
+              key={s.key}
+              d={path}
               fill="none"
-              stroke={series.color}
+              stroke={s.color}
               strokeWidth="1.75"
-              opacity={0.9}
+              strokeLinejoin="round"
+              strokeLinecap="round"
             />
           );
         })}
@@ -116,11 +103,11 @@ export function BarTrend({
       {points.map((point) => (
         <div
           key={point.label}
-          className="min-w-0 flex-1 rounded-t-sm"
+          className="flex-1 rounded-t-sm"
           style={{
             height: `${Math.max(4, (point.value / max) * 100)}%`,
             background: color,
-            opacity: point.value === 0 ? 0.2 : 0.9,
+            opacity: 0.85,
           }}
           title={`${point.label}: ${point.value}`}
         />

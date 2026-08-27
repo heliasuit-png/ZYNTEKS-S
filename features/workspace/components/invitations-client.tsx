@@ -3,6 +3,7 @@
 import { useTransition } from "react";
 import { Check, X } from "lucide-react";
 
+import { useDictionary } from "@/components/i18n/locale-provider";
 import { Button } from "@/components/dashboard/button";
 import {
   Panel,
@@ -33,19 +34,19 @@ export function InvitationsClient({
   invitations: InvitationRow[];
   highlightToken?: string;
 }) {
+  const { dict } = useDictionary();
+  const t = dict.dash.members;
   const [pending, startTransition] = useTransition();
 
   return (
     <FadeIn>
       <Panel>
         <PanelHeader>
-          <PanelTitle>Pending invitations</PanelTitle>
+          <PanelTitle>{t.pendingInvitations}</PanelTitle>
         </PanelHeader>
         <PanelContent className="space-y-3">
           {invitations.length === 0 ? (
-            <p className="text-sm text-zt-muted">
-              You have no pending workspace invitations.
-            </p>
+            <p className="text-sm text-zt-muted">{t.emptyInvitationsDesc}</p>
           ) : (
             invitations.map((inv) => (
               <div
@@ -60,7 +61,9 @@ export function InvitationsClient({
                     {inv.workspaceName}
                   </p>
                   <p className="text-xs text-zt-muted">
-                    Role: {inv.roleLabel} · expires {inv.expiresLabel}
+                    {t.invitationMeta
+                      .replace("{role}", inv.roleLabel)
+                      .replace("{label}", inv.expiresLabel)}
                   </p>
                 </div>
                 <div className="flex gap-2">
@@ -74,7 +77,7 @@ export function InvitationsClient({
                     }
                   >
                     <Check className="size-4" aria-hidden />
-                    Accept
+                    {t.accept}
                   </Button>
                   <Button
                     size="sm"
@@ -87,7 +90,7 @@ export function InvitationsClient({
                     }
                   >
                     <X className="size-4" aria-hidden />
-                    Decline
+                    {t.decline}
                   </Button>
                 </div>
               </div>

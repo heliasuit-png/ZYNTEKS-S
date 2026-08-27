@@ -1,6 +1,7 @@
-import type { Metadata } from "next";
 import dynamic from "next/dynamic";
 import { redirect } from "next/navigation";
+import { dashboardPageMetadata } from "@/lib/i18n/dashboard-metadata";
+import { getDictionary } from "@/lib/i18n/get-dictionary";
 
 import { PageHeader } from "@/components/dashboard/page-header";
 import { DASHBOARD_ROUTES } from "@/lib/constants";
@@ -18,9 +19,11 @@ const AuditView = dynamic(
   { ssr: true },
 );
 
-export const metadata: Metadata = { title: "Audit Log" };
+export const generateMetadata = () => dashboardPageMetadata("audit");
 
 export default async function AuditPage() {
+  const { dict } = await getDictionary();
+  const pageCopy = dict.dashboard.pageTitles.audit;
   const supabase = await createSupabaseServerClient();
   const user = await getAuthenticatedUser(supabase);
   if (!user) redirect(DASHBOARD_ROUTES.dashboard);
@@ -42,9 +45,7 @@ export default async function AuditPage() {
 
   return (
     <div className="space-y-6">
-      <PageHeader
-        title="Audit log"
-        description="Searchable timeline of security and operational actions across this workspace."
+      <PageHeader title={pageCopy.title} description={pageCopy.description}
       />
       <AuditView logs={page.items} csv={csv} />
     </div>

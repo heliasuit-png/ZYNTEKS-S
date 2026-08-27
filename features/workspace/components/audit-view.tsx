@@ -3,6 +3,7 @@
 import { useMemo, useState, useTransition } from "react";
 import { Download, Search } from "lucide-react";
 
+import { useDictionary } from "@/components/i18n/locale-provider";
 import { Badge } from "@/components/dashboard/badge";
 import { Button } from "@/components/dashboard/button";
 import {
@@ -12,10 +13,16 @@ import {
   PanelTitle,
 } from "@/components/dashboard/panel";
 import { FadeIn } from "@/components/dashboard/motion";
-import { AUDIT_ACTION_LABELS } from "@/lib/constants";
 import { formatDateTime, formatRelativeTime } from "@/utils/format";
 import type { AuditLog } from "@/services/workspace/audit.service";
-import type { AuditAction } from "@/types/database";
+import type { DashDictionary } from "@/lib/i18n/dictionaries/dash-types";
+
+function auditActionLabel(
+  action: string,
+  actions: DashDictionary["audit"]["actions"],
+): string {
+  return actions[action as keyof typeof actions] ?? action;
+}
 
 export function AuditView({
   logs,
@@ -24,6 +31,8 @@ export function AuditView({
   logs: AuditLog[];
   csv: string;
 }) {
+  const { dict, locale } = useDictionary();
+  const t = dict.dash.audit;
   const [search, setSearch] = useState("");
   const [action, setAction] = useState<string>("all");
   const [pending, startTransition] = useTransition();
@@ -63,14 +72,14 @@ export function AuditView({
       <FadeIn>
         <Panel>
           <PanelHeader className="flex-col items-stretch gap-3 sm:flex-row sm:items-center">
-            <PanelTitle>Enterprise audit log</PanelTitle>
+            <PanelTitle>{t.title}</PanelTitle>
             <div className="flex flex-1 flex-wrap items-center gap-2 sm:justify-end">
               <div className="relative min-w-[200px] flex-1 sm:max-w-xs">
                 <Search className="pointer-events-none absolute left-3 top-1/2 size-3.5 -translate-y-1/2 text-zt-muted" />
                 <input
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  placeholder="Search actions…"
+                  placeholder={t.searchActions}
                   className="w-full rounded-xl border border-zt-border bg-white/[0.02] py-2 pl-9 pr-3 text-sm text-zt-text outline-none focus:border-zt-primary"
                 />
               </div>
@@ -79,10 +88,10 @@ export function AuditView({
                 onChange={(e) => setAction(e.target.value)}
                 className="rounded-xl border border-zt-border bg-white/[0.02] px-3 py-2 text-sm text-zt-text"
               >
-                <option value="all">All actions</option>
+                <option value="all">{t.allActions}</option>
                 {actions.map((a) => (
                   <option key={a} value={a}>
-                    {AUDIT_ACTION_LABELS[a as AuditAction] ?? a}
+                    {auditActionLabel(a, t.actions)}
                   </option>
                 ))}
               </select>
@@ -93,13 +102,13 @@ export function AuditView({
                 disabled={pending || !csv}
               >
                 <Download className="size-4" aria-hidden />
-                Export CSV
+                {t.exportCsv}
               </Button>
             </div>
           </PanelHeader>
           <PanelContent>
             {filtered.length === 0 ? (
-              <p className="text-sm text-zt-muted">No audit events match your filters.</p>
+              <p className="text-sm text-zt-muted">{t.emptyDesc}</p>
             ) : (
               <ol className="relative space-y-0 border-l border-zt-border pl-6">
                 {filtered.map((log) => (
@@ -112,7 +121,7 @@ export function AuditView({
                         </p>
                         <div className="mt-1 flex flex-wrap items-center gap-2">
                           <Badge tone="primary">
-                            {AUDIT_ACTION_LABELS[log.action] ?? log.action}
+                            {auditActionLabel(log.action, t.actions)}
                           </Badge>
                           {log.resource_type ? (
                             <Badge tone="default">{log.resource_type}</Badge>
@@ -120,7 +129,7 @@ export function AuditView({
                         </div>
                       </div>
                       <div className="text-right text-xs text-zt-muted">
-                        <p>{formatRelativeTime(log.created_at)}</p>
+                        <p>{formatRelativeTime(log.created_at, undefined, locale)}</p>
                         <p>{formatDateTime(log.created_at)}</p>
                       </div>
                     </div>

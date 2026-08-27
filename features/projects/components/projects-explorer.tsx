@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { FolderKanban, Plus, Search } from "lucide-react";
 
+import { useDictionary } from "@/components/i18n/locale-provider";
 import { EmptyState } from "@/components/dashboard/empty-state";
 import { Pagination } from "@/components/dashboard/pagination";
 import { FadeIn } from "@/components/dashboard/motion";
@@ -28,6 +29,8 @@ export function ProjectsExplorer({
   pageSize,
   search,
 }: ProjectsExplorerProps) {
+  const { dict } = useDictionary();
+  const t = dict.dash.projects;
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -84,8 +87,8 @@ export function ProjectsExplorer({
             type="search"
             value={searchValue}
             onChange={(event) => setSearchValue(event.target.value)}
-            placeholder="Search projects…"
-            aria-label="Search projects"
+            placeholder={t.searchPlaceholder}
+            aria-label={t.searchAria}
             className="h-9 w-full rounded-xl border border-zt-border bg-zt-surface pl-9 pr-3 text-sm text-zt-text placeholder:text-zt-muted focus:outline-none focus:ring-2 focus:ring-zt-primary/40"
           />
         </div>
@@ -95,18 +98,18 @@ export function ProjectsExplorer({
           className="inline-flex items-center justify-center gap-2 rounded-xl bg-zt-primary px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-zt-primary/90"
         >
           <Plus className="size-4" aria-hidden />
-          New Project
+          {t.newProject}
         </button>
       </div>
 
       {projects.length === 0 ? (
         <EmptyState
           icon={FolderKanban}
-          title={search ? "No matching projects" : "No projects yet"}
+          title={search ? t.noMatching : t.noProjects}
           description={
             search
-              ? `No projects match “${search}”. Try a different search.`
-              : "Create your first project to start monitoring errors, health, and API keys. You can still use the AI assistant without a project."
+              ? t.emptySearchDesc.replace("{query}", search)
+              : t.emptyDesc
           }
           action={
             search ? undefined : (
@@ -116,7 +119,7 @@ export function ProjectsExplorer({
                 className="inline-flex items-center gap-2 rounded-xl bg-zt-primary px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-zt-primary/90"
               >
                 <Plus className="size-4" aria-hidden />
-                New Project
+                {t.newProject}
               </button>
             )
           }

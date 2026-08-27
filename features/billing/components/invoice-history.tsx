@@ -1,5 +1,8 @@
+"use client";
+
 import { Receipt } from "lucide-react";
 
+import { useDictionary } from "@/components/i18n/locale-provider";
 import { Badge } from "@/components/dashboard/badge";
 import type { BadgeProps } from "@/components/dashboard/badge";
 import { DataTable } from "@/components/dashboard/data-table";
@@ -25,17 +28,20 @@ const invoiceTone: Record<InvoiceStatus, BadgeProps["tone"]> = {
 };
 
 export function InvoiceHistory({ invoices }: { invoices: BillingInvoice[] }) {
+  const { dict } = useDictionary();
+  const t = dict.dash.billingUi;
+
   const columns: Column<BillingInvoice>[] = [
     {
       key: "number",
-      header: "Invoice",
+      header: t.colInvoice,
       render: (invoice) => (
         <span className="font-medium text-zt-text">{invoice.number}</span>
       ),
     },
     {
       key: "amount",
-      header: "Amount",
+      header: t.colAmount,
       render: (invoice) => (
         <span className="text-zt-text">
           {formatMoney(invoice.amountCents, invoice.currency)}
@@ -44,14 +50,14 @@ export function InvoiceHistory({ invoices }: { invoices: BillingInvoice[] }) {
     },
     {
       key: "status",
-      header: "Status",
+      header: t.colStatus,
       render: (invoice) => (
         <Badge tone={invoiceTone[invoice.status]}>{invoice.status}</Badge>
       ),
     },
     {
       key: "issued",
-      header: "Issued",
+      header: t.colIssued,
       align: "right",
       render: (invoice) => (
         <span className="text-zt-muted">{formatDate(invoice.issuedAt)}</span>
@@ -64,11 +70,8 @@ export function InvoiceHistory({ invoices }: { invoices: BillingInvoice[] }) {
       <Panel>
         <PanelHeader>
           <div>
-            <PanelTitle>Invoice history</PanelTitle>
-            <PanelDescription>
-              Invoices sync from your PaymentProvider once connected. No mock
-              invoices are shown.
-            </PanelDescription>
+            <PanelTitle>{t.invoiceHistory}</PanelTitle>
+            <PanelDescription>{t.invoiceHistoryDesc}</PanelDescription>
           </div>
         </PanelHeader>
         <PanelContent>
@@ -79,8 +82,8 @@ export function InvoiceHistory({ invoices }: { invoices: BillingInvoice[] }) {
             empty={
               <EmptyState
                 icon={Receipt}
-                title="No invoices yet"
-                description="After a payment provider is connected and the first billing cycle completes, invoices appear here."
+                title={t.noInvoices}
+                description={t.noInvoicesDesc}
               />
             }
           />

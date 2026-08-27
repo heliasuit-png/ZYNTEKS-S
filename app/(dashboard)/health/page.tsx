@@ -1,5 +1,6 @@
-import type { Metadata } from "next";
 import { redirect } from "next/navigation";
+import { dashboardPageMetadata } from "@/lib/i18n/dashboard-metadata";
+import { getDictionary } from "@/lib/i18n/get-dictionary";
 
 import { PageHeader } from "@/components/dashboard/page-header";
 import { API_KEY_ENVIRONMENTS, ROUTES } from "@/lib/constants";
@@ -10,7 +11,7 @@ import { createSupabaseServerClient } from "@/supabase/server";
 import { HealthExplorer } from "@/features/health/components/health-explorer";
 import type { HealthStatus } from "@/features/health/types";
 
-export const metadata: Metadata = { title: "Health Monitor" };
+export const generateMetadata = () => dashboardPageMetadata("health");
 
 const STATUSES: HealthStatus[] = [
   "healthy",
@@ -32,6 +33,8 @@ interface HealthPageProps {
 }
 
 export default async function HealthPage({ searchParams }: HealthPageProps) {
+  const { dict } = await getDictionary();
+  const pageCopy = dict.dashboard.pageTitles.health;
   const params = await searchParams;
 
   const supabase = await createSupabaseServerClient();
@@ -70,9 +73,7 @@ export default async function HealthPage({ searchParams }: HealthPageProps) {
 
   return (
     <div className="space-y-6">
-      <PageHeader
-        title="Health Monitor"
-        description="Live health score, uptime, heartbeats, latency, and performance across your projects."
+      <PageHeader title={pageCopy.title} description={pageCopy.description}
       />
       <HealthExplorer
         data={data}

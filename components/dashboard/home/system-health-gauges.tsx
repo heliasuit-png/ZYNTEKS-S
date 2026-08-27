@@ -8,6 +8,7 @@ import {
 } from "@/components/dashboard/panel";
 import { CircularProgress } from "@/components/dashboard/circular-progress";
 import { CountUp, FadeIn } from "@/components/dashboard/motion";
+import { useDictionary } from "@/components/i18n/locale-provider";
 import type { DashboardStats, HealthState } from "@/types/dashboard";
 
 function colorsFor(value: number): { from: string; to: string } {
@@ -29,6 +30,10 @@ export function SystemHealthGauges({
   stats: DashboardStats;
   overall: HealthState;
 }) {
+  const { dict } = useDictionary();
+  const health = dict.dash.home.systemHealth;
+  const statsCopy = dict.dash.home.stats;
+
   const errorFree =
     stats.apiRequestsToday > 0
       ? Math.round(
@@ -45,17 +50,17 @@ export function SystemHealthGauges({
   const availability = availabilityFor(overall);
 
   const gauges = [
-    { label: "Health Score", value: stats.healthScore },
-    { label: "Availability", value: availability },
-    { label: "Error-free", value: errorFree },
-    { label: "Active Projects", value: activeRatio },
+    { label: statsCopy.healthScore, value: stats.healthScore },
+    { label: dict.dash.health.availability, value: availability },
+    { label: health.errorFree, value: errorFree },
+    { label: statsCopy.activeProjects, value: activeRatio },
   ];
 
   return (
     <Panel>
       <PanelHeader>
-        <PanelTitle>System Metrics</PanelTitle>
-        <span className="text-xs text-zt-muted">Derived from live telemetry</span>
+        <PanelTitle>{health.metricsTitle}</PanelTitle>
+        <span className="text-xs text-zt-muted">{health.metricsSubtitle}</span>
       </PanelHeader>
       <PanelContent>
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">

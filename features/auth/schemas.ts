@@ -3,25 +3,26 @@ import { z } from "zod";
 /**
  * Reusable Zod schemas for every authentication flow. Server actions and
  * client forms share these so validation stays consistent end-to-end.
+ * Messages are stable codes mapped via actionMessages.validation.
  */
 
 const email = z
   .string()
   .trim()
-  .min(1, "Email is required")
-  .email("Enter a valid email address");
+  .min(1, "email_required")
+  .email("email_invalid");
 
 const password = z
   .string()
-  .min(8, "Password must be at least 8 characters")
-  .max(72, "Password must be at most 72 characters")
-  .regex(/[a-z]/, "Password must contain a lowercase letter")
-  .regex(/[A-Z]/, "Password must contain an uppercase letter")
-  .regex(/[0-9]/, "Password must contain a number");
+  .min(8, "password_min_8")
+  .max(72, "password_max_72")
+  .regex(/[a-z]/, "password_lowercase")
+  .regex(/[A-Z]/, "password_uppercase")
+  .regex(/[0-9]/, "password_number");
 
 export const signInSchema = z.object({
   email,
-  password: z.string().min(1, "Password is required"),
+  password: z.string().min(1, "password_required"),
 });
 
 export const signUpSchema = z
@@ -29,14 +30,14 @@ export const signUpSchema = z
     fullName: z
       .string()
       .trim()
-      .min(2, "Full name must be at least 2 characters")
-      .max(120, "Full name is too long"),
+      .min(2, "full_name_min")
+      .max(120, "full_name_max"),
     email,
     password,
-    confirmPassword: z.string().min(1, "Please confirm your password"),
+    confirmPassword: z.string().min(1, "password_confirm_required"),
   })
   .refine((data) => data.password === data.confirmPassword, {
-    message: "Passwords do not match",
+    message: "passwords_mismatch",
     path: ["confirmPassword"],
   });
 
@@ -51,10 +52,10 @@ export const magicLinkSchema = z.object({
 export const resetPasswordSchema = z
   .object({
     password,
-    confirmPassword: z.string().min(1, "Please confirm your password"),
+    confirmPassword: z.string().min(1, "password_confirm_required"),
   })
   .refine((data) => data.password === data.confirmPassword, {
-    message: "Passwords do not match",
+    message: "passwords_mismatch",
     path: ["confirmPassword"],
   });
 

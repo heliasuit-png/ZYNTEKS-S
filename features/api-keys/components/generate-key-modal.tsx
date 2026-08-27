@@ -3,11 +3,9 @@
 import { useActionState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 
+import { useDictionary } from "@/components/i18n/locale-provider";
 import { Modal } from "@/components/dashboard/modal";
-import {
-  API_KEY_ENVIRONMENTS,
-  API_KEY_ENVIRONMENT_LABELS,
-} from "@/lib/constants";
+import { API_KEY_ENVIRONMENTS } from "@/lib/constants";
 import { createApiKeyAction } from "@/features/api-keys/actions";
 import { initialApiKeyFormState } from "@/features/api-keys/types";
 
@@ -36,6 +34,9 @@ export function GenerateKeyModal({
   onCreated,
   onError,
 }: GenerateKeyModalProps) {
+  const { dict } = useDictionary();
+  const t = dict.dash.apiKeys;
+  const common = dict.dashboardCommon;
   const router = useRouter();
   const [state, formAction, isPending] = useActionState(
     createApiKeyAction,
@@ -66,8 +67,8 @@ export function GenerateKeyModal({
     <Modal
       open={open}
       onClose={onClose}
-      title="Generate API key"
-      description="Create a new key to authenticate requests for a project."
+      title={t.generateTitle}
+      description={t.generateDesc}
       footer={
         <>
           <button
@@ -75,7 +76,7 @@ export function GenerateKeyModal({
             onClick={onClose}
             className="rounded-lg border border-zt-border px-3 py-1.5 text-sm text-zt-muted transition-colors hover:text-zt-text"
           >
-            Cancel
+            {common.cancel}
           </button>
           <button
             type="submit"
@@ -83,26 +84,24 @@ export function GenerateKeyModal({
             disabled={isPending || projects.length === 0}
             className="rounded-lg bg-zt-primary px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-zt-primary/90 disabled:opacity-60"
           >
-            {isPending ? "Generating…" : "Generate key"}
+            {isPending ? t.generating : t.generateSubmit}
           </button>
         </>
       }
     >
       {projects.length === 0 ? (
-        <p className="text-sm text-zt-muted">
-          Create a project before generating API keys.
-        </p>
+        <p className="text-sm text-zt-muted">{t.createBeforeKeys}</p>
       ) : (
         <form id="generate-key-form" action={formAction} className="space-y-4">
           <div className="space-y-1.5">
             <label htmlFor="api-key-name" className={fieldLabel}>
-              Name
+              {t.name}
             </label>
             <input
               id="api-key-name"
               name="name"
               required
-              placeholder="Server key"
+              placeholder={t.namePlaceholder}
               className={fieldInput}
             />
             {fieldErrors.name?.[0] ? (
@@ -112,7 +111,7 @@ export function GenerateKeyModal({
 
           <div className="space-y-1.5">
             <label htmlFor="api-key-project" className={fieldLabel}>
-              Project
+              {t.project}
             </label>
             <select
               id="api-key-project"
@@ -133,7 +132,7 @@ export function GenerateKeyModal({
 
           <div className="space-y-1.5">
             <label htmlFor="api-key-environment" className={fieldLabel}>
-              Environment
+              {t.environment}
             </label>
             <select
               id="api-key-environment"
@@ -143,7 +142,7 @@ export function GenerateKeyModal({
             >
               {API_KEY_ENVIRONMENTS.map((environment) => (
                 <option key={environment} value={environment}>
-                  {API_KEY_ENVIRONMENT_LABELS[environment]}
+                  {t.environments[environment]}
                 </option>
               ))}
             </select>

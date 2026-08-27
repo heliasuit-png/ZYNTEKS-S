@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Menu, Sparkles, Users } from "lucide-react";
 
 import { LanguageSwitcher } from "@/components/i18n/language-switcher";
+import { useDictionary } from "@/components/i18n/locale-provider";
 import { DASHBOARD_ROUTES } from "@/lib/constants";
 import type { Locale } from "@/lib/i18n/config";
 import { useDashboard } from "@/features/dashboard/hooks/use-dashboard";
@@ -27,12 +28,6 @@ interface TopbarProps {
   localeLabels: { english: string; turkish: string; language: string };
 }
 
-const PLAN_LABELS: Record<string, string> = {
-  free: "Starter",
-  pro: "Pro",
-  enterprise: "Enterprise",
-};
-
 export function Topbar({
   user,
   workspace,
@@ -42,14 +37,18 @@ export function Topbar({
   localeLabels,
 }: TopbarProps) {
   const { openMobileNav } = useDashboard();
-  const planLabel = PLAN_LABELS[workspace.active.plan] ?? workspace.active.plan;
+  const { dict } = useDictionary();
+  const planNames = dict.dash.billingUi.planNames;
+  const planLabel =
+    planNames[workspace.active.plan as keyof typeof planNames] ??
+    workspace.active.plan;
 
   return (
     <header className="zt-glass sticky top-0 z-30 flex h-16 items-center gap-3 border-b border-zt-border px-4 lg:px-8">
       <button
         type="button"
         onClick={openMobileNav}
-        aria-label="Open navigation"
+        aria-label={dict.dash.shell.openNavigation}
         className="flex size-9 items-center justify-center rounded-xl border border-zt-border bg-white/[0.02] text-zt-muted transition-colors hover:text-zt-text lg:hidden"
       >
         <Menu className="size-5" aria-hidden />

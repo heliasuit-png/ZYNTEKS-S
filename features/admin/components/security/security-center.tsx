@@ -3,6 +3,8 @@
 import { useState, useTransition, type ReactNode } from "react";
 import { motion } from "framer-motion";
 
+import { useDictionary } from "@/components/i18n/locale-provider";
+import { fillTemplate } from "@/lib/i18n/fill-template";
 import { hasAdminPermission } from "@/services/admin/permissions";
 import type { AdminPlatformRole } from "@/services/admin/types";
 import type {
@@ -34,6 +36,8 @@ export function SecurityCenter({
   data: SecurityCenterData;
   role: AdminPlatformRole;
 }) {
+  const { dict, locale } = useDictionary();
+  const t = dict.admin.security;
   const canRevoke = hasAdminPermission(role, "admin:users:write");
   const [message, setMessage] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
@@ -47,58 +51,61 @@ export function SecurityCenter({
 
   const kpis = [
     {
-      label: "Security score",
+      label: t.metrics.securityScore,
       value: String(data.overview.securityScore),
-      hint: `Risk ${data.overview.riskLevel}`,
+      hint: `${t.metrics.riskLevel} ${data.overview.riskLevel}`,
     },
     {
-      label: "Failed auth",
+      label: t.metrics.failedAuth,
       value: formatNumber(data.overview.failedApiAuth),
-      hint: "Login failures + API auth_failed",
+      hint: t.metricsHints.failedAuth,
     },
     {
-      label: "Successful logins",
+      label: t.metrics.successfulLogins,
       value: formatNumber(data.overview.successfulSessions),
       hint: "auth_login_events / sessions",
     },
     {
-      label: "Blocked requests",
-      value: data.overview.blockedRequests == null ? "—" : formatNumber(data.overview.blockedRequests),
-      hint: "Not persisted",
+      label: t.metrics.blockedRequests,
+      value:
+        data.overview.blockedRequests == null
+          ? "—"
+          : formatNumber(data.overview.blockedRequests),
+      hint: t.metricsHints.blockedRequests,
     },
     {
-      label: "Suspended users",
+      label: t.metrics.suspendedUsers,
       value: formatNumber(data.overview.suspendedUsers),
       hint: "profiles.status = banned",
     },
     {
-      label: "Admin accounts",
+      label: t.metrics.adminAccounts,
       value: formatNumber(data.overview.adminAccounts),
       hint: "admin_users",
     },
     {
-      label: "API key failures",
+      label: t.metrics.apiKeyFailures,
       value: formatNumber(data.overview.apiKeyFailures),
-      hint: "auth_failed events",
+      hint: t.metrics.apiKeyFailuresHint,
     },
     {
-      label: "Security events",
+      label: t.metrics.securityEvents,
       value: formatNumber(data.overview.securityEvents),
-      hint: "Filtered timeline count",
+      hint: t.metricsHints.securityEvents,
     },
     {
-      label: "Risk level",
+      label: t.metrics.riskLevel,
       value: data.overview.riskLevel,
-      hint: `${data.overview.activeSessions} active sessions`,
+      hint: `${data.overview.activeSessions} ${t.activeSessions.toLowerCase()}`,
     },
   ];
 
   return (
     <div className="space-y-5">
       <AdminPageHeader
-        eyebrow="Zero Trust plane"
-        title="Enterprise Security Center"
-        description="Auth signals, API key abuse, admin actions, and session control — real telemetry only."
+        eyebrow={t.eyebrow}
+        title={t.pageTitle}
+        description={t.description}
       />
 
       {message ? (
@@ -157,8 +164,10 @@ export function SecurityCenter({
       </div>
 
       <p className="text-[11px] text-[var(--admin-muted)]">
-        Honest gaps: {data.unavailable.join(" · ")}. Updated{" "}
-        {formatRelative(data.generatedAt)}.
+        {fillTemplate(t.honestGapsUpdated, {
+          items: data.unavailable.join(" · "),
+          when: formatRelative(data.generatedAt, locale),
+        })}
       </p>
     </div>
   );
@@ -169,15 +178,18 @@ function ThreatCenter({
 }: {
   threats: SecurityCenterData["threats"];
 }) {
+  const { dict, locale } = useDictionary();
+  const t = dict.admin.security;
+  const common = dict.admin.common;
   const buckets: { key: SecuritySeverity; label: string }[] = [
-    { key: "critical", label: "Critical" },
-    { key: "high", label: "High" },
-    { key: "medium", label: "Medium" },
-    { key: "low", label: "Low" },
+    { key: "critical", label: common.severityCritical },
+    { key: "high", label: common.severityHigh },
+    { key: "medium", label: common.severityMedium },
+    { key: "low", label: common.severityLow },
   ];
 
   return (
-    <Panel title="Threat center" subtitle="Severity buckets + timeline">
+    <Panel title={t.threatCenter} subtitle={t.threatCenterDesc}>
       <div className="mb-3 grid grid-cols-4 gap-2">
         {buckets.map((bucket) => (
           <div
@@ -195,7 +207,7 @@ function ThreatCenter({
       </div>
       <div className="max-h-80 space-y-1.5 overflow-y-auto">
         {threats.timeline.length === 0 ? (
-          <AdminEmptyState title="No threats in filter scope." />
+          <AdminEmptyState title={t.threatEmpty} />
         ) : (
           threats.timeline.map((item) => (
             <div
@@ -211,7 +223,7 @@ function ThreatCenter({
               <p className="mt-0.5 text-[10px] text-[var(--admin-muted)]">
                 {item.source} · {item.userEmail ?? "—"} ·{" "}
                 {item.workspaceName ?? "—"} · {item.projectName ?? "—"} ·{" "}
-                {formatRelative(item.occurredAt)}
+                {formatRelative(item.occurredAt, locale)}
               </p>
             </div>
           ))
@@ -222,25 +234,27 @@ function ThreatCenter({
 }
 
 function RiskPanel({ risk }: { risk: SecurityCenterData["risk"] }) {
+  const { dict } = useDictionary();
+  const t = dict.admin.security;
   const max = 100;
   return (
-    <Panel title="Risk analysis" subtitle="Score · trend · recommendations">
+    <Panel title={t.riskAnalysis} subtitle={t.riskAnalysisDesc}>
       <div className="mb-3 flex items-end justify-between gap-3">
         <div>
           <p className="text-[10px] uppercase text-[var(--admin-muted)]">
-            Overall risk score
+            {t.overallRiskScore}
           </p>
           <p className="text-3xl font-semibold text-[var(--admin-text)]">
             {risk.overallScore}
           </p>
           <p className={`text-sm capitalize ${SEVERITY_TONE[risk.riskLevel]}`}>
-            {risk.riskLevel} risk
+            {fillTemplate(t.riskLevelLabel, { level: risk.riskLevel })}
           </p>
         </div>
         <div
           className="flex h-16 items-end gap-0.5"
           role="img"
-          aria-label="Risk trend"
+          aria-label={t.riskTrendAria}
         >
           {risk.trend.map((point) => (
             <div
@@ -273,16 +287,16 @@ function LoginSecurity({
 }: {
   panel: SecurityCenterData["loginSecurity"];
 }) {
+  const { dict, locale } = useDictionary();
+  const t = dict.admin.security;
+  const common = dict.admin.common;
   return (
-    <Panel
-      title="Login security"
-      subtitle="Product auth_login_events · sessions fallback · API auth_failed"
-    >
-      <SectionLabel>Recent logins</SectionLabel>
+    <Panel title={t.loginSecurity} subtitle={t.loginSecurityDesc}>
+      <SectionLabel>{t.recentLogins}</SectionLabel>
       <SessionList rows={panel.recentLogins} />
-      <SectionLabel>Failed API authentication</SectionLabel>
+      <SectionLabel>{t.failedApiAuthSection}</SectionLabel>
       {panel.failedApiAuth.length === 0 ? (
-        <Empty>No API auth failures in range.</Empty>
+        <Empty>{t.noApiAuthFailures}</Empty>
       ) : (
         <div className="mb-3 max-h-40 space-y-1 overflow-y-auto">
           {panel.failedApiAuth.map((item) => (
@@ -290,15 +304,13 @@ function LoginSecurity({
               key={item.id}
               className="rounded-lg border border-rose-500/15 px-2 py-1.5 text-[11px] text-[var(--admin-muted)]"
             >
-              {item.summary} · {item.ipAddress ?? "IP unknown"} ·{" "}
-              {formatRelative(item.occurredAt)}
+              {item.summary} · {item.ipAddress ?? common.ipUnknown} ·{" "}
+              {formatRelative(item.occurredAt, locale)}
             </div>
           ))}
         </div>
       )}
-      <SectionLabel>
-        Flagged (unknown device / country · new browser / IP)
-      </SectionLabel>
+      <SectionLabel>{t.flaggedSessions}</SectionLabel>
       <SessionList rows={panel.flaggedSessions} showFlags />
     </Panel>
   );
@@ -311,7 +323,9 @@ function SessionList({
   rows: SecurityCenterData["loginSecurity"]["recentLogins"];
   showFlags?: boolean;
 }) {
-  if (rows.length === 0) return <Empty>None.</Empty>;
+  const { dict, locale } = useDictionary();
+  const t = dict.admin.security;
+  if (rows.length === 0) return <Empty>{t.noneDot}</Empty>;
   return (
     <div className="mb-3 max-h-44 space-y-1 overflow-y-auto">
       {rows.map((row) => (
@@ -324,7 +338,7 @@ function SessionList({
           </p>
           <p className="text-[var(--admin-muted)]">
             {row.os ?? "—"} · {row.country ?? "—"} · {row.ipAddress ?? "—"} ·{" "}
-            {formatRelative(row.createdAt)}
+            {formatRelative(row.createdAt, locale)}
             {showFlags && row.flags.length > 0
               ? ` · ${row.flags.join(", ")}`
               : ""}
@@ -346,11 +360,13 @@ function ActiveSessions({
   pending: boolean;
   onRevoke: (id: string) => void;
 }) {
+  const { dict, locale } = useDictionary();
+  const t = dict.admin.security;
   return (
-    <Panel title="Active sessions" subtitle="Revoke unknown devices">
+    <Panel title={t.activeSessions} subtitle={t.activeSessionsDesc}>
       <div className="max-h-[420px] space-y-1.5 overflow-y-auto">
         {sessions.length === 0 ? (
-          <AdminEmptyState title="No active sessions." />
+          <AdminEmptyState title={t.sessionsEmpty} />
         ) : (
           sessions.map((session) => (
             <div
@@ -362,7 +378,7 @@ function ActiveSessions({
                   {session.userName || session.userEmail}
                   {session.isCurrent ? (
                     <span className="ml-2 text-[10px] text-emerald-300">
-                      current
+                      {t.currentSession}
                     </span>
                   ) : null}
                 </p>
@@ -370,7 +386,7 @@ function ActiveSessions({
                   {session.browser ?? "—"} · {session.os ?? "—"} ·{" "}
                   {session.deviceLabel ?? "—"} · {session.country ?? "—"} ·{" "}
                   {session.ipAddress ?? "—"} ·{" "}
-                  {formatRelative(session.lastActiveAt)}
+                  {formatRelative(session.lastActiveAt, locale)}
                 </p>
               </div>
               {canRevoke ? (
@@ -380,7 +396,7 @@ function ActiveSessions({
                   onClick={() => onRevoke(session.id)}
                   className="rounded-lg border border-rose-500/30 px-2 py-1 text-[11px] text-rose-300 hover:bg-rose-500/10 disabled:opacity-40"
                 >
-                  Revoke
+                  {t.revoke}
                 </button>
               ) : null}
             </div>
@@ -396,24 +412,35 @@ function ApiSecurity({
 }: {
   panel: SecurityCenterData["apiSecurity"];
 }) {
+  const { dict, locale } = useDictionary();
+  const t = dict.admin.security;
+  const common = dict.admin.common;
   return (
-    <Panel title="API security" subtitle="Auth failures · keys · abuse">
+    <Panel title={t.apiSecurity} subtitle={t.apiSecurityDesc}>
       <div className="mb-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
-        <MiniStat label="Failed auth" value={formatNumber(panel.failedAuth)} />
         <MiniStat
-          label="Successful auth"
+          label={t.metrics.failedAuth}
+          value={formatNumber(panel.failedAuth)}
+        />
+        <MiniStat
+          label={t.api.successfulAuth}
           value={formatNumber(panel.successfulAuth)}
         />
-        <MiniStat label="Revoked keys" value={formatNumber(panel.revokedKeys)} />
         <MiniStat
-          label="Expired keys"
-          value={panel.expiredKeys == null ? "—" : formatNumber(panel.expiredKeys)}
+          label={t.api.revokedKeys}
+          value={formatNumber(panel.revokedKeys)}
+        />
+        <MiniStat
+          label={t.api.expiredKeys}
+          value={
+            panel.expiredKeys == null ? "—" : formatNumber(panel.expiredKeys)
+          }
         />
       </div>
-      <SectionLabel>Most used API keys</SectionLabel>
+      <SectionLabel>{t.api.mostUsedKeys}</SectionLabel>
       <div className="mb-3 max-h-36 space-y-1 overflow-y-auto">
         {panel.mostUsed.length === 0 ? (
-          <Empty>No usage events.</Empty>
+          <Empty>{t.api.noUsageEvents}</Empty>
         ) : (
           panel.mostUsed.map((key) => (
             <div
@@ -421,37 +448,41 @@ function ApiSecurity({
               className="rounded-lg border border-[var(--admin-border)] px-2 py-1.5 text-[11px] text-[var(--admin-muted)]"
             >
               <span className="text-[var(--admin-text)]">{key.name}</span> ·{" "}
-              {key.keyPrefix}… · {key.projectName} · {key.useEvents} events
-              {key.lastUsedAt ? ` · ${formatRelative(key.lastUsedAt)}` : ""}
+              {key.keyPrefix}… · {key.projectName} ·{" "}
+              {fillTemplate(t.useEvents, { count: String(key.useEvents) })}
+              {key.lastUsedAt ? ` · ${formatRelative(key.lastUsedAt, locale)}` : ""}
             </div>
           ))
         )}
       </div>
-      <SectionLabel>API abuse attempts (≥3 failures / IP)</SectionLabel>
+      <SectionLabel>{t.apiAbuseAttempts}</SectionLabel>
       <div className="mb-3 max-h-28 space-y-1 overflow-y-auto">
         {panel.abuseAttempts.length === 0 ? (
-          <Empty>No abuse clusters.</Empty>
+          <Empty>{t.noAbuseClusters}</Empty>
         ) : (
           panel.abuseAttempts.map((row) => (
             <div
               key={`${row.ipAddress}-${row.lastSeen}`}
               className="rounded-lg border border-rose-500/15 px-2 py-1.5 text-[11px] text-rose-200/80"
             >
-              {row.ipAddress ?? "unknown IP"} · {row.failures} failures ·{" "}
-              {formatRelative(row.lastSeen)}
+              {row.ipAddress ?? common.ipUnknown} ·{" "}
+              {fillTemplate(t.failuresCount, {
+                count: String(row.failures),
+              })}{" "}
+              · {formatRelative(row.lastSeen, locale)}
             </div>
           ))
         )}
       </div>
-      <SectionLabel>Recent failures</SectionLabel>
+      <SectionLabel>{t.recentFailures}</SectionLabel>
       <div className="max-h-28 space-y-1 overflow-y-auto">
         {panel.recentFailures.map((row) => (
           <div
             key={row.id}
             className="rounded-lg border border-[var(--admin-border)] px-2 py-1 text-[11px] text-[var(--admin-muted)]"
           >
-            {row.projectName ?? "Project"} · {row.ipAddress ?? "—"} ·{" "}
-            {formatRelative(row.createdAt)}
+            {row.projectName ?? t.api.projectFallback} · {row.ipAddress ?? "—"} ·{" "}
+            {formatRelative(row.createdAt, locale)}
           </div>
         ))}
       </div>
@@ -464,8 +495,10 @@ function AdminSecurity({
 }: {
   panel: SecurityCenterData["adminSecurity"];
 }) {
+  const { dict, locale } = useDictionary();
+  const t = dict.admin.security;
   return (
-    <Panel title="Admin security" subtitle="Accounts · roles · recent actions">
+    <Panel title={t.adminSecurity} subtitle={t.adminSecurityDesc}>
       <div className="mb-3 max-h-56 space-y-1.5 overflow-y-auto">
         {panel.accounts.map((account) => (
           <div
@@ -481,9 +514,11 @@ function AdminSecurity({
               </span>
             </div>
             <p className="mt-0.5 text-[10px] text-[var(--admin-muted)]">
-              {account.email} · last login{" "}
+              {account.email} · {t.lastLoginLabel}{" "}
               {account.lastLogin ? formatWhen(account.lastLogin) : "—"} ·{" "}
-              {account.recentActions} actions in range
+              {fillTemplate(t.actionsInRange, {
+                count: String(account.recentActions),
+              })}
             </p>
             <p className="mt-1 line-clamp-2 text-[10px] text-[var(--admin-accent-text)]/70">
               {account.permissions.join(" · ")}
@@ -491,10 +526,10 @@ function AdminSecurity({
           </div>
         ))}
       </div>
-      <SectionLabel>Recent admin actions</SectionLabel>
+      <SectionLabel>{t.recentAdminActions}</SectionLabel>
       <div className="max-h-40 space-y-1 overflow-y-auto">
         {panel.recentActions.length === 0 ? (
-          <Empty>No admin audit rows.</Empty>
+          <Empty>{t.noAdminAuditRows}</Empty>
         ) : (
           panel.recentActions.map((item) => (
             <div
@@ -502,7 +537,7 @@ function AdminSecurity({
               className="rounded-lg border border-[var(--admin-border)] px-2 py-1.5 text-[11px] text-[var(--admin-muted)]"
             >
               <span className="text-[var(--admin-text)]">{item.action}</span> ·{" "}
-              {item.summary} · {formatRelative(item.occurredAt)}
+              {item.summary} · {formatRelative(item.occurredAt, locale)}
             </div>
           ))
         )}
@@ -516,11 +551,13 @@ function AuditCenter({
 }: {
   items: SecurityCenterData["audit"];
 }) {
+  const { dict } = useDictionary();
+  const t = dict.admin.security;
   return (
-    <Panel title="Audit center" subtitle="Filterable security timeline">
+    <Panel title={t.auditCenter} subtitle={t.auditCenterDesc}>
       <div className="max-h-[480px] space-y-1.5 overflow-y-auto">
         {items.length === 0 ? (
-          <AdminEmptyState title="No audit events match filters." />
+          <AdminEmptyState title={t.auditEmpty} />
         ) : (
           items.map((item) => (
             <div
@@ -550,6 +587,8 @@ function AlertCenter({
 }: {
   alerts: SecurityCenterData["alerts"];
 }) {
+  const { dict, locale } = useDictionary();
+  const t = dict.admin.security;
   const counts = {
     open: alerts.filter((a) => a.status === "open").length,
     acknowledged: alerts.filter((a) => a.status === "acknowledged").length,
@@ -557,21 +596,21 @@ function AlertCenter({
   };
 
   return (
-    <Panel
-      title="Security alerts"
-      subtitle="Derived from API abuse, incidents, suspensions · dismiss state not stored"
-    >
+    <Panel title={t.securityAlerts} subtitle={t.securityAlertsDesc}>
       <div className="mb-3 grid grid-cols-3 gap-2 text-center text-xs">
-        <MiniStat label="Open" value={String(counts.open)} />
-        <MiniStat label="Acknowledged" value={String(counts.acknowledged)} />
-        <MiniStat label="Resolved" value={String(counts.resolved)} />
+        <MiniStat label={t.alerts.open} value={String(counts.open)} />
+        <MiniStat
+          label={t.alerts.acknowledged}
+          value={String(counts.acknowledged)}
+        />
+        <MiniStat label={t.alerts.resolved} value={String(counts.resolved)} />
       </div>
       <p className="mb-2 text-[10px] text-[var(--admin-muted)]">
-        Dismissed: not persisted in schema.
+        {t.dismissedNote}
       </p>
       <div className="max-h-80 space-y-1.5 overflow-y-auto">
         {alerts.length === 0 ? (
-          <Empty>No current alerts.</Empty>
+          <Empty>{t.noCurrentAlerts}</Empty>
         ) : (
           alerts.map((alert) => (
             <div
@@ -586,7 +625,7 @@ function AlertCenter({
               </div>
               <p className="mt-0.5 text-[10px] text-[var(--admin-muted)]">
                 {alert.source} · {alert.status} ·{" "}
-                {formatRelative(alert.occurredAt)}
+                {formatRelative(alert.occurredAt, locale)}
               </p>
             </div>
           ))

@@ -100,11 +100,14 @@ export function sanitizeUserMessage(raw: string): string {
 }
 
 /** Derives a short conversation title from the first user message. */
-export function deriveTitle(message: string): string {
+export function deriveTitle(
+  message: string,
+  emptyFallback = "…",
+): string {
   const firstLine = message.split("\n").map((l) => l.trim()).find(Boolean) ?? "";
   const normalized = firstLine.replace(/\s+/g, " ").trim();
   if (!normalized) {
-    return "New conversation";
+    return emptyFallback;
   }
   if (normalized.length <= AI.titleMaxChars) {
     return normalized;

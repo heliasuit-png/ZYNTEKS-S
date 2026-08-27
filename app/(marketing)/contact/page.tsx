@@ -1,24 +1,28 @@
 import type { Metadata } from "next";
-
-import { APP_NAME, ROUTES } from "@/lib/constants";
-import { LegalPage } from "@/features/landing/components/legal-page";
 import Link from "next/link";
 
-export const metadata: Metadata = {
-  title: "Contact",
-  description: `Contact ${APP_NAME}.`,
-};
+import { ROUTES } from "@/lib/constants";
+import { LegalPage } from "@/features/landing/components/legal-page";
+import { getDictionary } from "@/lib/i18n/get-dictionary";
 
-export default function ContactPage() {
+export async function generateMetadata(): Promise<Metadata> {
+  const { dict } = await getDictionary();
+  return {
+    title: dict.contact.title,
+    description: dict.contact.intro,
+  };
+}
+
+export default async function ContactPage() {
+  const { dict } = await getDictionary();
+  const c = dict.contact;
+
   return (
-    <LegalPage title="Contact">
-      <p>
-        Questions about the platform, licensing, or deployment? Reach the team
-        below.
-      </p>
+    <LegalPage title={c.title}>
+      <p>{c.intro}</p>
       <ul className="list-disc space-y-2 pl-5">
         <li>
-          General:{" "}
+          {c.general}{" "}
           <a
             className="text-zt-primary hover:underline"
             href="mailto:hello@zynteksis.com"
@@ -27,7 +31,7 @@ export default function ContactPage() {
           </a>
         </li>
         <li>
-          Billing architecture:{" "}
+          {c.billing}{" "}
           <a
             className="text-zt-primary hover:underline"
             href="mailto:billing@zynteksis.com"
@@ -36,9 +40,9 @@ export default function ContactPage() {
           </a>
         </li>
         <li>
-          Product access:{" "}
+          {c.productAccess}{" "}
           <Link className="text-zt-primary hover:underline" href={ROUTES.register}>
-            Create an account
+            {c.createAccount}
           </Link>
         </li>
       </ul>

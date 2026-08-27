@@ -8,7 +8,12 @@ import type { Components } from "react-markdown";
 import remarkGfm from "remark-gfm";
 import rehypeHighlight from "rehype-highlight";
 
+import { useDictionaryOptional } from "@/components/i18n/locale-provider";
+import { dictionaries } from "@/lib/i18n/dictionaries";
+
 import "highlight.js/styles/github-dark.css";
+
+const fallbackSystem = dictionaries.en.system;
 
 function collectText(children: ReactNode): string {
   if (children === null || children === undefined || children === false) {
@@ -35,6 +40,8 @@ function collectText(children: ReactNode): string {
 function CodeBlock({ children }: { children: ReactNode }) {
   const preRef = useRef<HTMLPreElement>(null);
   const [copied, setCopied] = useState(false);
+  const ctx = useDictionaryOptional();
+  const system = ctx?.dict.system ?? fallbackSystem;
 
   async function copy() {
     const text = preRef.current?.innerText ?? "";
@@ -52,7 +59,7 @@ function CodeBlock({ children }: { children: ReactNode }) {
       <button
         type="button"
         onClick={copy}
-        aria-label="Copy code"
+        aria-label={system.copyCode}
         className="absolute right-2 top-2 flex items-center gap-1 rounded-md border border-zt-border bg-zt-surface/80 px-2 py-1 text-xs text-zt-muted opacity-0 transition-opacity hover:text-zt-text group-hover:opacity-100"
       >
         {copied ? (
@@ -60,7 +67,7 @@ function CodeBlock({ children }: { children: ReactNode }) {
         ) : (
           <Copy className="size-3.5" aria-hidden />
         )}
-        {copied ? "Copied" : "Copy"}
+        {copied ? system.copied : system.copy}
       </button>
       <pre
         ref={preRef}

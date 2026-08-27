@@ -76,13 +76,13 @@ describe("API key UX — safe feedback helpers", () => {
 describe("API key UX — explorer revoke/create feedback", () => {
   it("revoke success shows success toast and refreshes list state", () => {
     assert.match(explorer, /variant:\s*"success"/);
-    assert.match(explorer, /Key revoked/);
+    assert.match(explorer, /t\.toasts\.revoked/);
     assert.match(explorer, /router\.refresh\(\)/);
     assert.match(explorer, /from "@\/components\/dashboard\/toast"/);
   });
 
   it("revoke failure shows error toast without logging the key", () => {
-    assert.match(explorer, /Revoke failed/);
+    assert.match(explorer, /t\.toasts\.revokeFailed/);
     assert.match(explorer, /variant:\s*"error"/);
     assert.match(explorer, /apiKeyActionErrorMessage/);
     assert.equal(/console\.(log|error|warn|debug)\s*\(/.test(explorer), false);
@@ -91,7 +91,7 @@ describe("API key UX — explorer revoke/create feedback", () => {
   it("create key failure surfaces toast via onError", () => {
     assert.match(generateModal, /onError\?/);
     assert.match(generateModal, /onError\?\.\(state\.message\)/);
-    assert.match(explorer, /Could not create key/);
+    assert.match(explorer, /t\.toasts\.createFailed/);
     assert.match(explorer, /onError=\{handleCreateError\}/);
   });
 
@@ -99,8 +99,8 @@ describe("API key UX — explorer revoke/create feedback", () => {
     assert.match(explorer, /setRevealKey\(payload\.data\.plainKey\)/);
     assert.match(explorer, /setRevealKey\(plainKey\)/);
     assert.match(revealModal, /CopyButton/);
-    assert.match(revealModal, /never be shown again/i);
-    assert.match(explorer, /Key regenerated|API key created/);
+    assert.match(revealModal, /t\.revealDesc|t\.revealWarning/);
+    assert.match(explorer, /t\.toasts\.regenerated|t\.toasts\.created/);
   });
 
   it("server actions do not console-log plainKey", () => {

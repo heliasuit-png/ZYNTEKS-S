@@ -11,10 +11,14 @@ import type { AdminAuditAction, AdminPlatformRole } from "@/types/database";
 import { AdminContainer } from "@/features/admin";
 import { EnterpriseAuditCenter } from "@/features/admin/components/audit/enterprise-audit-center";
 import { requireAdminSession } from "@/features/admin/load-admin-session";
+import { getDictionary } from "@/lib/i18n/get-dictionary";
 
-export const metadata: Metadata = {
-  title: "Enterprise Audit Center · ZYNTEKSIS Admin",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const { dict } = await getDictionary();
+  return {
+    title: `${dict.admin.audit.pageTitle}${dict.admin.common.metaTitleSuffix}`,
+  };
+}
 
 export const dynamic = "force-dynamic";
 

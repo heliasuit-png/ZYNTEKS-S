@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { CreditCard, ArrowUpRight } from "lucide-react";
 
+import { useDictionary } from "@/components/i18n/locale-provider";
 import { Badge } from "@/components/dashboard/badge";
 import type { BadgeProps } from "@/components/dashboard/badge";
 import {
@@ -43,6 +44,8 @@ export function SubscriptionPanel({
 }: {
   subscription: BillingSubscription;
 }) {
+  const { dict } = useDictionary();
+  const t = dict.dash.billingUi;
   const [result, setResult] = useState<BillingActionState>({ status: "idle" });
   const canUpgrade = subscription.plan === "free" || subscription.plan === "pro";
 
@@ -51,11 +54,8 @@ export function SubscriptionPanel({
       <Panel>
         <PanelHeader className="flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <PanelTitle>Subscription</PanelTitle>
-            <PanelDescription>
-              Current plan status and billing cycle. Checkout opens only after a
-              PaymentProvider is connected.
-            </PanelDescription>
+            <PanelTitle>{t.subscriptionTitle}</PanelTitle>
+            <PanelDescription>{t.subscriptionDesc}</PanelDescription>
           </div>
           <Badge tone={statusTone[subscription.status]}>
             {subscription.status}
@@ -63,17 +63,17 @@ export function SubscriptionPanel({
         </PanelHeader>
         <PanelContent className="space-y-5">
           <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-            <Meta label="Plan" value={subscription.plan} capitalize />
-            <Meta label="Seats" value={String(subscription.seats)} />
+            <Meta label={t.plan} value={subscription.plan} capitalize />
+            <Meta label={t.seats} value={String(subscription.seats)} />
             <Meta
-              label="Amount due"
+              label={t.amountDue}
               value={formatMoney(
                 subscription.amountDueCents,
                 subscription.currency,
               )}
             />
             <Meta
-              label="Period ends"
+              label={t.periodEnds}
               value={
                 subscription.currentPeriodEnd
                   ? formatDate(subscription.currentPeriodEnd)
@@ -83,17 +83,15 @@ export function SubscriptionPanel({
           </div>
 
           {subscription.cancelAtPeriodEnd ? (
-            <p className="text-sm text-zt-warning">
-              Cancellation is scheduled at period end.
-            </p>
+            <p className="text-sm text-zt-warning">{t.cancellationScheduled}</p>
           ) : null}
 
           <div className="flex flex-wrap gap-2">
             {canUpgrade ? (
               <BillingActionButton
                 action={upgradePlanAction}
-                label="Upgrade"
-                pendingLabel="Preparing…"
+                label={t.upgrade}
+                pendingLabel={t.preparing}
                 hiddenFields={{
                   fromPlan: subscription.plan,
                   toPlan: subscription.plan === "free" ? "pro" : "enterprise",
@@ -106,8 +104,8 @@ export function SubscriptionPanel({
             ) : null}
             <BillingActionButton
               action={manageSubscriptionAction}
-              label="Manage subscription"
-              pendingLabel="Preparing…"
+              label={t.manageSubscription}
+              pendingLabel={t.preparing}
               variant="secondary"
               onResult={setResult}
             >

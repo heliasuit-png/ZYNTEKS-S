@@ -3,7 +3,7 @@ import { z } from "zod";
 const optionalUrl = z
   .string()
   .trim()
-  .url("Enter a valid URL.")
+  .url("invalid_url")
   .or(z.literal(""))
   .optional();
 
@@ -11,37 +11,37 @@ export const updateProfileSchema = z.object({
   fullName: z
     .string()
     .trim()
-    .min(1, "Display name is required.")
-    .max(80, "Display name must be 80 characters or fewer."),
+    .min(1, "display_name_required")
+    .max(80, "display_name_max"),
   avatarUrl: optionalUrl,
   language: z
     .string()
     .trim()
-    .min(2, "Language is required.")
+    .min(2, "language_required")
     .max(16),
   timezone: z
     .string()
     .trim()
-    .min(1, "Timezone is required.")
+    .min(1, "timezone_required")
     .max(64),
 });
 
 export const changePasswordSchema = z
   .object({
-    currentPassword: z.string().min(1, "Current password is required."),
+    currentPassword: z.string().min(1, "current_password_required"),
     newPassword: z
       .string()
-      .min(8, "Password must be at least 8 characters.")
-      .max(72, "Password must be 72 characters or fewer."),
-    confirmPassword: z.string().min(1, "Confirm your new password."),
+      .min(8, "password_min_8")
+      .max(72, "password_max_72"),
+    confirmPassword: z.string().min(1, "confirm_new_password"),
   })
   .refine((value) => value.newPassword === value.confirmPassword, {
-    message: "Passwords do not match.",
+    message: "passwords_mismatch",
     path: ["confirmPassword"],
   });
 
 export const changeEmailSchema = z.object({
-  email: z.string().trim().email("Enter a valid email address."),
+  email: z.string().trim().email("email_invalid"),
 });
 
 export const deleteAccountSchema = z.object({
@@ -49,7 +49,7 @@ export const deleteAccountSchema = z.object({
     .string()
     .trim()
     .refine((value) => value === "DELETE", {
-      message: 'Type DELETE to confirm.',
+      message: "type_delete_confirm",
     }),
 });
 

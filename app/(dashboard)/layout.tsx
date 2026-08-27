@@ -141,6 +141,7 @@ export default async function DashboardLayout({
         unreadCount={unreadCount}
         notifications={notifications}
         locale={locale}
+        dict={dict}
         localeLabels={{
           english: dict.common.english,
           turkish: dict.common.turkish,

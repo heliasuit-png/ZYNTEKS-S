@@ -1,30 +1,51 @@
-import { INCIDENT_SEVERITY_LABELS } from "@/lib/constants";
+import { DEFAULT_LOCALE } from "@/lib/i18n/config";
+import { dictionaries } from "@/lib/i18n/dictionaries";
+import type { Dictionary } from "@/lib/i18n/dictionaries/types";
+import { fillTemplate } from "@/lib/i18n/fill-template";
+import { getDictionary } from "@/lib/i18n/get-dictionary";
 import { formatDateTime, truncate } from "@/utils/format";
 import type { ComposedNotification, NotificationEvent } from "./types";
+
+async function resolveComposerDict(): Promise<Dictionary> {
+  try {
+    return (await getDictionary()).dict;
+  } catch {
+    return dictionaries[DEFAULT_LOCALE];
+  }
+}
 
 /**
  * Translates a raw notification event into presentation-ready content used for
  * both the in-app feed and the email. Keeping this in one place guarantees the
  * dashboard and email stay consistent.
  */
-export function composeNotification(
+export async function composeNotification(
   event: NotificationEvent,
-): ComposedNotification {
+): Promise<ComposedNotification> {
+  const dict = await resolveComposerDict();
+  const t = dict.dash.notifications.composer;
+  const severityLabels = dict.dash.incidents.severities;
+
   switch (event.type) {
     case "incident_created": {
-      const severityLabel = INCIDENT_SEVERITY_LABELS[event.severity];
+      const severityLabel = severityLabels[event.severity];
       return {
         type: event.type,
         level: event.severity === "critical" ? "error" : "warning",
-        title: `Incident: ${event.incidentTitle}`,
-        body: `A ${severityLabel.toLowerCase()} incident was opened for ${event.projectName}.`,
+        title: fillTemplate(t.incidentCreatedTitle, {
+          title: event.incidentTitle,
+        }),
+        body: fillTemplate(t.incidentCreatedBody, {
+          severity: severityLabel.toLowerCase(),
+          project: event.projectName,
+        }),
         details: [
-          { label: "Project", value: event.projectName },
-          { label: "Severity", value: severityLabel },
-          { label: "Started", value: formatDateTime(event.startedAt) },
+          { label: t.detailProject, value: event.projectName },
+          { label: t.detailSeverity, value: severityLabel },
+          { label: t.detailStarted, value: formatDateTime(event.startedAt) },
         ],
         actionPath: `/incidents/${event.incidentId}`,
-        actionLabel: "View incident",
+        actionLabel: t.viewIncident,
         dedupeKey: "incidentId",
         dedupeValue: event.incidentId,
         data: {
@@ -39,15 +60,19 @@ export function composeNotification(
       return {
         type: event.type,
         level: "success",
-        title: `Resolved: ${event.incidentTitle}`,
-        body: `The incident affecting ${event.projectName} has been resolved.`,
+        title: fillTemplate(t.incidentResolvedTitle, {
+          title: event.incidentTitle,
+        }),
+        body: fillTemplate(t.incidentResolvedBody, {
+          project: event.projectName,
+        }),
         details: [
-          { label: "Project", value: event.projectName },
-          { label: "Downtime", value: event.durationText },
-          { label: "Resolved", value: formatDateTime(event.resolvedAt) },
+          { label: t.detailProject, value: event.projectName },
+          { label: t.detailDowntime, value: event.durationText },
+          { label: t.detailResolved, value: formatDateTime(event.resolvedAt) },
         ],
         actionPath: `/incidents/${event.incidentId}`,
-        actionLabel: "View incident",
+        actionLabel: t.viewIncident,
         dedupeKey: "incidentResolvedId",
         dedupeValue: event.incidentId,
         data: {
@@ -60,20 +85,22 @@ export function composeNotification(
     }
     case "critical_error": {
       const details = [
-        { label: "Project", value: event.projectName },
-        { label: "When", value: formatDateTime(event.occurredAt) },
+        { label: t.detailProject, value: event.projectName },
+        { label: t.detailWhen, value: formatDateTime(event.occurredAt) },
       ];
       if (event.url) {
-        details.push({ label: "URL", value: event.url });
+        details.push({ label: t.detailUrl, value: event.url });
       }
       return {
         type: event.type,
         level: "error",
-        title: `Critical error in ${event.projectName}`,
+        title: fillTemplate(t.criticalErrorTitle, {
+          project: event.projectName,
+        }),
         body: truncate(event.message, 200),
         details,
         actionPath: "/errors",
-        actionLabel: "View errors",
+        actionLabel: t.viewErrors,
         dedupeKey: "errorId",
         dedupeValue: event.errorId,
         data: {
@@ -88,15 +115,21 @@ export function composeNotification(
       return {
         type: event.type,
         level: "warning",
-        title: "API key revoked",
-        body: `The API key "${event.keyName}" for ${event.projectName} was revoked.`,
+        title: t.apiKeyRevokedTitle,
+        body: fillTemplate(t.apiKeyRevokedBody, {
+          key: event.keyName,
+          project: event.projectName,
+        }),
         details: [
-          { label: "Project", value: event.projectName },
-          { label: "Key", value: `${event.keyName} (${event.keyPrefix})` },
-          { label: "Revoked", value: formatDateTime(event.revokedAt) },
+          { label: t.detailProject, value: event.projectName },
+          {
+            label: t.detailKey,
+            value: `${event.keyName} (${event.keyPrefix})`,
+          },
+          { label: t.detailRevoked, value: formatDateTime(event.revokedAt) },
         ],
         actionPath: "/api-keys",
-        actionLabel: "Manage keys",
+        actionLabel: t.manageKeys,
         dedupeKey: "keyId",
         dedupeValue: event.keyId,
         data: {
@@ -107,19 +140,24 @@ export function composeNotification(
       };
     }
     case "project_created": {
-      const details = [{ label: "Project", value: event.projectName }];
+      const details = [{ label: t.detailProject, value: event.projectName }];
       if (event.framework) {
-        details.push({ label: "Framework", value: event.framework });
+        details.push({ label: t.detailFramework, value: event.framework });
       }
-      details.push({ label: "Created", value: formatDateTime(event.createdAt) });
+      details.push({
+        label: t.detailCreated,
+        value: formatDateTime(event.createdAt),
+      });
       return {
         type: event.type,
         level: "success",
-        title: "Project created",
-        body: `Your project "${event.projectName}" is ready to receive events.`,
+        title: t.projectCreatedTitle,
+        body: fillTemplate(t.projectCreatedBody, {
+          project: event.projectName,
+        }),
         details,
         actionPath: "/projects",
-        actionLabel: "Open projects",
+        actionLabel: t.openProjects,
         dedupeKey: "projectCreatedId",
         dedupeValue: event.projectId,
         data: {

@@ -6,6 +6,8 @@ import { redirect } from "next/navigation";
 
 import { DASHBOARD_ROUTES } from "@/lib/constants";
 import { isAppError } from "@/lib/errors";
+import { fillTemplate } from "@/lib/i18n/fill-template";
+import { getDictionary } from "@/lib/i18n/get-dictionary";
 import { getAuthenticatedUser } from "@/services/auth";
 import {
   acceptInvitation,
@@ -37,22 +39,27 @@ export type ActionState = {
   message?: string;
 };
 
-function fail(error: unknown): ActionState {
+function fail(error: unknown, fallback: string): ActionState {
   if (isAppError(error)) return { ok: false, error: error.message };
   if (error instanceof Error) return { ok: false, error: error.message };
-  return { ok: false, error: "Something went wrong." };
+  return { ok: false, error: fallback };
 }
 
 async function requireUser() {
   const supabase = await createSupabaseServerClient();
   const user = await getAuthenticatedUser(supabase);
-  if (!user) throw new Error("You must be signed in.");
+  if (!user) {
+    const { dict } = await getDictionary();
+    throw new Error(dict.actionMessages.mustSignIn);
+  }
   return { supabase, user };
 }
 
 export async function switchWorkspaceAction(
   workspaceId: string,
 ): Promise<ActionState> {
+  const { dict } = await getDictionary();
+  const am = dict.actionMessages;
   try {
     const { supabase, user } = await requireUser();
     const { data } = await supabase
@@ -62,12 +69,12 @@ export async function switchWorkspaceAction(
       .eq("user_id", user.id)
       .eq("status", "active")
       .maybeSingle();
-    if (!data) return { ok: false, error: "You are not a member of that workspace." };
+    if (!data) return { ok: false, error: am.workspaceNotMember };
     await setActiveWorkspaceCookie(workspaceId);
     revalidatePath("/", "layout");
-    return { ok: true, message: "Workspace switched." };
+    return { ok: true, message: am.workspaceSwitched };
   } catch (error) {
-    return fail(error);
+    return fail(error, am.genericError);
   }
 }
 
@@ -75,16 +82,18 @@ export async function createWorkspaceAction(
   _prev: ActionState,
   formData: FormData,
 ): Promise<ActionState> {
+  const { dict } = await getDictionary();
+  const am = dict.actionMessages;
   try {
     const { supabase, user } = await requireUser();
     const name = String(formData.get("name") ?? "").trim();
-    if (!name) return { ok: false, error: "Workspace name is required." };
+    if (!name) return { ok: false, error: am.workspaceNameRequired };
     const ws = await createWorkspace(supabase, user.id, { name });
     await setActiveWorkspaceCookie(ws.id);
     revalidatePath("/", "layout");
-    return { ok: true, message: "Workspace created." };
+    return { ok: true, message: am.workspaceCreated };
   } catch (error) {
-    return fail(error);
+    return fail(error, am.genericError);
   }
 }
 
@@ -92,6 +101,8 @@ export async function updateOrganizationAction(
   _prev: ActionState,
   formData: FormData,
 ): Promise<ActionState> {
+  const { dict } = await getDictionary();
+  const am = dict.actionMessages;
   try {
     const { supabase, user } = await requireUser();
     const workspaceId = String(formData.get("workspaceId") ?? "");
@@ -99,7 +110,7 @@ export async function updateOrganizationAction(
     const logoFile = formData.get("logoFile");
     if (logoFile instanceof File && logoFile.size > 0) {
       if (logoFile.size > 2 * 1024 * 1024) {
-        return { ok: false, error: "Logo must be 2MB or smaller." };
+        return { ok: false, error: am.logoTooLarge };
       }
       const ext = logoFile.name.split(".").pop()?.toLowerCase() || "png";
       const path = `${workspaceId}/logo-${Date.now()}.${ext}`;
@@ -129,9 +140,9 @@ export async function updateOrganizationAction(
     });
     revalidatePath(DASHBOARD_ROUTES.organization);
     revalidatePath(DASHBOARD_ROUTES.settings);
-    return { ok: true, message: "Organization settings saved." };
+    return { ok: true, message: am.organizationSaved };
   } catch (error) {
-    return fail(error);
+    return fail(error, am.genericError);
   }
 }
 
@@ -139,6 +150,8 @@ export async function deleteWorkspaceAction(
   _prev: ActionState,
   formData: FormData,
 ): Promise<ActionState> {
+  const { dict } = await getDictionary();
+  const am = dict.actionMessages;
   try {
     const { supabase, user } = await requireUser();
     const workspaceId = String(formData.get("workspaceId") ?? "");
@@ -148,7 +161,7 @@ export async function deleteWorkspaceAction(
     jar.delete(WORKSPACE_COOKIE);
     revalidatePath("/", "layout");
   } catch (error) {
-    return fail(error);
+    return fail(error, am.genericError);
   }
   redirect(DASHBOARD_ROUTES.dashboard);
 }
@@ -157,6 +170,8 @@ export async function inviteMemberAction(
   _prev: ActionState,
   formData: FormData,
 ): Promise<ActionState> {
+  const { dict } = await getDictionary();
+  const am = dict.actionMessages;
   try {
     const { supabase, user } = await requireUser();
     const workspaceId = String(formData.get("workspaceId") ?? "");
@@ -167,11 +182,10 @@ export async function inviteMemberAction(
     revalidatePath(DASHBOARD_ROUTES.invitations);
     return {
       ok: true,
-      message:
-        "Invitation created. Email is delivered when RESEND_API_KEY is configured; otherwise share the Invitations page.",
+      message: am.invitationCreated,
     };
   } catch (error) {
-    return fail(error);
+    return fail(error, am.genericError);
   }
 }
 
@@ -179,17 +193,18 @@ export async function resendInvitationAction(
   workspaceId: string,
   invitationId: string,
 ): Promise<ActionState> {
+  const { dict } = await getDictionary();
+  const am = dict.actionMessages;
   try {
     const { supabase, user } = await requireUser();
     await resendInvitation(supabase, user.id, workspaceId, invitationId);
     revalidatePath(DASHBOARD_ROUTES.members);
     return {
       ok: true,
-      message:
-        "Invitation updated. Email is delivered when RESEND_API_KEY is configured.",
+      message: am.invitationResent,
     };
   } catch (error) {
-    return fail(error);
+    return fail(error, am.genericError);
   }
 }
 
@@ -197,40 +212,46 @@ export async function cancelInvitationAction(
   workspaceId: string,
   invitationId: string,
 ): Promise<ActionState> {
+  const { dict } = await getDictionary();
+  const am = dict.actionMessages;
   try {
     const { supabase, user } = await requireUser();
     await cancelInvitation(supabase, user.id, workspaceId, invitationId);
     revalidatePath(DASHBOARD_ROUTES.members);
-    return { ok: true, message: "Invitation cancelled." };
+    return { ok: true, message: am.invitationCancelled };
   } catch (error) {
-    return fail(error);
+    return fail(error, am.genericError);
   }
 }
 
 export async function acceptInvitationAction(token: string): Promise<ActionState> {
+  const { dict } = await getDictionary();
+  const am = dict.actionMessages;
   try {
     const { supabase, user } = await requireUser();
     const email = user.email;
-    if (!email) return { ok: false, error: "Your account has no email." };
+    if (!email) return { ok: false, error: am.accountNoEmail };
     const invitation = await acceptInvitation(supabase, user.id, email, token);
     await setActiveWorkspaceCookie(invitation.workspace_id);
     revalidatePath("/", "layout");
-    return { ok: true, message: "Invitation accepted." };
+    return { ok: true, message: am.invitationAccepted };
   } catch (error) {
-    return fail(error);
+    return fail(error, am.genericError);
   }
 }
 
 export async function declineInvitationAction(token: string): Promise<ActionState> {
+  const { dict } = await getDictionary();
+  const am = dict.actionMessages;
   try {
     const { supabase, user } = await requireUser();
     const email = user.email;
-    if (!email) return { ok: false, error: "Your account has no email." };
+    if (!email) return { ok: false, error: am.accountNoEmail };
     await declineInvitation(supabase, user.id, email, token);
     revalidatePath(DASHBOARD_ROUTES.invitations);
-    return { ok: true, message: "Invitation declined." };
+    return { ok: true, message: am.invitationDeclined };
   } catch (error) {
-    return fail(error);
+    return fail(error, am.genericError);
   }
 }
 
@@ -239,13 +260,15 @@ export async function changeRoleAction(
   memberId: string,
   role: WorkspaceRole,
 ): Promise<ActionState> {
+  const { dict } = await getDictionary();
+  const am = dict.actionMessages;
   try {
     const { supabase, user } = await requireUser();
     await changeMemberRole(supabase, user.id, workspaceId, memberId, role);
     revalidatePath(DASHBOARD_ROUTES.members);
-    return { ok: true, message: "Role updated." };
+    return { ok: true, message: am.roleUpdated };
   } catch (error) {
-    return fail(error);
+    return fail(error, am.genericError);
   }
 }
 
@@ -253,13 +276,15 @@ export async function removeMemberAction(
   workspaceId: string,
   memberId: string,
 ): Promise<ActionState> {
+  const { dict } = await getDictionary();
+  const am = dict.actionMessages;
   try {
     const { supabase, user } = await requireUser();
     await removeMember(supabase, user.id, workspaceId, memberId);
     revalidatePath(DASHBOARD_ROUTES.members);
-    return { ok: true, message: "Member removed." };
+    return { ok: true, message: am.memberRemoved };
   } catch (error) {
-    return fail(error);
+    return fail(error, am.genericError);
   }
 }
 
@@ -267,13 +292,15 @@ export async function suspendMemberAction(
   workspaceId: string,
   memberId: string,
 ): Promise<ActionState> {
+  const { dict } = await getDictionary();
+  const am = dict.actionMessages;
   try {
     const { supabase, user } = await requireUser();
     await suspendMember(supabase, user.id, workspaceId, memberId);
     revalidatePath(DASHBOARD_ROUTES.members);
-    return { ok: true, message: "Member suspended." };
+    return { ok: true, message: am.memberSuspended };
   } catch (error) {
-    return fail(error);
+    return fail(error, am.genericError);
   }
 }
 
@@ -281,13 +308,15 @@ export async function restoreMemberAction(
   workspaceId: string,
   memberId: string,
 ): Promise<ActionState> {
+  const { dict } = await getDictionary();
+  const am = dict.actionMessages;
   try {
     const { supabase, user } = await requireUser();
     await restoreMember(supabase, user.id, workspaceId, memberId);
     revalidatePath(DASHBOARD_ROUTES.members);
-    return { ok: true, message: "Member restored." };
+    return { ok: true, message: am.memberRestored };
   } catch (error) {
-    return fail(error);
+    return fail(error, am.genericError);
   }
 }
 
@@ -295,37 +324,43 @@ export async function transferOwnershipAction(
   workspaceId: string,
   memberId: string,
 ): Promise<ActionState> {
+  const { dict } = await getDictionary();
+  const am = dict.actionMessages;
   try {
     const { supabase, user } = await requireUser();
     await transferOwnership(supabase, user.id, workspaceId, memberId);
     revalidatePath(DASHBOARD_ROUTES.members);
-    return { ok: true, message: "Ownership transferred." };
+    return { ok: true, message: am.ownershipTransferred };
   } catch (error) {
-    return fail(error);
+    return fail(error, am.genericError);
   }
 }
 
 export async function revokeSessionAction(sessionId: string): Promise<ActionState> {
+  const { dict } = await getDictionary();
+  const am = dict.actionMessages;
   try {
     const { supabase, user } = await requireUser();
     const cookieStore = await cookies();
     const workspaceId = cookieStore.get(WORKSPACE_COOKIE)?.value ?? null;
     await revokeSession(supabase, user.id, sessionId, workspaceId);
     revalidatePath(DASHBOARD_ROUTES.security);
-    return { ok: true, message: "Session revoked." };
+    return { ok: true, message: am.sessionRevoked };
   } catch (error) {
-    return fail(error);
+    return fail(error, am.genericError);
   }
 }
 
 export async function revokeOtherSessionsAction(): Promise<ActionState> {
+  const { dict } = await getDictionary();
+  const am = dict.actionMessages;
   try {
     const { supabase, user } = await requireUser();
     const {
       data: { session },
     } = await supabase.auth.getSession();
     if (!session?.access_token) {
-      return { ok: false, error: "No active session." };
+      return { ok: false, error: am.noActiveSession };
     }
     const cookieStore = await cookies();
     const workspaceId = cookieStore.get(WORKSPACE_COOKIE)?.value ?? null;
@@ -338,9 +373,12 @@ export async function revokeOtherSessionsAction(): Promise<ActionState> {
     revalidatePath(DASHBOARD_ROUTES.security);
     return {
       ok: true,
-      message: `Signed out ${count} other device${count === 1 ? "" : "s"}.`,
+      message: fillTemplate(
+        count === 1 ? am.otherSessionsRevoked : am.otherSessionsRevokedPlural,
+        { count },
+      ),
     };
   } catch (error) {
-    return fail(error);
+    return fail(error, am.genericError);
   }
 }

@@ -1,5 +1,6 @@
-import type { Metadata } from "next";
 import { redirect } from "next/navigation";
+import { dashboardPageMetadata } from "@/lib/i18n/dashboard-metadata";
+import { getDictionary } from "@/lib/i18n/get-dictionary";
 
 import { PageHeader } from "@/components/dashboard/page-header";
 import {
@@ -35,7 +36,7 @@ import { NotificationPreferencesForm } from "@/features/notifications/components
 import { DeliveryPanel } from "@/features/notifications/components/delivery-panel";
 import type { NotificationLevel, NotificationType } from "@/types/database";
 
-export const metadata: Metadata = { title: "Notifications" };
+export const generateMetadata = () => dashboardPageMetadata("notifications");
 
 const PAGE_SIZE = 20;
 
@@ -57,6 +58,8 @@ interface NotificationsPageProps {
 export default async function NotificationsPage({
   searchParams,
 }: NotificationsPageProps) {
+  const { dict } = await getDictionary();
+  const pageCopy = dict.dashboard.pageTitles.notifications;
   const params = await searchParams;
   const supabase = await createSupabaseServerClient();
   const user = await getAuthenticatedUser(supabase);
@@ -118,9 +121,7 @@ export default async function NotificationsPage({
 
   return (
     <div className="space-y-6">
-      <PageHeader
-        title="Notifications"
-        description="Manage your inbox, delivery channels, and notification preferences."
+      <PageHeader title={pageCopy.title} description={pageCopy.description}
       />
 
       <NotificationsExplorer
@@ -144,14 +145,16 @@ export default async function NotificationsPage({
       />
 
       <div className="space-y-3">
-        <h2 className="text-sm font-medium text-zt-text">Delivery</h2>
+        <h2 className="text-sm font-medium text-zt-text">
+          {dict.dash.notifications.delivery}
+        </h2>
         <DeliveryPanel activity={activity} queue={queue} />
       </div>
 
       <FadeIn delay={0.08}>
         <Panel>
           <PanelHeader>
-            <PanelTitle>Notification preferences</PanelTitle>
+            <PanelTitle>{dict.dash.notifications.preferencesTitle}</PanelTitle>
           </PanelHeader>
           <PanelContent>
             <NotificationPreferencesForm preferences={preferences} />

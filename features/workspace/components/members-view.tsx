@@ -11,6 +11,7 @@ import {
   UserCheck,
 } from "lucide-react";
 
+import { useDictionary } from "@/components/i18n/locale-provider";
 import { Badge } from "@/components/dashboard/badge";
 import { Button } from "@/components/dashboard/button";
 import {
@@ -20,8 +21,8 @@ import {
   PanelTitle,
 } from "@/components/dashboard/panel";
 import { FadeIn } from "@/components/dashboard/motion";
-import { WORKSPACE_ROLE_LABELS } from "@/lib/constants";
 import { formatRelativeTime } from "@/utils/format";
+import { fillTemplate } from "@/lib/i18n/fill-template";
 import {
   cancelInvitationAction,
   changeRoleAction,
@@ -44,14 +45,24 @@ import {
   Dropdown,
   dropdownItemClass,
 } from "@/components/dashboard/dropdown";
+import type { DashDictionary } from "@/lib/i18n/dictionaries/dash-types";
 
-const PERMISSION_SUMMARY: Record<string, string> = {
-  owner: "Full access including transfer & delete",
-  administrator: "Manage settings, members, projects & security",
-  developer: "Projects, API keys, AI & notifications",
-  viewer: "Read-only access to workspace resources",
-  billing_manager: "Billing & subscription management",
-};
+function permissionSummaryForRole(
+  role: string,
+  summary: DashDictionary["members"]["permissionSummary"],
+): string | null {
+  if (role in summary) {
+    return summary[role as keyof typeof summary];
+  }
+  return null;
+}
+
+function roleLabel(
+  role: WorkspaceRole,
+  roles: DashDictionary["members"]["roles"],
+): string {
+  return roles[role] ?? role;
+}
 
 function initials(name: string | null, email: string) {
   const source = name?.trim() || email;
@@ -75,6 +86,9 @@ export function MembersView({
   canManage: boolean;
   currentUserId: string;
 }) {
+  const { dict, locale } = useDictionary();
+  const t = dict.dash.members;
+
   const [inviteState, inviteAction, invitePending] = useActionState<
     ActionState,
     FormData
@@ -87,7 +101,7 @@ export function MembersView({
         <FadeIn>
           <Panel>
             <PanelHeader>
-              <PanelTitle>Invite member</PanelTitle>
+              <PanelTitle>{t.inviteTitle}</PanelTitle>
             </PanelHeader>
             <PanelContent>
               <form action={inviteAction} className="flex flex-col gap-3 sm:flex-row">
@@ -96,7 +110,7 @@ export function MembersView({
                   name="email"
                   type="email"
                   required
-                  placeholder="colleague@company.com"
+                  placeholder={t.invitePlaceholder}
                   className="flex-1 rounded-xl border border-zt-border bg-white/[0.02] px-3 py-2 text-sm text-zt-text outline-none focus:border-zt-primary"
                 />
                 <select
@@ -106,13 +120,13 @@ export function MembersView({
                 >
                   {ASSIGNABLE_ROLES.map((role) => (
                     <option key={role} value={role}>
-                      {WORKSPACE_ROLE_LABELS[role]}
+                      {roleLabel(role, t.roles)}
                     </option>
                   ))}
                 </select>
                 <Button type="submit" disabled={invitePending}>
                   <Mail className="size-4" aria-hidden />
-                  Invite
+                  {t.invite}
                 </Button>
               </form>
               {inviteState.error ? (
@@ -128,74 +142,83 @@ export function MembersView({
 
       <FadeIn delay={0.05}>
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-          {members.map((member) => (
-            <article
-              key={member.id}
-              className="zt-card rounded-2xl border border-zt-border p-5"
-            >
-              <div className="flex items-start justify-between gap-3">
-                <div className="flex items-center gap-3">
-                  <span className="flex size-11 items-center justify-center rounded-xl bg-gradient-to-br from-zt-primary to-zt-purple text-sm font-semibold text-white shadow-lg shadow-zt-primary/20">
-                    {initials(member.fullName, member.email)}
-                  </span>
-                  <div className="min-w-0">
-                    <p className="truncate text-sm font-semibold text-zt-text">
-                      {member.fullName || member.email}
-                    </p>
-                    <p className="truncate text-xs text-zt-muted">{member.email}</p>
+          {members.map((member) => {
+            const summary =
+              permissionSummaryForRole(member.role, t.permissionSummary) ??
+              fillTemplate(t.grantsCount, {
+                count: permissionsForRole(member.role).length,
+              });
+            const statusLabel =
+              member.status === "suspended"
+                ? t.status.suspended
+                : t.status.active;
+
+            return (
+              <article
+                key={member.id}
+                className="zt-card rounded-2xl border border-zt-border p-5"
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-center gap-3">
+                    <span className="flex size-11 items-center justify-center rounded-xl bg-gradient-to-br from-zt-primary to-zt-purple text-sm font-semibold text-white shadow-lg shadow-zt-primary/20">
+                      {initials(member.fullName, member.email)}
+                    </span>
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-semibold text-zt-text">
+                        {member.fullName || member.email}
+                      </p>
+                      <p className="truncate text-xs text-zt-muted">{member.email}</p>
+                    </div>
                   </div>
+                  {canManage && member.userId !== currentUserId ? (
+                    <MemberMenu
+                      workspaceId={workspaceId}
+                      member={member}
+                      pending={pending}
+                      startTransition={startTransition}
+                    />
+                  ) : null}
                 </div>
-                {canManage && member.userId !== currentUserId ? (
-                  <MemberMenu
-                    workspaceId={workspaceId}
-                    member={member}
-                    pending={pending}
-                    startTransition={startTransition}
-                  />
-                ) : null}
-              </div>
-              <div className="mt-4 flex flex-wrap items-center gap-2">
-                <Badge
-                  tone={
-                    member.role === "owner"
-                      ? "primary"
-                      : member.status === "suspended"
-                        ? "danger"
-                        : "default"
-                  }
-                >
-                  <Shield className="size-3" aria-hidden />
-                  {WORKSPACE_ROLE_LABELS[member.role]}
-                </Badge>
-                <Badge
-                  tone={member.status === "active" ? "success" : "warning"}
-                >
-                  {member.status}
-                </Badge>
-              </div>
-              <dl className="mt-4 grid grid-cols-2 gap-3 text-xs">
-                <div>
-                  <dt className="text-zt-muted">Last active</dt>
-                  <dd className="mt-0.5 text-zt-text">
-                    {member.lastActiveAt
-                      ? formatRelativeTime(member.lastActiveAt)
-                      : "Never"}
-                  </dd>
+                <div className="mt-4 flex flex-wrap items-center gap-2">
+                  <Badge
+                    tone={
+                      member.role === "owner"
+                        ? "primary"
+                        : member.status === "suspended"
+                          ? "danger"
+                          : "default"
+                    }
+                  >
+                    <Shield className="size-3" aria-hidden />
+                    {roleLabel(member.role, t.roles)}
+                  </Badge>
+                  <Badge
+                    tone={member.status === "active" ? "success" : "warning"}
+                  >
+                    {statusLabel}
+                  </Badge>
                 </div>
-                <div>
-                  <dt className="text-zt-muted">Projects</dt>
-                  <dd className="mt-0.5 text-zt-text">{member.projectCount}</dd>
-                </div>
-              </dl>
-              <p className="mt-3 text-xs text-zt-muted">
-                Permissions:{" "}
-                <span className="text-zt-text">
-                  {PERMISSION_SUMMARY[member.role] ??
-                    `${permissionsForRole(member.role).length} grants`}
-                </span>
-              </p>
-            </article>
-          ))}
+                <dl className="mt-4 grid grid-cols-2 gap-3 text-xs">
+                  <div>
+                    <dt className="text-zt-muted">{t.lastActive}</dt>
+                    <dd className="mt-0.5 text-zt-text">
+                      {member.lastActiveAt
+                        ? formatRelativeTime(member.lastActiveAt, undefined, locale)
+                        : t.never}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt className="text-zt-muted">{t.projects}</dt>
+                    <dd className="mt-0.5 text-zt-text">{member.projectCount}</dd>
+                  </div>
+                </dl>
+                <p className="mt-3 text-xs text-zt-muted">
+                  {t.permissions}:{" "}
+                  <span className="text-zt-text">{summary}</span>
+                </p>
+              </article>
+            );
+          })}
         </div>
       </FadeIn>
 
@@ -203,7 +226,7 @@ export function MembersView({
         <FadeIn delay={0.1}>
           <Panel>
             <PanelHeader>
-              <PanelTitle>Pending invitations</PanelTitle>
+              <PanelTitle>{t.pendingInvitations}</PanelTitle>
             </PanelHeader>
             <PanelContent className="space-y-2">
               {invitations
@@ -216,8 +239,11 @@ export function MembersView({
                     <div>
                       <p className="text-sm text-zt-text">{inv.email}</p>
                       <p className="text-xs text-zt-muted">
-                        {WORKSPACE_ROLE_LABELS[inv.role]} · expires{" "}
-                        {formatRelativeTime(inv.expires_at)}
+                        {roleLabel(inv.role, t.roles)} ·{" "}
+                        {t.expires.replace(
+                          "{rel}",
+                          formatRelativeTime(inv.expires_at, undefined, locale),
+                        )}
                       </p>
                     </div>
                     {canManage ? (
@@ -232,7 +258,7 @@ export function MembersView({
                             })
                           }
                         >
-                          Resend
+                          {t.resend}
                         </Button>
                         <Button
                           variant="danger"
@@ -244,7 +270,7 @@ export function MembersView({
                             })
                           }
                         >
-                          Cancel
+                          {t.cancelInvite}
                         </Button>
                       </div>
                     ) : null}
@@ -269,6 +295,9 @@ function MemberMenu({
   pending: boolean;
   startTransition: (fn: () => void) => void;
 }) {
+  const { dict } = useDictionary();
+  const t = dict.dash.members;
+  const org = dict.dash.organization;
   const [role, setRole] = useState<WorkspaceRole>(
     member.role === "owner" ? "administrator" : member.role,
   );
@@ -287,7 +316,7 @@ function MemberMenu({
         onClick={(e) => e.stopPropagation()}
       >
         <label className="block px-2 pt-1 text-[11px] text-zt-muted">
-          Change role
+          {t.changeRole}
         </label>
         <select
           value={role}
@@ -297,7 +326,7 @@ function MemberMenu({
         >
           {ASSIGNABLE_ROLES.map((r) => (
             <option key={r} value={r}>
-              {WORKSPACE_ROLE_LABELS[r]}
+              {roleLabel(r, t.roles)}
             </option>
           ))}
         </select>
@@ -312,7 +341,7 @@ function MemberMenu({
           }
         >
           <Shield className="size-4" aria-hidden />
-          Save role
+          {t.saveRole}
         </button>
         {member.status === "active" ? (
           <button
@@ -326,7 +355,7 @@ function MemberMenu({
             }
           >
             <UserX className="size-4" aria-hidden />
-            Suspend
+            {t.suspend}
           </button>
         ) : (
           <button
@@ -340,7 +369,7 @@ function MemberMenu({
             }
           >
             <UserCheck className="size-4" aria-hidden />
-            Restore
+            {t.restore}
           </button>
         )}
         <button
@@ -354,7 +383,7 @@ function MemberMenu({
           }
         >
           <UserMinus className="size-4" aria-hidden />
-          Remove
+          {t.remove}
         </button>
         <button
           type="button"
@@ -367,7 +396,7 @@ function MemberMenu({
           }
         >
           <Crown className="size-4" aria-hidden />
-          Transfer ownership
+          {org.transferOwnership}
         </button>
       </div>
     </Dropdown>

@@ -2,6 +2,7 @@
 
 import { useActionState } from "react";
 
+import { useDictionary } from "@/components/i18n/locale-provider";
 import { signUpAction } from "@/features/auth/actions";
 import { initialAuthFormState } from "@/features/auth/types";
 import { Field } from "@/features/auth/components/field";
@@ -9,6 +10,8 @@ import { FormMessage } from "@/features/auth/components/form-message";
 import { SubmitButton } from "@/features/auth/components/submit-button";
 
 export function RegisterForm() {
+  const { dict } = useDictionary();
+  const f = dict.authForms;
   const [state, formAction, pending] = useActionState(
     signUpAction,
     initialAuthFormState,
@@ -18,25 +21,25 @@ export function RegisterForm() {
     <form action={formAction} className="space-y-4" noValidate>
       <FormMessage state={state} />
       <Field
-        label="Full name"
+        label={f.fullName}
         name="fullName"
         type="text"
         autoComplete="name"
-        placeholder="Ada Lovelace"
+        placeholder={f.fullNamePlaceholder}
         required
         errors={state.fieldErrors?.fullName}
       />
       <Field
-        label="Email"
+        label={f.email}
         name="email"
         type="email"
         autoComplete="email"
-        placeholder="you@company.com"
+        placeholder={f.emailCompanyPlaceholder}
         required
         errors={state.fieldErrors?.email}
       />
       <Field
-        label="Password"
+        label={f.password}
         name="password"
         type="password"
         autoComplete="new-password"
@@ -44,7 +47,7 @@ export function RegisterForm() {
         errors={state.fieldErrors?.password}
       />
       <Field
-        label="Confirm password"
+        label={f.confirmPassword}
         name="confirmPassword"
         type="password"
         autoComplete="new-password"
@@ -52,7 +55,7 @@ export function RegisterForm() {
         errors={state.fieldErrors?.confirmPassword}
       />
       <SubmitButton pending={pending} className="w-full">
-        Create account
+        {f.createAccount}
       </SubmitButton>
     </form>
   );

@@ -3,9 +3,13 @@
 import { useEffect, useState } from "react";
 import { Check, Palette } from "lucide-react";
 
+import { useDictionary } from "@/components/i18n/locale-provider";
 import { cn } from "@/lib/utils";
 import { Dropdown } from "@/components/dashboard/dropdown";
-import { ACCENT_PRESETS } from "@/features/settings/lib/appearance";
+import {
+  ACCENT_PRESETS,
+  type AccentId,
+} from "@/features/settings/lib/appearance";
 
 const STORAGE_KEY = "zt:accent";
 
@@ -18,6 +22,8 @@ function applyAccent(primary: string, secondary: string) {
 }
 
 export function AppearanceMenu() {
+  const { dict } = useDictionary();
+  const t = dict.dash.settings.appearance;
   const [activeId, setActiveId] = useState("blue");
 
   useEffect(() => {
@@ -54,17 +60,18 @@ export function AppearanceMenu() {
       }
     >
       <div className="px-2 py-1.5 text-xs font-semibold uppercase tracking-wide text-zt-muted">
-        Accent color
+        {t.accentColor}
       </div>
       <div className="grid grid-cols-3 gap-2 p-2">
         {ACCENT_PRESETS.map((accent) => {
           const isActive = accent.id === activeId;
+          const label = t.accents[accent.id as AccentId];
           return (
             <button
               key={accent.id}
               type="button"
               onClick={() => select(accent)}
-              aria-label={accent.label}
+              aria-label={label}
               aria-pressed={isActive}
               className={cn(
                 "group flex flex-col items-center gap-1.5 rounded-xl border p-2 transition-all",
@@ -84,14 +91,14 @@ export function AppearanceMenu() {
                 ) : null}
               </span>
               <span className="text-[11px] text-zt-muted group-hover:text-zt-text">
-                {accent.label}
+                {label}
               </span>
             </button>
           );
         })}
       </div>
       <p className="px-3 pb-2 pt-1 text-[11px] text-zt-muted">
-        Preference is saved on this device.
+        {t.accentSavedLocally}
       </p>
     </Dropdown>
   );

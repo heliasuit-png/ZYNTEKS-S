@@ -6,6 +6,7 @@ import hljs from "highlight.js/lib/core";
 import javascript from "highlight.js/lib/languages/javascript";
 import "highlight.js/styles/github-dark.css";
 
+import { useDictionary } from "@/components/i18n/locale-provider";
 import { CopyButton } from "@/components/dashboard/copy-button";
 import { cn } from "@/lib/utils";
 import { parseStackTrace } from "@/features/errors/lib/stack-trace";
@@ -17,7 +18,16 @@ interface StackTracePanelProps {
   className?: string;
 }
 
+function fill(template: string, vars: Record<string, string | number>) {
+  return Object.entries(vars).reduce(
+    (s, [k, v]) => s.replaceAll(`{${k}}`, String(v)),
+    template,
+  );
+}
+
 export function StackTracePanel({ stack, className }: StackTracePanelProps) {
+  const { dict } = useDictionary();
+  const t = dict.dash.errors;
   const frames = useMemo(() => parseStackTrace(stack), [stack]);
   const [hideFramework, setHideFramework] = useState(true);
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
@@ -38,9 +48,7 @@ export function StackTracePanel({ stack, className }: StackTracePanelProps) {
   const hiddenCount = frames.length - visible.length;
 
   if (!stack?.trim()) {
-    return (
-      <p className="text-sm text-zt-muted">No stack trace was captured.</p>
-    );
+    return <p className="text-sm text-zt-muted">{t.noStackTrace}</p>;
   }
 
   function toggleFrame(id: string) {
@@ -54,10 +62,14 @@ export function StackTracePanel({ stack, className }: StackTracePanelProps) {
     return expanded[id] ?? allOpen;
   }
 
+  const showFrameworkLabel = hiddenCount
+    ? fill(t.showFrameworkFramesCount, { count: hiddenCount })
+    : t.showFrameworkFrames;
+
   return (
     <div className={cn("space-y-3", className)}>
       <div className="flex flex-wrap items-center gap-2">
-        <CopyButton value={stack} label="Copy Stack Trace" />
+        <CopyButton value={stack} label={t.copyStack} />
         <button
           type="button"
           onClick={() => setHideFramework((v) => !v)}
@@ -68,9 +80,7 @@ export function StackTracePanel({ stack, className }: StackTracePanelProps) {
           ) : (
             <Eye className="size-3.5" aria-hidden />
           )}
-          {hideFramework
-            ? `Show framework frames${hiddenCount ? ` (${hiddenCount})` : ""}`
-            : "Hide framework noise"}
+          {hideFramework ? showFrameworkLabel : t.hideFrameworkNoise}
         </button>
         <button
           type="button"
@@ -80,17 +90,14 @@ export function StackTracePanel({ stack, className }: StackTracePanelProps) {
           }}
           className="inline-flex items-center gap-1.5 rounded-lg border border-zt-border bg-zt-surface-2 px-2.5 py-1.5 text-xs font-medium text-zt-muted transition-colors hover:text-zt-text"
         >
-          {allOpen ? "Collapse Stack Trace" : "Expand Stack Trace"}
+          {allOpen ? t.collapseStack : t.expandStack}
         </button>
       </div>
 
       {visible.length === 0 ? (
-        <p className="text-sm text-zt-muted">
-          All frames look like framework noise. Show framework frames to inspect
-          them.
-        </p>
+        <p className="text-sm text-zt-muted">{t.allFramesFramework}</p>
       ) : (
-        <ul className="space-y-1.5" aria-label="Stack frames">
+        <ul className="space-y-1.5" aria-label={t.stackFramesAria}>
           {visible.map((frame) => {
             const open = isOpen(frame.id);
             return (
@@ -149,7 +156,7 @@ export function StackTracePanel({ stack, className }: StackTracePanelProps) {
 
       <details className="group rounded-xl border border-zt-border bg-black/30">
         <summary className="cursor-pointer px-3 py-2 text-xs font-medium text-zt-muted transition-colors hover:text-zt-text">
-          Full stack (syntax highlighted)
+          {t.fullStackHighlighted}
         </summary>
         <pre className="overflow-x-auto border-t border-zt-border p-3 text-[11px] leading-relaxed">
           <code

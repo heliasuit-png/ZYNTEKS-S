@@ -6,10 +6,14 @@ import type { ApiKeyEnvironment } from "@/types/database";
 import { AdminContainer } from "@/features/admin";
 import { MonitoringMissionControl } from "@/features/admin/components/monitoring/monitoring-mission-control";
 import { requireAdminSession } from "@/features/admin/load-admin-session";
+import { getDictionary } from "@/lib/i18n/get-dictionary";
 
-export const metadata: Metadata = {
-  title: "Monitoring Mission Control · ZYNTEKSIS Admin",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const { dict } = await getDictionary();
+  return {
+    title: `${dict.admin.monitoring.pageTitle}${dict.admin.common.metaTitleSuffix}`,
+  };
+}
 
 export const dynamic = "force-dynamic";
 

@@ -1,6 +1,23 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
+
+import {
+  DEFAULT_LOCALE,
+  LOCALE_COOKIE,
+  resolveLocale,
+  type Locale,
+} from "@/lib/i18n/config";
+import { dictionaries } from "@/lib/i18n/dictionaries";
+
+function readClientLocale(): Locale {
+  if (typeof document === "undefined") return DEFAULT_LOCALE;
+  const raw = document.cookie
+    .split("; ")
+    .find((row) => row.startsWith(`${LOCALE_COOKIE}=`))
+    ?.split("=")[1];
+  return resolveLocale(raw ? decodeURIComponent(raw) : undefined);
+}
 
 export default function GlobalError({
   error,
@@ -9,12 +26,15 @@ export default function GlobalError({
   error: Error & { digest?: string };
   reset: () => void;
 }) {
+  const locale = useMemo(() => readClientLocale(), []);
+  const system = dictionaries[locale]?.system ?? dictionaries.en.system;
+
   useEffect(() => {
     console.error(error);
   }, [error]);
 
   return (
-    <html lang="en">
+    <html lang={locale}>
       <body
         style={{
           display: "flex",
@@ -27,11 +47,9 @@ export default function GlobalError({
         }}
       >
         <h1 style={{ fontSize: "1.5rem", fontWeight: 600 }}>
-          Application error
+          {system.applicationError}
         </h1>
-        <p style={{ color: "#666" }}>
-          A critical error occurred. Please reload the page.
-        </p>
+        <p style={{ color: "#666" }}>{system.criticalError}</p>
         <button
           type="button"
           onClick={reset}
@@ -42,7 +60,7 @@ export default function GlobalError({
             cursor: "pointer",
           }}
         >
-          Reload
+          {system.reload}
         </button>
       </body>
     </html>

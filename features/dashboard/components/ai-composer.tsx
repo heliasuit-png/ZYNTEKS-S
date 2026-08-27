@@ -3,7 +3,11 @@
 import { useState } from "react";
 import { Send } from "lucide-react";
 
+import { useDictionary } from "@/components/i18n/locale-provider";
+
 export function AiComposer() {
+  const { dict } = useDictionary();
+  const t = dict.dash.ai;
   const [value, setValue] = useState("");
   const [notice, setNotice] = useState<string | null>(null);
 
@@ -16,15 +20,15 @@ export function AiComposer() {
           return;
         }
         // Integration point: send the prompt to the AI service (see ai/client).
-        setNotice("Connect the AI service to start receiving responses.");
+        setNotice(t.connectServiceNotice);
       }}
     >
       <div className="flex items-center gap-2">
         <input
           value={value}
           onChange={(event) => setValue(event.target.value)}
-          placeholder="Ask the assistant anything…"
-          aria-label="Message the assistant"
+          placeholder={t.askPlaceholder}
+          aria-label={t.messageAria}
           className="h-10 flex-1 rounded-xl border border-zt-border bg-zt-surface-2 px-3 text-sm text-zt-text placeholder:text-zt-muted focus:outline-none focus:ring-2 focus:ring-zt-primary/40"
         />
         <button
@@ -32,7 +36,7 @@ export function AiComposer() {
           className="flex h-10 items-center gap-2 rounded-xl bg-zt-primary px-4 text-sm font-medium text-white transition-colors hover:bg-zt-primary/90"
         >
           <Send className="size-4" aria-hidden />
-          Send
+          {t.send}
         </button>
       </div>
       {notice ? <p className="text-xs text-zt-warning">{notice}</p> : null}

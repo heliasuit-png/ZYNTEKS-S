@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 
+import { useDictionary } from "@/components/i18n/locale-provider";
 import type { AdminWorkspaceListItem } from "@/services/admin/workspaces.types";
 import { AdminEmptyState } from "@/features/admin/components/ui/admin-empty-state";
 
@@ -20,32 +21,36 @@ function formatBytes(bytes: number): string {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
-const COLUMNS: { key: string; label: string; sort?: string }[] = [
-  { key: "logo", label: "Logo" },
-  { key: "name", label: "Workspace", sort: "name" },
-  { key: "owner", label: "Owner", sort: "owner" },
-  { key: "members", label: "Members", sort: "members" },
-  { key: "projects", label: "Projects", sort: "projects" },
-  { key: "api_keys", label: "API Keys", sort: "api_keys" },
-  { key: "errors", label: "Errors", sort: "errors" },
-  { key: "incidents", label: "Incidents", sort: "incidents" },
-  { key: "plan", label: "Plan", sort: "plan" },
-  { key: "storage", label: "Storage", sort: "storage" },
-  { key: "status", label: "Status", sort: "status" },
-  { key: "created_at", label: "Created", sort: "created_at" },
-  { key: "actions", label: "Actions" },
-];
-
 interface WorkspacesTableProps {
   items: AdminWorkspaceListItem[];
   onOpen: (workspaceId: string) => void;
 }
 
 export function WorkspacesTable({ items, onOpen }: WorkspacesTableProps) {
+  const { dict } = useDictionary();
+  const t = dict.admin.workspaces.table;
+  const empty = dict.admin.workspaces.empty;
+  const f = dict.admin.workspaces.filters;
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const sort = searchParams.get("sort") ?? "created_at";
   const direction = searchParams.get("direction") ?? "desc";
+
+  const columns: { key: string; label: string; sort?: string }[] = [
+    { key: "logo", label: t.logo },
+    { key: "name", label: t.workspace, sort: "name" },
+    { key: "owner", label: t.owner, sort: "owner" },
+    { key: "members", label: t.members, sort: "members" },
+    { key: "projects", label: t.projects, sort: "projects" },
+    { key: "api_keys", label: t.apiKeys, sort: "api_keys" },
+    { key: "errors", label: t.errors, sort: "errors" },
+    { key: "incidents", label: t.incidents, sort: "incidents" },
+    { key: "plan", label: t.plan, sort: "plan" },
+    { key: "storage", label: t.storage, sort: "storage" },
+    { key: "status", label: t.status, sort: "status" },
+    { key: "created_at", label: t.created, sort: "created_at" },
+    { key: "actions", label: t.actions },
+  ];
 
   function sortHref(field: string) {
     const params = new URLSearchParams(searchParams.toString());
@@ -57,10 +62,7 @@ export function WorkspacesTable({ items, onOpen }: WorkspacesTableProps) {
 
   if (items.length === 0) {
     return (
-      <AdminEmptyState
-        title="No workspaces match these filters"
-        description="Adjust search or filters to broaden results."
-      />
+      <AdminEmptyState title={empty.title} description={empty.description} />
     );
   }
 
@@ -70,7 +72,7 @@ export function WorkspacesTable({ items, onOpen }: WorkspacesTableProps) {
         <table className="min-w-full text-left text-sm">
           <thead className="border-b border-[var(--admin-border)] text-[10px] uppercase tracking-wider text-[var(--admin-muted)]">
             <tr>
-              {COLUMNS.map((column) => (
+              {columns.map((column) => (
                 <th key={column.key} className="px-3 py-3 font-medium">
                   {column.sort ? (
                     <Link
@@ -157,7 +159,12 @@ export function WorkspacesTable({ items, onOpen }: WorkspacesTableProps) {
                   {formatBytes(workspace.storageBytes)}
                 </td>
                 <td className="px-3 py-2.5">
-                  <StatusPill status={workspace.status} />
+                  <StatusPill
+                    status={workspace.status}
+                    active={f.active}
+                    suspended={f.suspended}
+                    archived={f.archived}
+                  />
                 </td>
                 <td className="px-3 py-2.5 text-[var(--admin-muted)]">
                   {formatWhen(workspace.createdAt)}
@@ -168,7 +175,7 @@ export function WorkspacesTable({ items, onOpen }: WorkspacesTableProps) {
                     onClick={() => onOpen(workspace.id)}
                     className="rounded-lg border border-[var(--admin-border)] px-2 py-1 text-xs text-[var(--admin-accent)] hover:bg-[var(--admin-surface)]"
                   >
-                    Open
+                    {t.open}
                   </button>
                 </td>
               </tr>
@@ -180,18 +187,36 @@ export function WorkspacesTable({ items, onOpen }: WorkspacesTableProps) {
   );
 }
 
-function StatusPill({ status }: { status: string }) {
+function StatusPill({
+  status,
+  active,
+  suspended,
+  archived,
+}: {
+  status: string;
+  active: string;
+  suspended: string;
+  archived: string;
+}) {
   const tone =
     status === "active"
       ? "text-emerald-300 bg-emerald-500/10"
       : status === "suspended"
         ? "text-amber-300 bg-amber-500/10"
         : "text-slate-300 bg-slate-500/10";
+  const label =
+    status === "active"
+      ? active
+      : status === "suspended"
+        ? suspended
+        : status === "archived"
+          ? archived
+          : status;
   return (
     <span
       className={`inline-flex rounded-md px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide ${tone}`}
     >
-      {status}
+      {label}
     </span>
   );
 }

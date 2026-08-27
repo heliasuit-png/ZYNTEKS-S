@@ -2,6 +2,7 @@
 
 import { useActionState } from "react";
 
+import { useDictionary } from "@/components/i18n/locale-provider";
 import { magicLinkAction } from "@/features/auth/actions";
 import { initialAuthFormState } from "@/features/auth/types";
 import { Field } from "@/features/auth/components/field";
@@ -9,6 +10,8 @@ import { FormMessage } from "@/features/auth/components/form-message";
 import { SubmitButton } from "@/features/auth/components/submit-button";
 
 export function MagicLinkForm({ redirectTo }: { redirectTo?: string }) {
+  const { dict } = useDictionary();
+  const f = dict.authForms;
   const [state, formAction, pending] = useActionState(
     magicLinkAction,
     initialAuthFormState,
@@ -21,20 +24,18 @@ export function MagicLinkForm({ redirectTo }: { redirectTo?: string }) {
       ) : null}
       <FormMessage state={state} />
       <Field
-        label="Work email"
+        label={f.workEmail}
         name="email"
         type="email"
         autoComplete="email"
-        placeholder="you@company.com"
+        placeholder={f.emailCompanyPlaceholder}
         required
         errors={state.fieldErrors?.email}
       />
       <SubmitButton pending={pending} className="w-full" variant="secondary">
-        Continue with Email
+        {f.continueWithEmail}
       </SubmitButton>
-      <p className="text-center text-[11px] text-zt-muted">
-        We&apos;ll email a one-time magic link. No password required.
-      </p>
+      <p className="text-center text-[11px] text-zt-muted">{f.magicLinkHint}</p>
     </form>
   );
 }

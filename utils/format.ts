@@ -46,10 +46,15 @@ export function formatDateTime(
   }).format(new Date(date));
 }
 
-/** Formats a timestamp as a human-readable relative time (e.g. "3m ago"). */
+function toBcp47(locale?: string): string {
+  return locale === "tr" ? "tr" : "en";
+}
+
+/** Formats a timestamp as a human-readable relative time (e.g. "3 minutes ago"). */
 export function formatRelativeTime(
   date: Date | string | number,
   now: Date = new Date(),
+  locale: string = "en",
 ): string {
   const then = new Date(date).getTime();
   const diffMs = now.getTime() - then;
@@ -58,8 +63,11 @@ export function formatRelativeTime(
   if (Number.isNaN(then)) {
     return "";
   }
+
+  const rtf = new Intl.RelativeTimeFormat(toBcp47(locale), { numeric: "auto" });
+
   if (Math.abs(diffSec) < 45) {
-    return "just now";
+    return rtf.format(0, "second"); // "now" / "şimdi"
   }
 
   const units: Array<[Intl.RelativeTimeFormatUnit, number]> = [
@@ -72,14 +80,13 @@ export function formatRelativeTime(
     ["second", 1],
   ];
 
-  const rtf = new Intl.RelativeTimeFormat("en-US", { numeric: "auto" });
   for (const [unit, seconds] of units) {
     if (Math.abs(diffSec) >= seconds || unit === "second") {
       const valueInUnit = Math.round(diffSec / seconds);
       return rtf.format(-valueInUnit, unit);
     }
   }
-  return "just now";
+  return rtf.format(0, "second");
 }
 
 /** Formats a duration in seconds into a compact human string (e.g. "1h 5m"). */

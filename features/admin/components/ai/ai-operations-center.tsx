@@ -3,6 +3,8 @@
 import { motion } from "framer-motion";
 import type { ReactNode } from "react";
 
+import { useDictionary } from "@/components/i18n/locale-provider";
+import { fillTemplate } from "@/lib/i18n/fill-template";
 import type { AiOpsData } from "@/services/admin/ai-operations.types";
 import { HealthDot } from "@/features/admin/components/executive/health-dot";
 import {
@@ -49,58 +51,62 @@ function BarTrend({
 }
 
 export function AiOperationsCenter({ data }: { data: AiOpsData }) {
+  const { dict, locale } = useDictionary();
+  const t = dict.admin.ai;
   const kpis = [
     {
-      label: "Total AI requests",
+      label: t.metrics.totalRequests,
       value: formatNumber(data.overview.totalRequests),
-      hint: "ai_usage rows in range",
+      hint: t.metrics.totalRequestsHint,
     },
     {
-      label: "Requests today",
+      label: t.metrics.requestsToday,
       value: formatNumber(data.overview.requestsToday),
-      hint: "UTC day",
+      hint: t.metrics.requestsTodayHint,
     },
     {
-      label: "Successful requests",
+      label: t.metrics.successful,
       value: "—",
-      hint: "Failures not stored",
+      hint: t.metrics.successfulHint,
     },
     {
-      label: "Failed requests",
+      label: t.metrics.failed,
       value: "—",
-      hint: "Not persisted",
+      hint: t.metrics.failedHint,
     },
     {
-      label: "Avg response time",
+      label: t.metrics.avgResponseTime,
       value: "—",
-      hint: "Latency not stored",
+      hint: t.metrics.avgResponseTimeHint,
     },
     {
-      label: "Average tokens",
+      label: t.metrics.averageTokens,
       value:
         data.overview.averageTokens == null
           ? "—"
           : formatNumber(data.overview.averageTokens),
-      hint: "total_tokens / requests",
+      hint: t.metrics.averageTokensHint,
     },
     {
-      label: "Estimated AI cost",
+      label: t.metrics.estimatedCost,
       value: money(data.overview.estimatedCostUsd),
-      hint: "Public list prices × tokens",
+      hint: t.metrics.estimatedCostHint,
     },
     {
-      label: "Most used model",
+      label: t.metrics.mostUsedModel,
       value: data.overview.mostUsedModel ?? "—",
-      hint: "By request count",
+      hint: t.metrics.mostUsedModelHint,
     },
   ];
 
   return (
     <div className="space-y-5">
       <AdminPageHeader
-        eyebrow="Model operations"
-        title="AI Operations Center"
-        description={`Platform-wide AI usage, tokens, cost estimates, and health — from recorded completions only. Updated ${formatRelative(data.generatedAt)}.`}
+        eyebrow={t.eyebrow}
+        title={t.pageTitle}
+        description={fillTemplate(t.description, {
+          when: formatRelative(data.generatedAt, locale),
+        })}
       />
 
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-8">
@@ -128,10 +134,13 @@ export function AiOperationsCenter({ data }: { data: AiOpsData }) {
       <AiOpsFilters options={data.filterOptions} />
 
       <div className="grid gap-4 xl:grid-cols-2">
-        <Panel title="Model analytics" subtitle="Usage mix · tokens · daily trend">
+        <Panel
+          title={t.panels.modelAnalytics}
+          subtitle={t.panels.modelAnalyticsDesc}
+        >
           <div className="max-h-80 space-y-3 overflow-y-auto">
             {data.models.length === 0 ? (
-              <AdminEmptyState title="No model usage in range." />
+              <AdminEmptyState title={t.emptyModels} />
             ) : (
               data.models.map((model) => (
                 <div
@@ -159,7 +168,7 @@ export function AiOperationsCenter({ data }: { data: AiOpsData }) {
                         value: p.requests,
                       }))}
                       color="#60a5fa"
-                      label={`${model.model} daily`}
+                      label={fillTemplate(t.modelDaily, { model: model.model })}
                     />
                   </div>
                 </div>
@@ -168,18 +177,21 @@ export function AiOperationsCenter({ data }: { data: AiOpsData }) {
           </div>
         </Panel>
 
-        <Panel title="Token analytics" subtitle="Input · output · consumers">
+        <Panel
+          title={t.panels.tokenAnalytics}
+          subtitle={t.panels.tokenAnalyticsDesc}
+        >
           <div className="mb-3 grid grid-cols-3 gap-2">
             <MiniStat
-              label="Input tokens"
+              label={t.inputTokens}
               value={formatNumber(data.tokens.inputTokens)}
             />
             <MiniStat
-              label="Output tokens"
+              label={t.outputTokens}
               value={formatNumber(data.tokens.outputTokens)}
             />
             <MiniStat
-              label="Average"
+              label={t.average}
               value={
                 data.tokens.averageTokens == null
                   ? "—"
@@ -187,7 +199,6 @@ export function AiOperationsCenter({ data }: { data: AiOpsData }) {
               }
             />
           </div>
-          <SectionLabel>Top consumers</SectionLabel>
           <div className="mb-3 max-h-36 space-y-1 overflow-y-auto">
             {data.tokens.topConsumers.map((row) => (
               <div
@@ -202,16 +213,18 @@ export function AiOperationsCenter({ data }: { data: AiOpsData }) {
               </div>
             ))}
           </div>
-          <SectionLabel>Workspace distribution</SectionLabel>
+          <SectionLabel>{t.perWorkspace}</SectionLabel>
           <NamedMoneyList
+            emptyLabel={t.emptyData}
             rows={data.tokens.byWorkspace.map((r) => ({
               label: r.workspaceName,
               value: r.tokens,
               money: r.estimatedCostUsd,
             }))}
           />
-          <SectionLabel>Project distribution</SectionLabel>
+          <SectionLabel>{t.perProject}</SectionLabel>
           <NamedMoneyList
+            emptyLabel={t.emptyData}
             rows={data.tokens.byProject.map((r) => ({
               label: r.projectName,
               value: r.tokens,
@@ -222,67 +235,74 @@ export function AiOperationsCenter({ data }: { data: AiOpsData }) {
       </div>
 
       <div className="grid gap-4 xl:grid-cols-2">
-        <Panel title="Request analytics" subtitle="Hourly · daily · weekly · monthly">
-          <SectionLabel>Hourly (24h buckets)</SectionLabel>
+        <Panel
+          title={t.panels.requestAnalytics}
+          subtitle={t.panels.requestAnalyticsDesc}
+        >
+          <SectionLabel>{t.hourlyRequests}</SectionLabel>
           <BarTrend
             points={data.requests.hourly}
             color="#93c5fd"
-            label="Hourly AI requests"
+            label={t.hourlyRequests}
           />
-          <SectionLabel>Daily</SectionLabel>
+          <SectionLabel>{t.daily}</SectionLabel>
           <BarTrend
             points={data.requests.daily}
             color="#60a5fa"
-            label="Daily AI requests"
+            label={t.dailyRequests}
           />
-          <SectionLabel>Weekly</SectionLabel>
+          <SectionLabel>{t.weekly}</SectionLabel>
           <BarTrend
             points={data.requests.weekly}
             color="#3b82f6"
-            label="Weekly AI requests"
+            label={t.weeklyRequests}
           />
-          <SectionLabel>Monthly</SectionLabel>
+          <SectionLabel>{t.monthly}</SectionLabel>
           <BarTrend
             points={data.requests.monthly}
             color="#2563eb"
-            label="Monthly AI requests"
+            label={t.monthlyRequests}
           />
           <p className="mt-3 text-[11px] text-[var(--admin-muted)]">
-            Success vs failure: {data.requests.successVsFailureNote}
+            {fillTemplate(t.successVsFailure, {
+              note: t.notes.successVsFailure,
+            })}
           </p>
         </Panel>
 
-        <Panel title="Prompt analytics" subtitle={data.prompts.note}>
+        <Panel title={t.panels.promptAnalytics} subtitle={t.notes.prompts}>
           <div className="mb-3 grid grid-cols-2 gap-2">
             <MiniStat
-              label="Longest prompt"
+              label={t.longestPrompt}
               value={
                 data.prompts.longestPromptChars == null
                   ? "—"
-                  : `${formatNumber(data.prompts.longestPromptChars)} chars`
+                  : fillTemplate(t.charsValue, {
+                      count: formatNumber(data.prompts.longestPromptChars),
+                    })
               }
             />
             <MiniStat
-              label="Largest response"
+              label={t.largestResponse}
               value={
                 data.prompts.largestResponseChars == null
                   ? "—"
-                  : `${formatNumber(data.prompts.largestResponseChars)} chars`
+                  : fillTemplate(t.charsValue, {
+                      count: formatNumber(data.prompts.largestResponseChars),
+                    })
               }
             />
           </div>
-          <SectionLabel>Prompt growth</SectionLabel>
+          <SectionLabel>{t.promptGrowth}</SectionLabel>
           <BarTrend
             points={data.prompts.promptGrowth}
             color="#93c5fd"
-            label="Prompt growth"
+            label={t.promptGrowth}
           />
-          <SectionLabel>Categories</SectionLabel>
-          <NamedList rows={data.prompts.categories} />
-          <SectionLabel>Top conversation titles</SectionLabel>
-          <div className="max-h-40 space-y-1 overflow-y-auto">
+          <NamedList emptyLabel={t.emptyData} rows={data.prompts.categories} />
+          <div className="mt-3 max-h-40 space-y-1 overflow-y-auto">
             {data.prompts.topConversationTitles.length === 0 ? (
-              <Empty>No conversations.</Empty>
+              <Empty>{t.emptyConversations}</Empty>
             ) : (
               data.prompts.topConversationTitles.map((row) => (
                 <div
@@ -299,10 +319,13 @@ export function AiOperationsCenter({ data }: { data: AiOpsData }) {
       </div>
 
       <div className="grid gap-4 xl:grid-cols-2">
-        <Panel title="Workspace AI" subtitle="Requests · tokens · estimated cost">
+        <Panel
+          title={t.panels.workspaceAi}
+          subtitle={t.panels.workspaceAiDesc}
+        >
           <div className="max-h-72 space-y-1 overflow-y-auto">
             {data.workspaceAi.length === 0 ? (
-              <AdminEmptyState title="No project-scoped AI usage in range." />
+              <AdminEmptyState title={t.emptyData} />
             ) : (
               data.workspaceAi.map((row) => (
                 <div
@@ -320,10 +343,10 @@ export function AiOperationsCenter({ data }: { data: AiOpsData }) {
           </div>
         </Panel>
 
-        <Panel title="Project AI" subtitle="Ranked by usage">
+        <Panel title={t.panels.projectAi} subtitle={t.panels.projectAiDesc}>
           <div className="max-h-72 space-y-1 overflow-y-auto">
             {data.projectAi.length === 0 ? (
-              <AdminEmptyState title="No project-scoped AI usage in range." />
+              <AdminEmptyState title={t.emptyProjectUsage} />
             ) : (
               data.projectAi.map((row) => (
                 <div
@@ -342,37 +365,50 @@ export function AiOperationsCenter({ data }: { data: AiOpsData }) {
       </div>
 
       <div className="grid gap-4 xl:grid-cols-3">
-        <Panel title="AI health" subtitle="Provider · queue · availability">
+        <Panel title={t.panels.aiHealth} subtitle={t.panels.aiHealthDesc}>
           <div className="mb-3 flex items-center gap-2">
             <HealthDot tone={data.health.openaiTone} />
             <div>
               <p className="text-sm text-[var(--admin-text)]">OpenAI</p>
               <p className="text-[11px] text-[var(--admin-muted)]">
-                {data.health.openaiDetail}
+                {data.health.openaiConfigured
+                  ? fillTemplate(t.notes.openaiConfigured, {
+                      model: data.health.openaiModel,
+                    })
+                  : t.notes.openaiMissing}
               </p>
             </div>
           </div>
           <p className="text-[11px] text-[var(--admin-muted)]">
-            Queue: {data.health.queueNote}
+            {fillTemplate(t.queueLabel, { note: t.notes.queue })}
           </p>
           <p className="mt-2 text-[11px] text-[var(--admin-muted)]">
-            Avg latency: — · Error rate: —
+            {t.avgLatencyErrorRate}
           </p>
           <p className="mt-2 text-[11px] text-[var(--admin-muted)]">
-            Availability:{" "}
-            {data.health.availabilityPercent == null
-              ? "—"
-              : `${data.health.availabilityPercent}%`}
+            {fillTemplate(t.availabilityLabel, {
+              value:
+                data.health.availabilityPercent == null
+                  ? "—"
+                  : `${data.health.availabilityPercent}%`,
+            })}
           </p>
           <p className="mt-1 text-[10px] text-[var(--admin-accent-text)]">
-            {data.health.availabilityNote}
+            {data.health.availabilityNoteKey === "not_configured"
+              ? t.notes.availabilityNotConfigured
+              : data.health.availabilityNoteKey === "none"
+                ? t.notes.availabilityNone
+                : fillTemplate(t.notes.availabilityFromCompletions, {
+                    requests: data.health.availabilityRequestCount ?? 0,
+                    days: data.health.availabilityWindowDays ?? 0,
+                  })}
           </p>
         </Panel>
 
-        <Panel title="AI incidents" subtitle={data.incidents.note}>
+        <Panel title={t.panels.aiIncidents} subtitle={t.notes.incidents}>
           <div className="max-h-56 space-y-1 overflow-y-auto">
             {data.incidents.items.length === 0 ? (
-              <Empty>No negative feedback signals in range.</Empty>
+              <Empty>{t.emptyFeedback}</Empty>
             ) : (
               data.incidents.items.map((item) => (
                 <div
@@ -380,38 +416,40 @@ export function AiOperationsCenter({ data }: { data: AiOpsData }) {
                   className="rounded-lg border border-rose-500/15 px-2 py-1.5 text-[11px] text-[var(--admin-muted)]"
                 >
                   <p className="text-[var(--admin-text)]">{item.title}</p>
-                  {item.detail} · {formatRelative(item.occurredAt)}
+                  {item.detail} · {formatRelative(item.occurredAt, locale)}
                 </div>
               ))
             )}
           </div>
         </Panel>
 
-        <Panel title="Cost analytics" subtitle={data.cost.pricingNote}>
+        <Panel title={t.panels.costAnalytics} subtitle={t.notes.pricing}>
           <div className="mb-3 grid grid-cols-3 gap-2">
             <MiniStat
-              label="Daily"
+              label={t.daily}
               value={money(data.cost.estimatedDailyUsd)}
             />
             <MiniStat
-              label="Weekly"
+              label={t.weekly}
               value={money(data.cost.estimatedWeeklyUsd)}
             />
             <MiniStat
-              label="Monthly"
+              label={t.monthly}
               value={money(data.cost.estimatedMonthlyUsd)}
             />
           </div>
-          <SectionLabel>Per workspace</SectionLabel>
+          <SectionLabel>{t.perWorkspace}</SectionLabel>
           <NamedMoneyList
+            emptyLabel={t.emptyData}
             rows={data.cost.byWorkspace.map((r) => ({
               label: r.workspaceName,
               value: null,
               money: r.estimatedCostUsd,
             }))}
           />
-          <SectionLabel>Per project</SectionLabel>
+          <SectionLabel>{t.perProject}</SectionLabel>
           <NamedMoneyList
+            emptyLabel={t.emptyData}
             rows={data.cost.byProject.map((r) => ({
               label: r.projectName,
               value: null,
@@ -422,7 +460,9 @@ export function AiOperationsCenter({ data }: { data: AiOpsData }) {
       </div>
 
       <p className="text-[11px] text-[var(--admin-muted)]">
-        Honest gaps: {data.unavailable.join(" · ")}.
+        {fillTemplate(t.honestGaps, {
+          items: data.unavailable.join(" · "),
+        })}
       </p>
     </div>
   );
@@ -467,8 +507,14 @@ function MiniStat({ label, value }: { label: string; value: string }) {
   );
 }
 
-function NamedList({ rows }: { rows: { label: string; value: number }[] }) {
-  if (rows.length === 0) return <Empty>No data.</Empty>;
+function NamedList({
+  rows,
+  emptyLabel,
+}: {
+  rows: { label: string; value: number }[];
+  emptyLabel: string;
+}) {
+  if (rows.length === 0) return <Empty>{emptyLabel}</Empty>;
   return (
     <div className="max-h-28 space-y-1 overflow-y-auto">
       {rows.map((row) => (
@@ -488,10 +534,12 @@ function NamedList({ rows }: { rows: { label: string; value: number }[] }) {
 
 function NamedMoneyList({
   rows,
+  emptyLabel,
 }: {
   rows: { label: string; value: number | null; money: number }[];
+  emptyLabel: string;
 }) {
-  if (rows.length === 0) return <Empty>No data.</Empty>;
+  if (rows.length === 0) return <Empty>{emptyLabel}</Empty>;
   return (
     <div className="mb-2 max-h-28 space-y-1 overflow-y-auto">
       {rows.map((row) => (

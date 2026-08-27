@@ -6,8 +6,11 @@ export function formatMoney(amountCents: number, currency = "USD"): string {
   }).format(amountCents / 100);
 }
 
-export function formatLimit(value: number | null | undefined): string {
-  if (value === null || value === undefined) return "Unlimited";
+export function formatLimit(
+  value: number | null | undefined,
+  unlimitedLabel = "∞",
+): string {
+  if (value === null || value === undefined) return unlimitedLabel;
   return value.toLocaleString();
 }
 

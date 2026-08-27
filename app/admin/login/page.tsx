@@ -2,10 +2,12 @@ import type { Metadata } from "next";
 
 import { AdminLoginForm } from "@/features/admin";
 import { redirectIfAdminSession } from "@/features/admin/load-admin-session";
+import { getDictionary } from "@/lib/i18n/get-dictionary";
 
-export const metadata: Metadata = {
-  title: "Admin Sign In · ZYNTEKSIS",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const { dict } = await getDictionary();
+  return { title: dict.admin.login.metadataTitle };
+}
 
 export default async function AdminLoginPage({
   searchParams,

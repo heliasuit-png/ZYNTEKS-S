@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 
+import { useDictionary } from "@/components/i18n/locale-provider";
 import { LoginForm } from "@/features/auth/components/login-form";
 import { MagicLinkForm } from "@/features/auth/components/magic-link-form";
 import { OAuthButtons } from "@/features/auth/components/oauth-buttons";
@@ -21,6 +22,7 @@ export function AuthMethodPanel({
   providers,
   redirectTo,
 }: AuthMethodPanelProps) {
+  const { dict } = useDictionary();
   const [mode, setMode] = useState<Mode>("password");
   const hasOAuth = providers.some((provider) => provider.enabled);
 
@@ -32,7 +34,7 @@ export function AuthMethodPanel({
         <div className="relative flex items-center gap-3" aria-hidden>
           <div className="h-px flex-1 bg-gradient-to-r from-transparent via-white/15 to-transparent" />
           <span className="text-[10px] font-medium uppercase tracking-[0.2em] text-zt-muted">
-            or
+            {dict.auth.orDivider}
           </span>
           <div className="h-px flex-1 bg-gradient-to-r from-transparent via-white/15 to-transparent" />
         </div>
@@ -41,7 +43,7 @@ export function AuthMethodPanel({
       <div
         className="grid grid-cols-2 gap-1 rounded-xl border border-white/10 bg-black/20 p-1"
         role="tablist"
-        aria-label="Email authentication method"
+        aria-label={dict.auth.methodAria}
       >
         <button
           type="button"
@@ -54,7 +56,9 @@ export function AuthMethodPanel({
               : "text-zt-muted hover:text-zt-text"
           }`}
         >
-          {variant === "login" ? "Password" : "Email & password"}
+          {variant === "login"
+            ? dict.auth.passwordTab
+            : dict.auth.emailPasswordTab}
         </button>
         <button
           type="button"
@@ -67,7 +71,7 @@ export function AuthMethodPanel({
               : "text-zt-muted hover:text-zt-text"
           }`}
         >
-          Magic link
+          {dict.auth.magicLinkTab}
         </button>
       </div>
 

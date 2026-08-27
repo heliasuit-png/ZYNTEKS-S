@@ -1,6 +1,7 @@
 "use client";
 
 import { Sparkline, type SparkTone } from "@/components/dashboard/sparkline";
+import { useDictionary } from "@/components/i18n/locale-provider";
 import { cn } from "@/lib/utils";
 
 interface HealthChartProps {
@@ -17,8 +18,11 @@ export function HealthChart({
   tone = "primary",
   className,
   label,
-  emptyLabel = "No samples yet",
+  emptyLabel,
 }: HealthChartProps) {
+  const { dict } = useDictionary();
+  const resolvedEmpty = emptyLabel ?? dict.dash.health.noSamplesYet;
+
   if (values.length < 2) {
     return (
       <div
@@ -27,9 +31,9 @@ export function HealthChart({
           className,
         )}
         role="img"
-        aria-label={label ? `${label}: ${emptyLabel}` : emptyLabel}
+        aria-label={label ? `${label}: ${resolvedEmpty}` : resolvedEmpty}
       >
-        {emptyLabel}
+        {resolvedEmpty}
       </div>
     );
   }

@@ -3,10 +3,10 @@
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 
-import { z } from "zod";
-
 import { ADMIN_ROUTES } from "@/lib/constants";
 import { isAppError } from "@/lib/errors";
+import { getDictionary } from "@/lib/i18n/get-dictionary";
+import { fieldErrorsFromZod } from "@/lib/i18n/localize-action";
 import { signInWithPassword, signOut } from "@/services/auth";
 import {
   getAdminUserByAuthId,
@@ -17,24 +17,13 @@ import { adminSignInSchema } from "@/features/admin/schemas";
 import { safeAdminNextPath } from "@/features/admin/safe-admin-redirect";
 import type { AdminFormState } from "@/features/admin/types";
 
-function fieldErrorsFrom(error: z.ZodError): Record<string, string[]> {
-  const flattened = error.flatten().fieldErrors;
-  const result: Record<string, string[]> = {};
-  for (const [key, messages] of Object.entries(flattened)) {
-    if (messages && messages.length > 0) {
-      result[key] = messages;
-    }
-  }
-  return result;
-}
-
-function toErrorState(error: unknown): AdminFormState {
+function toErrorState(error: unknown, unexpected: string): AdminFormState {
   if (isAppError(error)) {
     return { status: "error", message: error.message };
   }
   return {
     status: "error",
-    message: "Something went wrong. Please try again.",
+    message: unexpected,
   };
 }
 
@@ -46,13 +35,16 @@ export async function adminSignInAction(
   _prevState: AdminFormState,
   formData: FormData,
 ): Promise<AdminFormState> {
+  const { dict } = await getDictionary();
+  const am = dict.actionMessages;
+
   const parsed = adminSignInSchema.safeParse({
     email: formData.get("email"),
     password: formData.get("password"),
   });
 
   if (!parsed.success) {
-    return { status: "error", fieldErrors: fieldErrorsFrom(parsed.error) };
+    return { status: "error", fieldErrors: fieldErrorsFromZod(parsed.error, am) };
   }
 
   const supabase = await createSupabaseServerClient();
@@ -65,13 +57,13 @@ export async function adminSignInAction(
       await signOut(supabase);
       return {
         status: "error",
-        message: "This account is not authorized for the Admin Control Center.",
+        message: am.admin.notAuthorized,
       };
     }
 
     await touchAdminLastLogin(supabase, session.user.id);
   } catch (error) {
-    return toErrorState(error);
+    return toErrorState(error, am.unexpectedError);
   }
 
   revalidatePath(ADMIN_ROUTES.root, "layout");

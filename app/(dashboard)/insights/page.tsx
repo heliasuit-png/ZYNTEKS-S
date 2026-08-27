@@ -1,7 +1,8 @@
-import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { BrainCircuit, FolderPlus } from "lucide-react";
+import { dashboardPageMetadata } from "@/lib/i18n/dashboard-metadata";
+import { getDictionary } from "@/lib/i18n/get-dictionary";
 
 import { PageHeader } from "@/components/dashboard/page-header";
 import { EmptyState } from "@/components/dashboard/empty-state";
@@ -12,13 +13,15 @@ import { getProjectIntelligence } from "@/services/intelligence";
 import { createSupabaseServerClient } from "@/supabase/server";
 import { InsightsView } from "@/features/insights/components/insights-view";
 
-export const metadata: Metadata = { title: "Monitoring Intelligence" };
+export const generateMetadata = () => dashboardPageMetadata("insights");
 
 export default async function InsightsPage({
   searchParams,
 }: {
   searchParams: Promise<{ p?: string }>;
 }) {
+  const { dict } = await getDictionary();
+  const pageCopy = dict.dashboard.pageTitles.insights;
   const { p: requestedId } = await searchParams;
 
   const supabase = await createSupabaseServerClient();
@@ -34,9 +37,7 @@ export default async function InsightsPage({
   const projects = projectsPage.items.map((p) => ({ id: p.id, name: p.name }));
 
   const header = (
-    <PageHeader
-      title="Monitoring Intelligence"
-      description="Autonomous detection, correlation and recommendations across your telemetry."
+    <PageHeader title={pageCopy.title} description={pageCopy.description}
     />
   );
 
@@ -46,15 +47,15 @@ export default async function InsightsPage({
         {header}
         <EmptyState
           icon={BrainCircuit}
-          title="No projects to analyze yet"
-          description="Create a project and install the SDK to unlock autonomous monitoring intelligence — health scoring, anomaly detection, correlation and recommendations."
+          title={dict.dash.insights.emptyTitle}
+          description={dict.dash.insights.emptyDesc}
           action={
             <Link
               href={DASHBOARD_ROUTES.projects}
               className="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-zt-primary to-zt-purple px-4 py-2 text-sm font-medium text-white shadow-[0_8px_30px_-12px_var(--color-zt-primary)] transition-transform hover:scale-[1.02]"
             >
               <FolderPlus className="size-4" aria-hidden />
-              Create a project
+              {dict.dash.insights.createProject}
             </Link>
           }
         />

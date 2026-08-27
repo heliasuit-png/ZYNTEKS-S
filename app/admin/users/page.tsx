@@ -6,10 +6,14 @@ import type { SubscriptionPlan, UserStatus } from "@/types/database";
 import { AdminContainer } from "@/features/admin";
 import { UsersManagement } from "@/features/admin/components/users/users-management";
 import { requireAdminSession } from "@/features/admin/load-admin-session";
+import { getDictionary } from "@/lib/i18n/get-dictionary";
 
-export const metadata: Metadata = {
-  title: "User Management · ZYNTEKSIS Admin",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const { dict } = await getDictionary();
+  return {
+    title: `${dict.admin.users.pageTitle}${dict.admin.common.metaTitleSuffix}`,
+  };
+}
 
 function pick(
   value: string | undefined,

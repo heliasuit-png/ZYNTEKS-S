@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 
 import { Button } from "@/components/dashboard/button";
 import type { ButtonProps } from "@/components/dashboard/button";
+import { useDictionary } from "@/components/i18n/locale-provider";
+import { fillTemplate } from "@/lib/i18n/fill-template";
 import {
   initialBillingActionState,
   type BillingActionState,
@@ -40,6 +42,8 @@ export function BillingActionButton({
   hiddenFields?: Record<string, string>;
   onResult?: (state: BillingActionState) => void;
 }) {
+  const { dict } = useDictionary();
+  const billingUi = dict.dash.billingUi;
   const router = useRouter();
   const [state, formAction, pending] = useActionState(
     action,
@@ -63,13 +67,16 @@ export function BillingActionButton({
         : null}
       <Button type="submit" variant={variant} size={size} disabled={pending}>
         {children}
-        {pending ? pendingLabel ?? "Working…" : label}
+        {pending ? pendingLabel ?? billingUi.working : label}
       </Button>
     </form>
   );
 }
 
 export function BillingActionMessage({ state }: { state: BillingActionState }) {
+  const { dict } = useDictionary();
+  const billingUi = dict.dash.billingUi;
+
   if (state.status === "idle" || !state.message) return null;
 
   const tone =
@@ -86,14 +93,16 @@ export function BillingActionMessage({ state }: { state: BillingActionState }) {
     >
       <p className="font-medium">
         {state.status === "not_configured"
-          ? "Payment provider not connected"
+          ? billingUi.paymentProviderNotConnected
           : state.status === "ok"
-            ? "Ready"
-            : "Billing action"}
+            ? billingUi.actionReady
+            : billingUi.billingAction}
       </p>
       <p className="mt-1 opacity-90">{state.message}</p>
       {state.providerId ? (
-        <p className="mt-2 text-xs opacity-70">Provider: {state.providerId}</p>
+        <p className="mt-2 text-xs opacity-70">
+          {fillTemplate(billingUi.providerId, { id: state.providerId })}
+        </p>
       ) : null}
     </div>
   );

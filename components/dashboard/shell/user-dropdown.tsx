@@ -11,6 +11,7 @@ import {
 
 import { cn } from "@/lib/utils";
 import { Dropdown, dropdownItemClass } from "@/components/dashboard/dropdown";
+import { useDictionary } from "@/components/i18n/locale-provider";
 import { DASHBOARD_ROUTES } from "@/lib/constants";
 import { signOutAction } from "@/features/auth/actions";
 import type { DashboardUser } from "@/features/dashboard/types";
@@ -25,6 +26,8 @@ function getInitials(user: DashboardUser): string {
 }
 
 export function UserDropdown({ user }: { user: DashboardUser }) {
+  const { dict } = useDictionary();
+  const nav = dict.dashboardNav;
   const displayName = user.fullName?.trim() || user.email;
 
   return (
@@ -52,15 +55,15 @@ export function UserDropdown({ user }: { user: DashboardUser }) {
       <div className="py-1">
         <Link href={DASHBOARD_ROUTES.profile} className={dropdownItemClass}>
           <UserIcon className="size-4" aria-hidden />
-          Profile
+          {nav.profile}
         </Link>
         <Link href={DASHBOARD_ROUTES.settings} className={dropdownItemClass}>
           <SettingsIcon className="size-4" aria-hidden />
-          Settings
+          {nav.settings}
         </Link>
         <Link href={DASHBOARD_ROUTES.billing} className={dropdownItemClass}>
           <CreditCard className="size-4" aria-hidden />
-          Billing
+          {nav.billing}
         </Link>
       </div>
       <div className="border-t border-zt-border pt-1">
@@ -70,7 +73,7 @@ export function UserDropdown({ user }: { user: DashboardUser }) {
             className={cn(dropdownItemClass, "text-zt-danger hover:text-zt-danger")}
           >
             <LogOut className="size-4" aria-hidden />
-            Sign out
+            {dict.dash.shell.signOut}
           </button>
         </form>
       </div>

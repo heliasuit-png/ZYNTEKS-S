@@ -12,6 +12,7 @@ import {
   PanelTitle,
 } from "@/components/dashboard/panel";
 import { EmptyState } from "@/components/dashboard/empty-state";
+import { useDictionary } from "@/components/i18n/locale-provider";
 import { formatRelativeTime } from "@/utils/format";
 import type { ActivityItem, ActivityType } from "@/types/dashboard";
 
@@ -32,6 +33,8 @@ function timeLabelUtc(value: string): string {
 }
 
 export function LiveActivityFeed({ activity }: { activity: ActivityItem[] }) {
+  const { dict, locale } = useDictionary();
+  const t = dict.dash.home.liveActivity;
   // Relative labels use "now" — only compute after mount to match client clock.
   const [relativeReady, setRelativeReady] = useState(false);
   useEffect(() => {
@@ -44,7 +47,7 @@ export function LiveActivityFeed({ activity }: { activity: ActivityItem[] }) {
         <PanelTitle>
           <span className="flex items-center gap-2">
             <TerminalSquare className="size-4 text-zt-primary" aria-hidden />
-            Live Activity
+            {t.title}
           </span>
         </PanelTitle>
         <span className="flex items-center gap-1.5 text-xs text-zt-muted">
@@ -57,8 +60,8 @@ export function LiveActivityFeed({ activity }: { activity: ActivityItem[] }) {
         {activity.length === 0 ? (
           <EmptyState
             icon={TerminalSquare}
-            title="Waiting for signals"
-            description="Live events from your projects will stream in here as they happen."
+            title={t.waiting}
+            description={t.waitingDesc}
           />
         ) : (
           <div className="max-h-[22rem] overflow-y-auto rounded-xl border border-zt-border bg-black/30 p-4 font-mono text-[13px] leading-relaxed">
@@ -83,7 +86,7 @@ export function LiveActivityFeed({ activity }: { activity: ActivityItem[] }) {
                   <span className="w-full pl-[4.5rem] text-xs text-zt-muted/70 sm:w-auto sm:pl-0">
                     — {item.description}
                     {relativeReady ? (
-                      <> · {formatRelativeTime(item.createdAt)}</>
+                      <> · {formatRelativeTime(item.createdAt, undefined, locale)}</>
                     ) : null}
                   </span>
                 </motion.div>

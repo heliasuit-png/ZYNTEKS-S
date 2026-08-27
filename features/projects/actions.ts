@@ -4,7 +4,11 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
 import { DASHBOARD_ROUTES } from "@/lib/constants";
-import { isAppError } from "@/lib/errors";
+import { getDictionary } from "@/lib/i18n/get-dictionary";
+import {
+  fieldErrorsFromZod,
+  toLocalizedErrorMessage,
+} from "@/lib/i18n/localize-action";
 import { createSupabaseServerClient } from "@/supabase/server";
 import { getAuthenticatedUser } from "@/services/auth";
 import {
@@ -21,30 +25,15 @@ import type {
   ProjectFormState,
 } from "@/features/projects/types";
 
-const idSchema = z.string().uuid("Invalid project id.");
-
-function fieldErrorsFrom(error: z.ZodError): Record<string, string[]> {
-  const flattened = error.flatten().fieldErrors;
-  const result: Record<string, string[]> = {};
-  for (const [key, messages] of Object.entries(flattened)) {
-    if (messages && messages.length > 0) {
-      result[key] = messages;
-    }
-  }
-  return result;
-}
-
-function toErrorMessage(error: unknown): string {
-  if (isAppError(error)) {
-    return error.message;
-  }
-  return "Something went wrong. Please try again.";
-}
+const idSchema = z.string().uuid("invalid_project_id");
 
 export async function createProjectAction(
   _prevState: ProjectFormState,
   formData: FormData,
 ): Promise<ProjectFormState> {
+  const { dict } = await getDictionary();
+  const am = dict.actionMessages;
+
   const parsed = createProjectSchema.safeParse({
     name: formData.get("name"),
     slug: formData.get("slug") ?? undefined,
@@ -55,13 +44,13 @@ export async function createProjectAction(
   });
 
   if (!parsed.success) {
-    return { status: "error", fieldErrors: fieldErrorsFrom(parsed.error) };
+    return { status: "error", fieldErrors: fieldErrorsFromZod(parsed.error, am) };
   }
 
   const supabase = await createSupabaseServerClient();
   const user = await getAuthenticatedUser(supabase);
   if (!user) {
-    return { status: "error", message: "You must be signed in." };
+    return { status: "error", message: am.mustSignIn };
   }
 
   try {
@@ -74,9 +63,9 @@ export async function createProjectAction(
       stagingUrl: parsed.data.stagingUrl,
     });
     revalidatePath(DASHBOARD_ROUTES.projects);
-    return { status: "success", message: "Project created.", project };
+    return { status: "success", message: am.projectCreated, project };
   } catch (error) {
-    return { status: "error", message: toErrorMessage(error) };
+    return { status: "error", message: toLocalizedErrorMessage(error, am) };
   }
 }
 
@@ -84,9 +73,12 @@ export async function updateProjectAction(
   _prevState: ProjectFormState,
   formData: FormData,
 ): Promise<ProjectFormState> {
+  const { dict } = await getDictionary();
+  const am = dict.actionMessages;
+
   const idResult = idSchema.safeParse(formData.get("id"));
   if (!idResult.success) {
-    return { status: "error", message: "Invalid project id." };
+    return { status: "error", message: am.invalidProjectId };
   }
 
   const parsed = updateProjectSchema.safeParse({
@@ -99,13 +91,13 @@ export async function updateProjectAction(
   });
 
   if (!parsed.success) {
-    return { status: "error", fieldErrors: fieldErrorsFrom(parsed.error) };
+    return { status: "error", fieldErrors: fieldErrorsFromZod(parsed.error, am) };
   }
 
   const supabase = await createSupabaseServerClient();
   const user = await getAuthenticatedUser(supabase);
   if (!user) {
-    return { status: "error", message: "You must be signed in." };
+    return { status: "error", message: am.mustSignIn };
   }
 
   try {
@@ -118,9 +110,9 @@ export async function updateProjectAction(
       stagingUrl: parsed.data.stagingUrl,
     });
     revalidatePath(DASHBOARD_ROUTES.projects);
-    return { status: "success", message: "Project updated.", project };
+    return { status: "success", message: am.projectUpdated, project };
   } catch (error) {
-    return { status: "error", message: toErrorMessage(error) };
+    return { status: "error", message: toLocalizedErrorMessage(error, am) };
   }
 }
 
@@ -128,22 +120,25 @@ export async function deleteProjectAction(
   _prevState: ProjectActionState,
   formData: FormData,
 ): Promise<ProjectActionState> {
+  const { dict } = await getDictionary();
+  const am = dict.actionMessages;
+
   const idResult = idSchema.safeParse(formData.get("id"));
   if (!idResult.success) {
-    return { status: "error", message: "Invalid project id." };
+    return { status: "error", message: am.invalidProjectId };
   }
 
   const supabase = await createSupabaseServerClient();
   const user = await getAuthenticatedUser(supabase);
   if (!user) {
-    return { status: "error", message: "You must be signed in." };
+    return { status: "error", message: am.mustSignIn };
   }
 
   try {
     await deleteProject(supabase, user.id, idResult.data);
     revalidatePath(DASHBOARD_ROUTES.projects);
-    return { status: "success", message: "Project deleted." };
+    return { status: "success", message: am.projectDeleted };
   } catch (error) {
-    return { status: "error", message: toErrorMessage(error) };
+    return { status: "error", message: toLocalizedErrorMessage(error, am) };
   }
 }

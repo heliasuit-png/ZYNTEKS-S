@@ -7,6 +7,8 @@ import {
   NOTIFICATION_CATEGORIES,
   NOTIFICATION_CHANNELS,
 } from "@/lib/constants";
+import { getDictionary } from "@/lib/i18n/get-dictionary";
+import { firstZodMessage } from "@/lib/i18n/localize-action";
 import { createSupabaseServerClient } from "@/supabase/server";
 import { getAuthenticatedUser } from "@/services/auth";
 import {
@@ -113,6 +115,9 @@ export async function updateNotificationPreferencesAction(
   _prevState: PreferencesFormState,
   formData: FormData,
 ): Promise<PreferencesFormState> {
+  const { dict } = await getDictionary();
+  const am = dict.actionMessages;
+
   const typePreferences = parseTypePreferencesFromForm(formData);
   const parsed = notificationPreferencesSchema.safeParse({
     email_enabled: checkbox(formData, "email_enabled"),
@@ -125,13 +130,12 @@ export async function updateNotificationPreferencesAction(
   });
 
   if (!parsed.success) {
-    const first = parsed.error.issues[0];
-    return { status: "error", message: first?.message ?? "Invalid input." };
+    return { status: "error", message: firstZodMessage(parsed.error, am) };
   }
 
   const { supabase, user } = await resolveUser();
   if (!user) {
-    return { status: "error", message: "You must be signed in." };
+    return { status: "error", message: am.mustSignIn };
   }
 
   try {
@@ -145,8 +149,8 @@ export async function updateNotificationPreferencesAction(
       type_preferences: parsed.data.type_preferences as unknown as Json,
     });
     revalidateNotificationViews();
-    return { status: "success", message: "Preferences saved." };
+    return { status: "success", message: am.preferencesSaved };
   } catch {
-    return { status: "error", message: "Could not save preferences." };
+    return { status: "error", message: am.preferencesSaveFailed };
   }
 }

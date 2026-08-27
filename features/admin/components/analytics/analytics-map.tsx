@@ -1,5 +1,7 @@
 "use client";
 
+import { useDictionary } from "@/components/i18n/locale-provider";
+import { fillTemplate } from "@/lib/i18n/fill-template";
 import type { AnalyticsIntelligenceData } from "@/services/admin/analytics-intelligence.types";
 
 export function AnalyticsMap({
@@ -7,6 +9,8 @@ export function AnalyticsMap({
 }: {
   geography: AnalyticsIntelligenceData["geography"];
 }) {
+  const { dict } = useDictionary();
+  const t = dict.admin.analytics;
   const max = Math.max(1, ...geography.countries.map((c) => c.sessions));
 
   return (
@@ -15,10 +19,10 @@ export function AnalyticsMap({
       <div className="relative mb-3 flex flex-wrap items-end justify-between gap-2">
         <div>
           <h2 className="text-sm font-semibold text-[var(--admin-text)]">
-            Geographic analytics
+            {t.geographicTitle}
           </h2>
           <p className="mt-0.5 text-[11px] text-[var(--admin-muted)]">
-            {geography.cityNote}
+            {t.notes.city}
           </p>
         </div>
       </div>
@@ -27,7 +31,7 @@ export function AnalyticsMap({
           viewBox="0 0 100 70"
           className="h-56 w-full rounded-xl border border-[var(--admin-border)] bg-[rgba(4,12,24,0.65)]"
           role="img"
-          aria-label="World analytics map"
+          aria-label={t.mapAria}
         >
           <ellipse
             cx="50"
@@ -47,8 +51,11 @@ export function AnalyticsMap({
                   fill="rgba(96,165,250,0.85)"
                 >
                   <title>
-                    {country.country}: {country.sessions} sessions ·{" "}
-                    {country.users} users
+                    {fillTemplate(t.countryTooltip, {
+                      country: country.country,
+                      sessions: country.sessions,
+                      users: country.users,
+                    })}
                   </title>
                 </circle>
               </g>
@@ -62,13 +69,13 @@ export function AnalyticsMap({
               fill="rgba(148,163,184,0.8)"
               fontSize="3.2"
             >
-              No country session data
+              {t.noCountryData}
             </text>
           ) : null}
         </svg>
         <div className="space-y-2">
           <p className="text-[10px] uppercase tracking-[0.14em] text-[var(--admin-muted)]">
-            Top regions
+            {t.topRegions}
           </p>
           {geography.regions.map((region) => (
             <div

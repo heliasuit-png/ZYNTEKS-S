@@ -6,17 +6,12 @@ import { cn } from "@/lib/utils";
 import { Brand } from "@/components/dashboard/shell/brand";
 import { NavList } from "@/components/dashboard/shell/nav-list";
 import { WorkspaceSwitcher } from "@/components/dashboard/shell/workspace-switcher";
+import { useDictionary } from "@/components/i18n/locale-provider";
 import { useDashboard } from "@/features/dashboard/hooks/use-dashboard";
 import type {
   DashboardUser,
   DashboardWorkspaceContext,
 } from "@/features/dashboard/types";
-
-const PLAN_LABELS: Record<string, string> = {
-  free: "Starter",
-  pro: "Pro",
-  enterprise: "Enterprise",
-};
 
 function getInitials(user: DashboardUser): string {
   const source = user.fullName?.trim() || user.email;
@@ -35,9 +30,13 @@ export function Sidebar({
   workspace: DashboardWorkspaceContext;
 }) {
   const { isSidebarCollapsed, toggleSidebar } = useDashboard();
+  const { dict } = useDictionary();
+  const shell = dict.dash.shell;
   const collapsed = isSidebarCollapsed;
   const displayName = user.fullName?.trim() || user.email;
-  const planLabel = PLAN_LABELS[user.plan] ?? user.plan;
+  const planNames = dict.dash.billingUi.planNames;
+  const planLabel =
+    planNames[user.plan as keyof typeof planNames] ?? user.plan;
 
   return (
     <aside
@@ -88,7 +87,7 @@ export function Sidebar({
           <button
             type="button"
             onClick={toggleSidebar}
-            aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+            aria-label={collapsed ? shell.expandSidebar : shell.collapseSidebar}
             aria-pressed={collapsed}
             className={cn(
               "mt-2 flex w-full items-center justify-center gap-2 rounded-lg border border-zt-border py-1.5 text-xs text-zt-muted transition-colors hover:border-zt-border-strong hover:text-zt-text",
@@ -99,7 +98,7 @@ export function Sidebar({
             ) : (
               <>
                 <ChevronsLeft className="size-4" aria-hidden />
-                Collapse
+                {shell.collapse}
               </>
             )}
           </button>

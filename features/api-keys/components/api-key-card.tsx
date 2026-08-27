@@ -2,12 +2,12 @@
 
 import { Ban, RefreshCw } from "lucide-react";
 
+import { useDictionary } from "@/components/i18n/locale-provider";
 import { Badge } from "@/components/dashboard/badge";
 import type { BadgeProps } from "@/components/dashboard/badge";
 import { Panel } from "@/components/dashboard/panel";
 import { CopyButton } from "@/components/dashboard/copy-button";
 import { buildMaskedKey } from "@/lib/api-key-format";
-import { API_KEY_ENVIRONMENT_LABELS } from "@/lib/constants";
 import { formatDate } from "@/utils/format";
 import type { ApiKeyEnvironment, ApiKeyStatus } from "@/types/database";
 import type { ApiKey } from "@/features/api-keys/types";
@@ -38,6 +38,9 @@ export function ApiKeyCard({
   onRevoke,
   onRegenerate,
 }: ApiKeyCardProps) {
+  const { dict } = useDictionary();
+  const t = dict.dash.apiKeys;
+  const never = dict.dash.members.never;
   const isActive = apiKey.status === "active";
 
   return (
@@ -51,9 +54,11 @@ export function ApiKeyCard({
         </div>
         <div className="flex items-center gap-2">
           <Badge tone={environmentTone[apiKey.environment]}>
-            {API_KEY_ENVIRONMENT_LABELS[apiKey.environment]}
+            {t.environments[apiKey.environment]}
           </Badge>
-          <Badge tone={statusTone[apiKey.status]}>{apiKey.status}</Badge>
+          <Badge tone={statusTone[apiKey.status]}>
+            {t.statuses[apiKey.status]}
+          </Badge>
         </div>
       </div>
 
@@ -61,18 +66,18 @@ export function ApiKeyCard({
         <code className="flex-1 overflow-x-auto whitespace-nowrap rounded-lg border border-zt-border bg-zt-surface-2 px-3 py-2 font-mono text-xs text-zt-muted">
           {buildMaskedKey(apiKey.key_prefix)}
         </code>
-        <CopyButton value={apiKey.key_prefix} label="Copy prefix" />
+        <CopyButton value={apiKey.key_prefix} label={t.copyPrefix} />
       </div>
 
       <dl className="mt-4 grid grid-cols-2 gap-3 text-xs">
         <div>
-          <dt className="text-zt-muted">Created</dt>
+          <dt className="text-zt-muted">{t.created}</dt>
           <dd className="text-zt-text">{formatDate(apiKey.created_at)}</dd>
         </div>
         <div>
-          <dt className="text-zt-muted">Last used</dt>
+          <dt className="text-zt-muted">{t.lastUsed}</dt>
           <dd className="text-zt-text">
-            {apiKey.last_used_at ? formatDate(apiKey.last_used_at) : "Never"}
+            {apiKey.last_used_at ? formatDate(apiKey.last_used_at) : never}
           </dd>
         </div>
       </dl>
@@ -85,7 +90,7 @@ export function ApiKeyCard({
           className="inline-flex items-center gap-1.5 rounded-lg border border-zt-border bg-zt-surface-2 px-3 py-1.5 text-xs font-medium text-zt-text transition-colors hover:border-zt-primary/40 disabled:opacity-60"
         >
           <RefreshCw className="size-3.5" aria-hidden />
-          Regenerate
+          {t.regenerate}
         </button>
         {isActive ? (
           <button
@@ -95,7 +100,7 @@ export function ApiKeyCard({
             className="inline-flex items-center gap-1.5 rounded-lg border border-zt-danger/40 bg-zt-danger/10 px-3 py-1.5 text-xs font-medium text-zt-danger transition-colors hover:bg-zt-danger/20 disabled:opacity-60"
           >
             <Ban className="size-3.5" aria-hidden />
-            Revoke
+            {t.revoke}
           </button>
         ) : null}
       </div>

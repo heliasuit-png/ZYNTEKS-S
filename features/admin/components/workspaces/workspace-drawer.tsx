@@ -3,6 +3,8 @@
 import { useEffect, useState, useTransition, type ReactNode } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 
+import { useDictionary } from "@/components/i18n/locale-provider";
+import { fillTemplate } from "@/lib/i18n/fill-template";
 import { hasAdminPermission } from "@/services/admin/permissions";
 import type { AdminPlatformRole } from "@/services/admin/types";
 import type { AdminWorkspaceDetail } from "@/services/admin/workspaces.types";
@@ -29,6 +31,9 @@ export function WorkspaceDrawer({
   role,
   onClose,
 }: WorkspaceDrawerProps) {
+  const { dict } = useDictionary();
+  const t = dict.admin.workspaces.drawer;
+  const common = dict.admin.common;
   const [detail, setDetail] = useState<AdminWorkspaceDetail | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
@@ -54,16 +59,14 @@ export function WorkspaceDrawer({
         }
       } catch (err) {
         if (!cancelled) {
-          setError(
-            err instanceof Error ? err.message : "Failed to load workspace",
-          );
+          setError(err instanceof Error ? err.message : t.loadFailed);
         }
       }
     });
     return () => {
       cancelled = true;
     };
-  }, [workspaceId]);
+  }, [workspaceId, t.loadFailed]);
 
   function run(action: () => Promise<{ ok: boolean; message: string }>) {
     startTransition(async () => {
@@ -92,7 +95,7 @@ export function WorkspaceDrawer({
         <>
           <motion.button
             type="button"
-            aria-label="Close workspace drawer"
+            aria-label={t.closeAria}
             className="fixed inset-0 z-40 bg-black/55"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -102,7 +105,7 @@ export function WorkspaceDrawer({
           <motion.aside
             role="dialog"
             aria-modal="true"
-            aria-label="Workspace detail"
+            aria-label={t.detailAria}
             initial={{ x: "100%" }}
             animate={{ x: 0 }}
             exit={{ x: "100%" }}
@@ -131,7 +134,7 @@ export function WorkspaceDrawer({
                 </div>
                 <div>
                   <h2 className="text-lg font-semibold text-[var(--admin-text)]">
-                    {detail?.workspace.name ?? "Workspace"}
+                    {detail?.workspace.name ?? t.workspaceFallback}
                   </h2>
                   <p className="text-xs text-[var(--admin-muted)]">
                     {detail?.workspace.slug}
@@ -143,7 +146,7 @@ export function WorkspaceDrawer({
                 onClick={onClose}
                 className="rounded-lg border border-[var(--admin-border)] px-2 py-1 text-xs text-[var(--admin-muted)]"
               >
-                Close
+                {common.close}
               </button>
             </header>
 
@@ -160,83 +163,89 @@ export function WorkspaceDrawer({
                     </p>
                   ) : null}
 
-                  <Section title="Overview">
+                  <Section title={t.overview}>
                     <Grid
                       rows={[
-                        ["Brand color", detail.workspace.brandColor],
+                        [t.fields.brandColor, detail.workspace.brandColor],
                         [
-                          "Owner",
+                          t.fields.owner,
                           detail.workspace.ownerName
                             ? `${detail.workspace.ownerName} · ${detail.workspace.ownerEmail}`
                             : detail.workspace.ownerEmail,
                         ],
-                        ["Members", String(detail.workspace.memberCount)],
-                        ["Projects", String(detail.workspace.projectCount)],
-                        ["API Keys", String(detail.workspace.apiKeyCount)],
+                        [t.fields.members, String(detail.workspace.memberCount)],
+                        [t.fields.projects, String(detail.workspace.projectCount)],
+                        [t.fields.apiKeys, String(detail.workspace.apiKeyCount)],
                         [
-                          "Health score",
+                          t.fields.healthScore,
                           detail.healthScore == null
                             ? "—"
                             : `${detail.healthScore}`,
                         ],
-                        ["Errors (30d)", String(detail.workspace.errorCount30d)],
                         [
-                          "Incidents (30d)",
+                          t.fields.errors30d,
+                          String(detail.workspace.errorCount30d),
+                        ],
+                        [
+                          t.fields.incidents30d,
                           String(detail.workspace.incidentCount30d),
                         ],
                         [
-                          "Notifications (30d)",
+                          t.fields.notifications30d,
                           String(detail.notificationCount30d),
                         ],
                         [
-                          "Storage (logos)",
+                          t.fields.storageLogos,
                           formatBytes(detail.workspace.storageBytes),
                         ],
                         [
-                          "AI usage",
-                          `${formatNumber(detail.aiUsage.requests)} req · ${formatNumber(detail.aiUsage.tokens)} tokens`,
+                          t.fields.aiUsage,
+                          fillTemplate(t.aiUsageValue, {
+                            requests: formatNumber(detail.aiUsage.requests),
+                            tokens: formatNumber(detail.aiUsage.tokens),
+                          }),
                         ],
-                        ["Heartbeat", detail.heartbeatStatus],
+                        [t.fields.heartbeat, detail.heartbeatStatus],
                         [
-                          "Last heartbeat",
+                          t.fields.lastHeartbeat,
                           detail.lastHeartbeatAt
                             ? formatWhen(detail.lastHeartbeatAt)
                             : "—",
                         ],
-                        ["Plan", detail.workspace.plan],
-                        ["Status", detail.workspace.status],
-                        ["Timezone", detail.timezone],
+                        [t.fields.plan, detail.workspace.plan],
+                        [t.fields.status, detail.workspace.status],
+                        [t.fields.timezone, detail.timezone],
                       ]}
                     />
                   </Section>
 
-                  <Section title="Health">
+                  <Section title={t.health}>
                     <MiniBars
-                      title="Error trend (14d)"
+                      title={t.errorTrend}
                       points={detail.errorTrend}
                       color="#f87171"
                     />
                     <MiniBars
-                      title="Incident trend (14d)"
+                      title={t.incidentTrend}
                       points={detail.incidentTrend}
                       color="#fbbf24"
                     />
                     <MiniBars
-                      title="API requests (14d)"
+                      title={t.apiRequestsTrend}
                       points={detail.apiRequestTrend}
                       color="#60a5fa"
                     />
                   </Section>
 
-                  <Section title="Analytics">
+                  <Section title={t.analytics}>
                     <WorkspaceAnalyticsChart points={detail.analytics} />
                   </Section>
 
                   {canWrite ? (
-                    <Section title="Workspace actions">
+                    <Section title={t.workspaceActions}>
                       <div className="flex flex-wrap gap-2">
                         <ActionButton
-                          label="Suspend"
+                          label={t.suspend}
                           disabled={
                             pending || detail.workspace.status === "suspended"
                           }
@@ -250,7 +259,7 @@ export function WorkspaceDrawer({
                           }
                         />
                         <ActionButton
-                          label="Reactivate"
+                          label={t.reactivate}
                           disabled={
                             pending || detail.workspace.status === "active"
                           }
@@ -264,7 +273,7 @@ export function WorkspaceDrawer({
                           }
                         />
                         <ActionButton
-                          label="Archive"
+                          label={t.archive}
                           disabled={
                             pending || detail.workspace.status === "archived"
                           }
@@ -283,10 +292,10 @@ export function WorkspaceDrawer({
                           value={renameValue}
                           onChange={(e) => setRenameValue(e.target.value)}
                           className="min-w-0 flex-1 rounded-lg border border-[var(--admin-border)] bg-[var(--admin-surface)] px-2 py-1.5 text-xs text-[var(--admin-text)]"
-                          aria-label="Rename workspace"
+                          aria-label={t.renameAria}
                         />
                         <ActionButton
-                          label="Rename"
+                          label={t.rename}
                           disabled={pending || !renameValue.trim()}
                           onClick={() =>
                             run(() =>
@@ -303,9 +312,9 @@ export function WorkspaceDrawer({
                           value={transferUserId}
                           onChange={(e) => setTransferUserId(e.target.value)}
                           className="min-w-0 flex-1 rounded-lg border border-[var(--admin-border)] bg-[var(--admin-surface)] px-2 py-1.5 text-xs text-[var(--admin-text)]"
-                          aria-label="Transfer ownership to member"
+                          aria-label={t.transferAria}
                         >
-                          <option value="">Transfer ownership to…</option>
+                          <option value="">{t.transferPlaceholder}</option>
                           {detail.members
                             .filter(
                               (m) => m.userId !== detail.workspace.ownerId,
@@ -317,7 +326,7 @@ export function WorkspaceDrawer({
                             ))}
                         </select>
                         <ActionButton
-                          label="Transfer"
+                          label={t.transfer}
                           disabled={pending || !transferUserId}
                           onClick={() =>
                             run(() =>
@@ -334,12 +343,12 @@ export function WorkspaceDrawer({
                           <input
                             value={deleteConfirm}
                             onChange={(e) => setDeleteConfirm(e.target.value)}
-                            placeholder="Type workspace name to delete"
+                            placeholder={t.deleteConfirmPlaceholder}
                             className="min-w-0 flex-1 rounded-lg border border-rose-500/40 bg-[var(--admin-surface)] px-2 py-1.5 text-xs text-[var(--admin-text)]"
-                            aria-label="Confirm delete workspace"
+                            aria-label={t.deleteAria}
                           />
                           <ActionButton
-                            label="Delete"
+                            label={t.delete}
                             danger
                             disabled={
                               pending ||
@@ -359,7 +368,7 @@ export function WorkspaceDrawer({
                     </Section>
                   ) : null}
 
-                  <Section title="Members">
+                  <Section title={t.members}>
                     <div className="space-y-2">
                       {detail.members.map((member) => (
                         <div
@@ -378,7 +387,7 @@ export function WorkspaceDrawer({
                           member.userId !== detail.workspace.ownerId ? (
                             <div className="flex flex-wrap gap-1">
                               <ActionButton
-                                label="Promote"
+                                label={t.promote}
                                 disabled={pending}
                                 onClick={() =>
                                   run(() =>
@@ -390,7 +399,7 @@ export function WorkspaceDrawer({
                                 }
                               />
                               <ActionButton
-                                label="Demote"
+                                label={t.demote}
                                 disabled={pending}
                                 onClick={() =>
                                   run(() =>
@@ -402,7 +411,7 @@ export function WorkspaceDrawer({
                                 }
                               />
                               <ActionButton
-                                label="Remove"
+                                label={t.remove}
                                 danger
                                 disabled={pending}
                                 onClick={() =>
@@ -421,10 +430,10 @@ export function WorkspaceDrawer({
                     </div>
                   </Section>
 
-                  <Section title="Invite history">
+                  <Section title={t.inviteHistory}>
                     {detail.invitations.length === 0 ? (
                       <p className="text-xs text-[var(--admin-muted)]">
-                        No invitations recorded.
+                        {t.emptyInvites}
                       </p>
                     ) : (
                       <ul className="space-y-1.5 text-xs text-[var(--admin-muted)]">
@@ -438,10 +447,10 @@ export function WorkspaceDrawer({
                     )}
                   </Section>
 
-                  <Section title="Projects">
+                  <Section title={t.projects}>
                     <ul className="space-y-1.5 text-xs text-[var(--admin-muted)]">
                       {detail.projects.length === 0 ? (
-                        <li>No projects.</li>
+                        <li>{t.emptyProjects}</li>
                       ) : (
                         detail.projects.map((project) => (
                           <li key={project.id}>
@@ -453,10 +462,10 @@ export function WorkspaceDrawer({
                     </ul>
                   </Section>
 
-                  <Section title="API Keys">
+                  <Section title={t.apiKeys}>
                     <ul className="space-y-1.5 text-xs text-[var(--admin-muted)]">
                       {detail.apiKeys.length === 0 ? (
-                        <li>No API keys.</li>
+                        <li>{t.emptyApiKeys}</li>
                       ) : (
                         detail.apiKeys.map((key) => (
                           <li key={key.id}>
@@ -468,11 +477,11 @@ export function WorkspaceDrawer({
                     </ul>
                   </Section>
 
-                  <Section title="Activity timeline">
+                  <Section title={t.activityTimeline}>
                     <ul className="space-y-2">
                       {detail.activity.length === 0 ? (
                         <li className="text-xs text-[var(--admin-muted)]">
-                          No activity yet.
+                          {t.emptyActivity}
                         </li>
                       ) : (
                         detail.activity.slice(0, 25).map((item) => (
@@ -495,11 +504,11 @@ export function WorkspaceDrawer({
                     </ul>
                   </Section>
 
-                  <Section title="Admin audit logs">
+                  <Section title={t.adminAuditLogs}>
                     <ul className="space-y-2">
                       {detail.auditLogs.length === 0 ? (
                         <li className="text-xs text-[var(--admin-muted)]">
-                          No admin audit entries for this workspace.
+                          {t.emptyAudit}
                         </li>
                       ) : (
                         detail.auditLogs.map((log) => (
@@ -648,18 +657,20 @@ function WorkspaceAnalyticsChart({
 }: {
   points: AdminWorkspaceDetail["analytics"];
 }) {
+  const { dict } = useDictionary();
+  const t = dict.admin.workspaces.drawer;
   const width = 640;
   const height = 160;
   const pad = { top: 12, right: 8, bottom: 22, left: 28 };
   const innerW = width - pad.left - pad.right;
   const innerH = height - pad.top - pad.bottom;
   const series = [
-    { key: "projects" as const, color: "#34d399", label: "Projects" },
-    { key: "apiRequests" as const, color: "#fbbf24", label: "API" },
-    { key: "errors" as const, color: "#f87171", label: "Errors" },
-    { key: "aiTokens" as const, color: "#a78bfa", label: "AI" },
-    { key: "members" as const, color: "#60a5fa", label: "Members" },
-    { key: "growth" as const, color: "#fb7185", label: "Growth" },
+    { key: "projects" as const, color: "#34d399", label: t.chartProjects },
+    { key: "apiRequests" as const, color: "#fbbf24", label: t.chartApi },
+    { key: "errors" as const, color: "#f87171", label: t.chartErrors },
+    { key: "aiTokens" as const, color: "#a78bfa", label: t.chartAi },
+    { key: "members" as const, color: "#60a5fa", label: t.chartMembers },
+    { key: "growth" as const, color: "#fb7185", label: t.chartGrowth },
   ];
   const max = Math.max(
     1,
@@ -688,7 +699,7 @@ function WorkspaceAnalyticsChart({
         viewBox={`0 0 ${width} ${height}`}
         className="w-full"
         role="img"
-        aria-label="Workspace analytics"
+        aria-label={t.chartAria}
       >
         {series.map((s) => {
           const d = points

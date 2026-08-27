@@ -12,13 +12,9 @@ import type { LucideIcon } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { AiInfinity } from "@/components/dashboard/home/ai-infinity";
+import { useDictionary } from "@/components/i18n/locale-provider";
+import { fillTemplate } from "@/lib/i18n/fill-template";
 import type { DashboardStats, HealthState } from "@/types/dashboard";
-
-function greetingFor(hour: number): string {
-  if (hour < 12) return "Good morning";
-  if (hour < 18) return "Good afternoon";
-  return "Good evening";
-}
 
 interface HeroProps {
   userName: string;
@@ -39,11 +35,17 @@ export function DashboardHero({
   stats,
   overall,
 }: HeroProps) {
-  const [greeting, setGreeting] = useState("Welcome back");
+  const { dict } = useDictionary();
+  const g = dict.dash.home.greetings;
+  const s = dict.dash.home.summary;
+  const [greeting, setGreeting] = useState(g.welcomeBack);
 
   useEffect(() => {
-    setGreeting(greetingFor(new Date().getHours()));
-  }, []);
+    const hour = new Date().getHours();
+    if (hour < 12) setGreeting(g.morning);
+    else if (hour < 18) setGreeting(g.afternoon);
+    else setGreeting(g.evening);
+  }, [g.afternoon, g.evening, g.morning]);
 
   const healthy =
     overall === "operational" &&
@@ -55,17 +57,17 @@ export function DashboardHero({
       ? [
           {
             icon: CheckCircle2,
-            text: "You're set up — try AI or create your first project.",
+            text: s.setupTryAi,
             className: "text-zt-primary",
           },
           {
             icon: ShieldCheck,
-            text: "No incidents yet. Monitoring starts when the SDK connects.",
+            text: s.noIncidentsYet,
             className: "text-zt-muted",
           },
           {
             icon: FolderKanban,
-            text: "0 projects so far — create one to issue an API key.",
+            text: s.zeroProjects,
             className: "text-zt-muted",
           },
         ]
@@ -73,29 +75,37 @@ export function DashboardHero({
           healthy
             ? {
                 icon: CheckCircle2,
-                text: "Everything looks healthy today.",
+                text: s.healthyToday,
                 className: "text-zt-success",
               }
             : {
                 icon: AlertTriangle,
                 text:
-                  overall === "down"
-                    ? "A service disruption needs attention."
-                    : "Some systems need a closer look.",
+                  overall === "down" ? s.serviceDisruption : s.needsCloserLook,
                 className: "text-zt-warning",
               },
           {
             icon: overall === "operational" ? ShieldCheck : AlertTriangle,
             text:
               stats.openIncidents === 0
-                ? "No incidents detected."
-                : `${stats.openIncidents} incident${stats.openIncidents === 1 ? "" : "s"} open.`,
+                ? s.noIncidentsDetected
+                : fillTemplate(
+                    stats.openIncidents === 1
+                      ? s.incidentsOpen
+                      : s.incidentsOpenPlural,
+                    { count: stats.openIncidents },
+                  ),
             className:
               stats.openIncidents === 0 ? "text-zt-success" : "text-zt-warning",
           },
           {
             icon: FolderKanban,
-            text: `${stats.activeProjects} project${stats.activeProjects === 1 ? "" : "s"} monitored.`,
+            text: fillTemplate(
+              stats.activeProjects === 1
+                ? s.projectsMonitored
+                : s.projectsMonitoredPlural,
+              { count: stats.activeProjects },
+            ),
             className: "text-zt-muted",
           },
         ];

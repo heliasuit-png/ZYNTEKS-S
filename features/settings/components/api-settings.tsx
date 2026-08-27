@@ -1,6 +1,9 @@
-import Link from "next/link";
-import { Copy, KeyRound, RefreshCw, Webhook } from "lucide-react";
+"use client";
 
+import Link from "next/link";
+import { Webhook } from "lucide-react";
+
+import { useDictionary } from "@/components/i18n/locale-provider";
 import {
   Panel,
   PanelContent,
@@ -27,14 +30,17 @@ export function ApiSettingsPanel({
   limits: PlanLimits;
   webhookHint: string;
 }) {
+  const { dict } = useDictionary();
+  const t = dict.dash.settings.api;
+
   return (
     <div className="space-y-6">
       <FadeIn>
         <div className="grid gap-4 sm:grid-cols-3">
-          <Stat label="Active API / SDK keys" value={String(activeKeyCount)} />
-          <Stat label="Total keys" value={String(totalKeyCount)} />
+          <Stat label={t.activeKeys} value={String(activeKeyCount)} />
+          <Stat label={t.totalKeys} value={String(totalKeyCount)} />
           <Stat
-            label="Keys per project"
+            label={t.keysPerProject}
             value={String(limits.apiKeysPerProject)}
           />
         </div>
@@ -44,34 +50,17 @@ export function ApiSettingsPanel({
         <Panel>
           <PanelHeader>
             <div>
-              <PanelTitle>API &amp; SDK keys</PanelTitle>
-              <PanelDescription>
-                Manage project API keys used by the SDK. Regenerate and copy
-                actions live on the API Keys page.
-              </PanelDescription>
+              <PanelTitle>{t.keysTitle}</PanelTitle>
+              <PanelDescription>{t.keysDesc}</PanelDescription>
             </div>
             <Badge tone="primary">{plan}</Badge>
           </PanelHeader>
           <PanelContent className="space-y-3">
-            <ul className="space-y-2 text-sm text-zt-muted">
-              <li className="flex items-center gap-2">
-                <KeyRound className="size-4 text-zt-primary" aria-hidden />
-                Create, revoke, regenerate and copy keys
-              </li>
-              <li className="flex items-center gap-2">
-                <RefreshCw className="size-4 text-zt-primary" aria-hidden />
-                Rate limits follow your {plan} plan project/key quotas
-              </li>
-              <li className="flex items-center gap-2">
-                <Copy className="size-4 text-zt-primary" aria-hidden />
-                Full key secret is shown once at creation/regeneration
-              </li>
-            </ul>
             <Link
               href={DASHBOARD_ROUTES.apiKeys}
               className="inline-flex rounded-lg bg-zt-primary px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-zt-primary/90"
             >
-              Manage API keys
+              {t.manageApiKeys}
             </Link>
           </PanelContent>
         </Panel>
@@ -80,11 +69,8 @@ export function ApiSettingsPanel({
       <FadeIn delay={0.08}>
         <Panel>
           <PanelHeader>
-            <PanelTitle>Webhooks</PanelTitle>
-            <PanelDescription>
-              Slack and Discord delivery webhooks are configured in Notification
-              preferences.
-            </PanelDescription>
+            <PanelTitle>{t.webhooks}</PanelTitle>
+            <PanelDescription>{t.webhooksDesc}</PanelDescription>
           </PanelHeader>
           <PanelContent className="space-y-3">
             <p className="flex items-start gap-2 text-sm text-zt-muted">
@@ -96,9 +82,9 @@ export function ApiSettingsPanel({
                 href={DASHBOARD_ROUTES.notifications}
                 className="rounded-lg border border-zt-border px-3 py-2 text-sm text-zt-muted transition-colors hover:text-zt-text"
               >
-                Notification webhooks
+                {t.notificationWebhooks}
               </Link>
-              <CopyButton value={webhookHint} label="Copy summary" />
+              <CopyButton value={webhookHint} label={t.copySummary} />
             </div>
           </PanelContent>
         </Panel>

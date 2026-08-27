@@ -2,10 +2,9 @@
 
 import { useActionState } from "react";
 
+import { useDictionary } from "@/components/i18n/locale-provider";
 import {
   NOTIFICATION_CATEGORIES,
-  NOTIFICATION_CATEGORY_LABELS,
-  NOTIFICATION_CHANNEL_LABELS,
   NOTIFICATION_CHANNELS,
 } from "@/lib/constants";
 import { updateNotificationPreferencesAction } from "@/features/notifications/actions";
@@ -49,6 +48,11 @@ function Toggle({ name, label, description, defaultChecked }: ToggleProps) {
 export function NotificationPreferencesForm({
   preferences,
 }: PreferencesFormProps) {
+  const { dict } = useDictionary();
+  const t = dict.dash.notifications;
+  const prefs = t.prefs;
+  const common = dict.dashboardCommon;
+
   const [state, formAction, isPending] = useActionState(
     updateNotificationPreferencesAction,
     initialPreferencesFormState,
@@ -63,20 +67,20 @@ export function NotificationPreferencesForm({
       <div className="divide-y divide-zt-border">
         <Toggle
           name="dashboard_enabled"
-          label="Dashboard notifications"
-          description="Show notifications in the in-app notification center."
+          label={prefs.dashboardTitle}
+          description={prefs.dashboardDesc}
           defaultChecked={preferences?.dashboard_enabled ?? true}
         />
         <Toggle
           name="email_enabled"
-          label="Email notifications"
-          description="Send transactional emails for important events."
+          label={prefs.emailTitle}
+          description={prefs.emailDesc}
           defaultChecked={preferences?.email_enabled ?? true}
         />
         <Toggle
           name="slack_enabled"
-          label="Slack notifications"
-          description="Post to a Slack incoming webhook."
+          label={prefs.slackTitle}
+          description={prefs.slackDesc}
           defaultChecked={preferences?.slack_enabled ?? false}
         />
         <div className="space-y-1.5 py-3">
@@ -84,22 +88,22 @@ export function NotificationPreferencesForm({
             htmlFor="slack_webhook_url"
             className="block text-xs font-medium text-zt-muted"
           >
-            Slack webhook URL
+            {prefs.slackWebhook}
           </label>
           <input
             id="slack_webhook_url"
             type="url"
             name="slack_webhook_url"
             defaultValue={preferences?.slack_webhook_url ?? ""}
-            placeholder="https://hooks.slack.com/services/…"
+            placeholder={prefs.slackWebhookPlaceholder}
             autoComplete="off"
             className="w-full rounded-xl border border-zt-border bg-zt-surface-2 px-3 py-2 text-sm text-zt-text outline-none transition-colors focus:border-zt-primary"
           />
         </div>
         <Toggle
           name="discord_enabled"
-          label="Discord notifications"
-          description="Post to a Discord webhook."
+          label={prefs.discordTitle}
+          description={prefs.discordDesc}
           defaultChecked={preferences?.discord_enabled ?? false}
         />
         <div className="space-y-1.5 py-3">
@@ -107,14 +111,14 @@ export function NotificationPreferencesForm({
             htmlFor="discord_webhook_url"
             className="block text-xs font-medium text-zt-muted"
           >
-            Discord webhook URL
+            {prefs.discordWebhook}
           </label>
           <input
             id="discord_webhook_url"
             type="url"
             name="discord_webhook_url"
             defaultValue={preferences?.discord_webhook_url ?? ""}
-            placeholder="https://discord.com/api/webhooks/…"
+            placeholder={prefs.discordWebhookPlaceholder}
             autoComplete="off"
             className="w-full rounded-xl border border-zt-border bg-zt-surface-2 px-3 py-2 text-sm text-zt-text outline-none transition-colors focus:border-zt-primary"
           />
@@ -123,20 +127,15 @@ export function NotificationPreferencesForm({
 
       <div className="space-y-3">
         <div>
-          <h3 className="text-sm font-medium text-zt-text">
-            Per notification type
-          </h3>
-          <p className="text-xs text-zt-muted">
-            Enable or disable Email, Dashboard, Slack, and Discord for each
-            category.
-          </p>
+          <h3 className="text-sm font-medium text-zt-text">{prefs.perTypeTitle}</h3>
+          <p className="text-xs text-zt-muted">{prefs.perTypeDesc}</p>
         </div>
         <div className="overflow-x-auto rounded-2xl border border-zt-border">
           <table className="min-w-full text-left text-sm">
             <thead className="border-b border-zt-border bg-zt-surface-2/60 text-xs uppercase tracking-wide text-zt-muted">
               <tr>
                 <th scope="col" className="px-3 py-2 font-medium">
-                  Type
+                  {prefs.typeColumn}
                 </th>
                 {NOTIFICATION_CHANNELS.map((channel) => (
                   <th
@@ -144,29 +143,32 @@ export function NotificationPreferencesForm({
                     scope="col"
                     className="px-3 py-2 text-center font-medium"
                   >
-                    {NOTIFICATION_CHANNEL_LABELS[channel]}
+                    {t.channels[channel]}
                   </th>
                 ))}
               </tr>
             </thead>
             <tbody className="divide-y divide-zt-border">
               {NOTIFICATION_CATEGORIES.map((category) => {
-                const prefs = resolveCategoryChannelPrefs(typePrefs, category);
+                const channelPrefs = resolveCategoryChannelPrefs(
+                  typePrefs,
+                  category,
+                );
                 return (
                   <tr key={category}>
                     <th
                       scope="row"
                       className="whitespace-nowrap px-3 py-2.5 font-medium text-zt-text"
                     >
-                      {NOTIFICATION_CATEGORY_LABELS[category]}
+                      {t.categories[category]}
                     </th>
                     {NOTIFICATION_CHANNELS.map((channel) => (
                       <td key={channel} className="px-3 py-2.5 text-center">
                         <input
                           type="checkbox"
                           name={`type_${category}_${channel}`}
-                          defaultChecked={prefs[channel]}
-                          aria-label={`${NOTIFICATION_CATEGORY_LABELS[category]} ${NOTIFICATION_CHANNEL_LABELS[channel]}`}
+                          defaultChecked={channelPrefs[channel]}
+                          aria-label={`${t.categories[category]} ${t.channels[channel]}`}
                           className="size-4 accent-zt-primary"
                         />
                       </td>
@@ -185,7 +187,7 @@ export function NotificationPreferencesForm({
           disabled={isPending}
           className="rounded-lg bg-zt-primary px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-zt-primary/90 disabled:opacity-60"
         >
-          {isPending ? "Saving…" : "Save preferences"}
+          {isPending ? common.saving : t.preferencesSave}
         </button>
         {state.status === "success" ? (
           <span className="text-xs text-zt-success" role="status">

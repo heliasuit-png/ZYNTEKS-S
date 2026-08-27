@@ -1,5 +1,7 @@
 "use client";
 
+import { useDictionary } from "@/components/i18n/locale-provider";
+import { fillTemplate } from "@/lib/i18n/fill-template";
 import type { MonitoringMissionData } from "@/services/admin/monitoring-mission.types";
 
 export function WorldMap({
@@ -7,6 +9,8 @@ export function WorldMap({
 }: {
   geography: MonitoringMissionData["geography"];
 }) {
+  const { dict } = useDictionary();
+  const t = dict.admin.monitoring;
   const max = Math.max(1, ...geography.countries.map((c) => c.sessions));
 
   return (
@@ -15,14 +19,14 @@ export function WorldMap({
       <div className="relative mb-3 flex flex-wrap items-end justify-between gap-2">
         <div>
           <h2 className="text-sm font-semibold text-[var(--admin-text)]">
-            World map
+            {t.worldMap}
           </h2>
           <p className="mt-0.5 text-[11px] text-[var(--admin-muted)]">
-            {geography.requestProxyNote}
+            {t.notes.requestProxy}
           </p>
         </div>
         <p className="text-[10px] text-[var(--admin-accent-text)]">
-          {geography.cityNote}
+          {t.notes.city}
         </p>
       </div>
 
@@ -31,7 +35,7 @@ export function WorldMap({
           viewBox="0 0 100 70"
           className="h-56 w-full rounded-xl border border-[var(--admin-border)] bg-[rgba(4,12,24,0.65)]"
           role="img"
-          aria-label="World activity map by country sessions"
+          aria-label={t.mapAria}
         >
           <defs>
             <radialGradient id="mapGlow" cx="50%" cy="50%" r="50%">
@@ -70,8 +74,11 @@ export function WorldMap({
                   fill="rgba(96,165,250,0.85)"
                 >
                   <title>
-                    {country.country}: {country.sessions} sessions ·{" "}
-                    {country.users} users
+                    {fillTemplate(t.countryTooltip, {
+                      country: country.country,
+                      sessions: country.sessions,
+                      users: country.users,
+                    })}
                   </title>
                 </circle>
               </g>
@@ -85,17 +92,17 @@ export function WorldMap({
               fill="rgba(148,163,184,0.8)"
               fontSize="3.2"
             >
-              No country session data in range
+              {t.noCountryData}
             </text>
           ) : null}
         </svg>
 
         <div className="space-y-2">
           <p className="text-[10px] uppercase tracking-[0.14em] text-[var(--admin-muted)]">
-            Top regions
+            {t.topRegions}
           </p>
           {geography.topRegions.length === 0 ? (
-            <p className="text-xs text-[var(--admin-muted)]">No regions yet.</p>
+            <p className="text-xs text-[var(--admin-muted)]">{t.noRegionsYet}</p>
           ) : (
             geography.topRegions.map((region) => (
               <div

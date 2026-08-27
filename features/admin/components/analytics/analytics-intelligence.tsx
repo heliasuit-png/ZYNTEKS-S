@@ -4,6 +4,8 @@ import dynamic from "next/dynamic";
 import { motion } from "framer-motion";
 import type { ReactNode } from "react";
 
+import { useDictionary } from "@/components/i18n/locale-provider";
+import { fillTemplate } from "@/lib/i18n/fill-template";
 import type { AnalyticsIntelligenceData } from "@/services/admin/analytics-intelligence.types";
 import {
   formatMs,
@@ -18,6 +20,16 @@ import {
 import { AdminPageHeader } from "@/features/admin/components/ui/admin-page-header";
 import { ADMIN_KPI_STAGGER } from "@/features/admin/components/ui/admin-motion";
 
+function AnalyticsMapLoading() {
+  const { dict } = useDictionary();
+  return (
+    <div
+      className="admin-skeleton h-72 w-full"
+      aria-label={dict.admin.analytics.loadingMap}
+    />
+  );
+}
+
 const AnalyticsMap = dynamic(
   () =>
     import("@/features/admin/components/analytics/analytics-map").then(
@@ -25,12 +37,7 @@ const AnalyticsMap = dynamic(
     ),
   {
     ssr: false,
-    loading: () => (
-      <div
-        className="admin-skeleton h-72 w-full"
-        aria-label="Loading geography map"
-      />
-    ),
+    loading: () => <AnalyticsMapLoading />,
   },
 );
 
@@ -44,54 +51,64 @@ export function AnalyticsIntelligence({
 }: {
   data: AnalyticsIntelligenceData;
 }) {
+  const { dict, locale } = useDictionary();
+  const t = dict.admin.analytics;
   const kpis = [
-    { label: "DAU", value: formatNumber(data.executive.dau), hint: "Distinct sessions 24h" },
-    { label: "WAU", value: formatNumber(data.executive.wau), hint: "Distinct sessions 7d" },
-    { label: "MAU", value: formatNumber(data.executive.mau), hint: "Distinct sessions 30d" },
-    { label: "New users", value: formatNumber(data.executive.newUsers), hint: "profiles.created_at" },
+    { label: t.dau, value: formatNumber(data.executive.dau), hint: t.hints.dau },
+    { label: t.wau, value: formatNumber(data.executive.wau), hint: t.hints.wau },
+    { label: t.mau, value: formatNumber(data.executive.mau), hint: t.hints.mau },
     {
-      label: "Retention",
+      label: t.newUsers,
+      value: formatNumber(data.executive.newUsers),
+      hint: t.hints.newUsers,
+    },
+    {
+      label: t.retention,
       value: pct(data.executive.retentionProxyPercent),
-      hint: "Prior actives returning (proxy)",
+      hint: t.hints.retention,
     },
     {
-      label: "Churn",
+      label: t.churn,
       value: pct(data.executive.churnProxyPercent),
-      hint: "Prior actives inactive (proxy)",
+      hint: t.hints.churn,
     },
     {
-      label: "Workspace growth",
+      label: t.workspaceGrowth,
       value: formatNumber(data.executive.workspaceGrowth),
-      hint: "Created in range",
+      hint: t.hints.workspaceGrowth,
     },
     {
-      label: "Project growth",
+      label: t.projectGrowth,
       value: formatNumber(data.executive.projectGrowth),
-      hint: "Created in range",
+      hint: t.hints.projectGrowth,
     },
     {
-      label: "API growth",
+      label: t.apiGrowth,
       value: formatNumber(data.executive.apiGrowth),
-      hint: "Keys created in range",
+      hint: t.hints.apiGrowth,
     },
     {
-      label: "AI usage",
+      label: t.aiUsage,
       value: formatNumber(data.executive.aiRequests),
-      hint: `${formatNumber(data.executive.aiTokens)} tokens`,
+      hint: fillTemplate(t.tokensCount, {
+        count: formatNumber(data.executive.aiTokens),
+      }),
     },
     {
-      label: "SDK adoption",
+      label: t.sdkAdoption,
       value: pct(data.executive.sdkAdoptionPercent),
-      hint: "Projects with heartbeats",
+      hint: t.hints.sdkAdoption,
     },
   ];
 
   return (
     <div className="space-y-5">
       <AdminPageHeader
-        eyebrow="Intelligence plane"
-        title="Analytics Intelligence Center"
-        description={`Platform growth, engagement, API, AI, SDK, and performance analytics — real telemetry only. Updated ${formatRelative(data.generatedAt)}.`}
+        eyebrow={t.eyebrow}
+        title={t.pageTitle}
+        description={fillTemplate(t.description, {
+          when: formatRelative(data.generatedAt, locale),
+        })}
       />
 
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 2xl:grid-cols-11">
@@ -118,8 +135,8 @@ export function AnalyticsIntelligence({
 
       <AnalyticsFilters options={data.filterOptions} />
 
-      <Panel title="Growth & engagement trend" subtitle="Daily series across core signals">
-        <MultiSeriesChart data={data.series} title="Analytics trend" />
+      <Panel title={t.panels.growthTrend} subtitle={t.panelsDesc.growthTrend}>
+        <MultiSeriesChart data={data.series} title={t.trendAria} />
       </Panel>
 
       <div className="grid gap-4 xl:grid-cols-2">
@@ -143,8 +160,9 @@ export function AnalyticsIntelligence({
       </div>
 
       <p className="text-[11px] text-[var(--admin-muted)]">
-        Honest gaps: {data.unavailable.join(" · ")}. Retention/churn are activity
-        proxies, not subscription churn. API latency uses client RUM samples.
+        {fillTemplate(t.honestGaps, {
+          items: data.unavailable.join(" · "),
+        })}
       </p>
     </div>
   );
@@ -155,16 +173,21 @@ function UserAnalytics({
 }: {
   users: AnalyticsIntelligenceData["users"];
 }) {
+  const { dict } = useDictionary();
+  const t = dict.admin.analytics;
   return (
-    <Panel title="User analytics" subtitle="Countries · browsers · OS · languages · devices">
+    <Panel title={t.panels.userAnalytics} subtitle={t.panelsDesc.userAnalytics}>
       <div className="mb-3 grid grid-cols-2 gap-2 text-xs">
-        <MiniStat label="New sessions" value={formatNumber(users.newSessions)} />
         <MiniStat
-          label="Returning sessions"
+          label={t.stats.newSessions}
+          value={formatNumber(users.newSessions)}
+        />
+        <MiniStat
+          label={t.stats.returningSessions}
           value={formatNumber(users.returningSessions)}
         />
         <MiniStat
-          label="Session duration"
+          label={t.stats.sessionDuration}
           value={
             users.averageSessionDurationMs == null
               ? "—"
@@ -173,14 +196,17 @@ function UserAnalytics({
         />
       </div>
       <p className="mb-3 text-[10px] text-[var(--admin-muted)]">
-        {users.sessionDurationNote}
+        {t.notes.sessionDuration}
       </p>
       <div className="grid gap-3 sm:grid-cols-2">
-        <NamedList title="Countries" rows={users.countries} />
-        <NamedList title="Browsers" rows={users.browsers} />
-        <NamedList title="Operating systems" rows={users.operatingSystems} />
-        <NamedList title="Languages" rows={users.languages} />
-        <NamedList title="Devices" rows={users.devices} />
+        <NamedList title={t.stats.countries} rows={users.countries} />
+        <NamedList title={t.stats.browsers} rows={users.browsers} />
+        <NamedList
+          title={t.stats.operatingSystems}
+          rows={users.operatingSystems}
+        />
+        <NamedList title={t.stats.languages} rows={users.languages} />
+        <NamedList title={t.stats.devices} rows={users.devices} />
       </div>
     </Panel>
   );
@@ -191,14 +217,28 @@ function WorkspaceAnalytics({
 }: {
   workspaces: AnalyticsIntelligenceData["workspaces"];
 }) {
+  const { dict } = useDictionary();
+  const t = dict.admin.analytics;
   return (
-    <Panel title="Workspace analytics" subtitle="Growth · plans · health">
+    <Panel
+      title={t.panels.workspaceAnalytics}
+      subtitle={t.panelsDesc.workspaceAnalytics}
+    >
       <div className="mb-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
-        <MiniStat label="Growth" value={formatNumber(workspaces.growth)} />
-        <MiniStat label="Projects" value={formatNumber(workspaces.totalProjects)} />
-        <MiniStat label="Members" value={formatNumber(workspaces.totalMembers)} />
         <MiniStat
-          label="Avg health"
+          label={t.stats.growth}
+          value={formatNumber(workspaces.growth)}
+        />
+        <MiniStat
+          label={t.stats.projects}
+          value={formatNumber(workspaces.totalProjects)}
+        />
+        <MiniStat
+          label={t.stats.members}
+          value={formatNumber(workspaces.totalMembers)}
+        />
+        <MiniStat
+          label={t.stats.avgHealth}
           value={
             workspaces.averageHealthScore == null
               ? "—"
@@ -206,7 +246,7 @@ function WorkspaceAnalytics({
           }
         />
       </div>
-      <NamedList title="Plans" rows={workspaces.byPlan} />
+      <NamedList title={t.stats.plans} rows={workspaces.byPlan} />
       <div className="mt-3 max-h-56 space-y-1 overflow-y-auto">
         {workspaces.rows.map((row) => (
           <div
@@ -214,8 +254,13 @@ function WorkspaceAnalytics({
             className="rounded-lg border border-[var(--admin-border)] px-2.5 py-1.5 text-[11px] text-[var(--admin-muted)]"
           >
             <span className="text-[var(--admin-text)]">{row.name}</span> ·{" "}
-            {row.plan} · {row.projects} projects · {row.members} members ·{" "}
-            {row.apiEvents} API · health {row.healthScore ?? "—"}
+            {fillTemplate(t.workspaceRowMeta, {
+              plan: row.plan,
+              projects: String(row.projects),
+              members: String(row.members),
+              apiEvents: String(row.apiEvents),
+              health: row.healthScore == null ? "—" : String(row.healthScore),
+            })}
           </div>
         ))}
       </div>
@@ -228,27 +273,33 @@ function ApiAnalytics({
 }: {
   api: AnalyticsIntelligenceData["api"];
 }) {
+  const { dict } = useDictionary();
+  const t = dict.admin.analytics;
   return (
-    <Panel
-      title="API analytics"
-      subtitle="Key events + client RUM latency (not server APM)"
-    >
+    <Panel title={t.panels.apiAnalytics} subtitle={t.panelsDesc.apiAnalytics}>
       <div className="mb-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
-        <MiniStat label="Requests" value={formatNumber(api.requests)} />
-        <MiniStat label="Success rate" value={pct(api.successRate)} />
-        <MiniStat label="Error rate" value={pct(api.errorRate)} />
-        <MiniStat label="Avg latency" value={formatMs(api.averageLatencyMs)} />
+        <MiniStat label={t.stats.requests} value={formatNumber(api.requests)} />
+        <MiniStat label={t.stats.successRate} value={pct(api.successRate)} />
+        <MiniStat label={t.stats.errorRate} value={pct(api.errorRate)} />
+        <MiniStat
+          label={t.stats.avgLatency}
+          value={formatMs(api.averageLatencyMs)}
+        />
       </div>
-      <BarTrend points={api.trafficTrend} color="#fbbf24" label="API traffic" />
+      <BarTrend
+        points={api.trafficTrend}
+        color="#fbbf24"
+        label={t.stats.apiTraffic}
+      />
       <div className="mt-3 grid gap-3 sm:grid-cols-2">
-        <NamedList title="Environment split" rows={api.byEnvironment} />
+        <NamedList title={t.stats.environmentSplit} rows={api.byEnvironment} />
         <div>
           <p className="mb-1.5 text-[10px] uppercase tracking-[0.14em] text-[var(--admin-muted)]">
-            Top endpoints
+            {t.topEndpoints}
           </p>
           <div className="max-h-40 space-y-1 overflow-y-auto">
             {api.topEndpoints.length === 0 ? (
-              <Empty>No RUM samples.</Empty>
+              <Empty>{t.noRumSamples}</Empty>
             ) : (
               api.topEndpoints.map((row) => (
                 <div
@@ -268,21 +319,26 @@ function ApiAnalytics({
 }
 
 function AiAnalytics({ ai }: { ai: AnalyticsIntelligenceData["ai"] }) {
+  const { dict } = useDictionary();
+  const t = dict.admin.analytics;
   return (
-    <Panel title="AI analytics" subtitle="Requests · models · tokens">
+    <Panel title={t.panels.aiAnalytics} subtitle={t.panelsDesc.aiAnalytics}>
       <div className="mb-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
-        <MiniStat label="Requests" value={formatNumber(ai.requests)} />
-        <MiniStat label="Tokens" value={formatNumber(ai.tokens)} />
-        <MiniStat label="Latency" value="—" />
-        <MiniStat label="Success rate" value={pct(ai.successRate)} />
+        <MiniStat label={t.stats.requests} value={formatNumber(ai.requests)} />
+        <MiniStat label={t.stats.tokens} value={formatNumber(ai.tokens)} />
+        <MiniStat label={t.stats.latency} value="—" />
+        <MiniStat label={t.stats.successRate} value={pct(ai.successRate)} />
       </div>
       <p className="mb-2 text-[10px] text-[var(--admin-muted)]">
-        AI latency and failure outcomes are not persisted on `ai_usage`.
+        {t.aiLatencyFootnote}
       </p>
       <BarTrend
-        points={ai.dailyTrend.map((p) => ({ label: p.label, value: p.requests }))}
+        points={ai.dailyTrend.map((p) => ({
+          label: p.label,
+          value: p.requests,
+        }))}
         color="#60a5fa"
-        label="AI daily requests"
+        label={t.stats.aiDailyRequests}
       />
       <div className="mt-3 max-h-40 space-y-1 overflow-y-auto">
         {ai.byModel.map((row) => (
@@ -300,18 +356,26 @@ function AiAnalytics({ ai }: { ai: AnalyticsIntelligenceData["ai"] }) {
 }
 
 function SdkAnalytics({ sdk }: { sdk: AnalyticsIntelligenceData["sdk"] }) {
+  const { dict, locale } = useDictionary();
+  const t = dict.admin.analytics;
   return (
-    <Panel title="SDK analytics" subtitle="Versions · installs · heartbeats">
+    <Panel title={t.panels.sdkAnalytics} subtitle={t.panelsDesc.sdkAnalytics}>
       <div className="mb-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
-        <MiniStat label="Installations" value={formatNumber(sdk.installations)} />
-        <MiniStat label="Heartbeats" value={formatNumber(sdk.heartbeats)} />
-        <MiniStat label="Errors" value={formatNumber(sdk.errors)} />
         <MiniStat
-          label="Perf samples"
+          label={t.stats.installations}
+          value={formatNumber(sdk.installations)}
+        />
+        <MiniStat
+          label={t.stats.heartbeats}
+          value={formatNumber(sdk.heartbeats)}
+        />
+        <MiniStat label={t.stats.errors} value={formatNumber(sdk.errors)} />
+        <MiniStat
+          label={t.stats.perfSamples}
           value={formatNumber(sdk.performanceSamples)}
         />
       </div>
-      <NamedList title="Environments" rows={sdk.byEnvironment} />
+      <NamedList title={t.stats.environments} rows={sdk.byEnvironment} />
       <div className="mt-3 max-h-48 space-y-1 overflow-y-auto">
         {sdk.versions.map((row) => (
           <div
@@ -320,7 +384,7 @@ function SdkAnalytics({ sdk }: { sdk: AnalyticsIntelligenceData["sdk"] }) {
           >
             <span className="text-[var(--admin-text)]">{row.release}</span> ·{" "}
             {row.environment} · {row.heartbeats} HB · {row.errors} errors ·{" "}
-            {formatRelative(row.lastSeen)}
+            {formatRelative(row.lastSeen, locale)}
           </div>
         ))}
       </div>
@@ -333,12 +397,20 @@ function ErrorAnalytics({
 }: {
   errors: AnalyticsIntelligenceData["errors"];
 }) {
+  const { dict, locale } = useDictionary();
+  const t = dict.admin.analytics;
   return (
-    <Panel title="Error analytics" subtitle="Top errors · trend · resolution">
+    <Panel
+      title={t.panels.errorAnalytics}
+      subtitle={t.panelsDesc.errorAnalytics}
+    >
       <div className="mb-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
-        <MiniStat label="Frequency" value={formatNumber(errors.frequency)} />
         <MiniStat
-          label="Avg resolution"
+          label={t.stats.frequency}
+          value={formatNumber(errors.frequency)}
+        />
+        <MiniStat
+          label={t.stats.avgResolution}
           value={
             errors.averageResolutionSeconds == null
               ? "—"
@@ -346,19 +418,22 @@ function ErrorAnalytics({
           }
         />
         <MiniStat
-          label="Projects"
+          label={t.stats.projects}
           value={formatNumber(errors.affectedProjects)}
         />
         <MiniStat
-          label="Workspaces"
+          label={t.stats.workspaces}
           value={formatNumber(errors.affectedWorkspaces)}
         />
       </div>
       <p className="mb-2 text-[10px] text-[var(--admin-muted)]">
-        Resolution time uses incident detected→resolved intervals (errors have no
-        resolved_at).
+        {t.errorResolutionFootnote}
       </p>
-      <BarTrend points={errors.trend} color="#f87171" label="Error trend" />
+      <BarTrend
+        points={errors.trend}
+        color="#f87171"
+        label={t.stats.errorTrend}
+      />
       <div className="mt-3 max-h-48 space-y-1 overflow-y-auto">
         {errors.top.map((row) => (
           <div
@@ -367,7 +442,7 @@ function ErrorAnalytics({
           >
             <p className="line-clamp-2 text-[var(--admin-text)]">{row.message}</p>
             {row.occurrences}× · {row.projectName} · {row.workspaceName} ·{" "}
-            {formatRelative(row.lastSeen)}
+            {formatRelative(row.lastSeen, locale)}
           </div>
         ))}
       </div>
@@ -380,20 +455,25 @@ function PerformanceAnalytics({
 }: {
   performance: AnalyticsIntelligenceData["performance"];
 }) {
+  const { dict } = useDictionary();
+  const t = dict.admin.analytics;
   return (
-    <Panel title="Performance analytics" subtitle="RUM response percentiles">
+    <Panel
+      title={t.panels.performanceAnalytics}
+      subtitle={t.panelsDesc.performanceAnalytics}
+    >
       <div className="mb-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
-        <MiniStat label="Avg" value={formatMs(performance.averageMs)} />
-        <MiniStat label="P50" value={formatMs(performance.p50Ms)} />
-        <MiniStat label="P95" value={formatMs(performance.p95Ms)} />
-        <MiniStat label="P99" value={formatMs(performance.p99Ms)} />
+        <MiniStat label={t.stats.avg} value={formatMs(performance.averageMs)} />
+        <MiniStat label={t.stats.p50} value={formatMs(performance.p50Ms)} />
+        <MiniStat label={t.stats.p95} value={formatMs(performance.p95Ms)} />
+        <MiniStat label={t.stats.p99} value={formatMs(performance.p99Ms)} />
       </div>
       <p className="mb-2 text-[10px] uppercase tracking-[0.14em] text-[var(--admin-muted)]">
-        Slow endpoints
+        {t.topEndpoints}
       </p>
       <div className="max-h-56 space-y-1 overflow-y-auto">
         {performance.slowEndpoints.length === 0 ? (
-          <Empty>No performance samples.</Empty>
+          <Empty>{t.empty}</Empty>
         ) : (
           performance.slowEndpoints.map((row) => (
             <div
@@ -448,6 +528,8 @@ function NamedList({
   title: string;
   rows: { label: string; value: number }[];
 }) {
+  const { dict } = useDictionary();
+  const t = dict.admin.analytics;
   return (
     <div>
       <p className="mb-1.5 text-[10px] uppercase tracking-[0.14em] text-[var(--admin-muted)]">
@@ -455,7 +537,7 @@ function NamedList({
       </p>
       <div className="max-h-36 space-y-1 overflow-y-auto">
         {rows.length === 0 ? (
-          <Empty>No data.</Empty>
+          <Empty>{t.empty}</Empty>
         ) : (
           rows.slice(0, 8).map((row) => (
             <div

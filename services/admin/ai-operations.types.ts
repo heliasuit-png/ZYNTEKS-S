@@ -83,8 +83,6 @@ export interface AiOpsData {
     daily: { label: string; value: number }[];
     weekly: { label: string; value: number }[];
     monthly: { label: string; value: number }[];
-    /** Success/failure split unavailable — only successful completions recorded. */
-    successVsFailureNote: string;
   };
   prompts: {
     topConversationTitles: { title: string; messageCount: number; model: string }[];
@@ -93,7 +91,6 @@ export interface AiOpsData {
     largestResponseChars: number | null;
     promptGrowth: { label: string; value: number }[];
     contentExposed: false;
-    note: string;
   };
   workspaceAi: {
     workspaceId: string;
@@ -123,12 +120,12 @@ export interface AiOpsData {
     openaiConfigured: boolean;
     openaiModel: string;
     openaiTone: "green" | "yellow" | "red";
-    openaiDetail: string;
-    queueNote: string;
     averageLatencyMs: null;
     errorRate: null;
     availabilityPercent: number | null;
-    availabilityNote: string;
+    availabilityNoteKey: "none" | "not_configured" | "from_completions";
+    availabilityWindowDays: number | null;
+    availabilityRequestCount: number | null;
   };
   incidents: {
     items: {
@@ -138,7 +135,6 @@ export interface AiOpsData {
       detail: string;
       occurredAt: string;
     }[];
-    note: string;
   };
   cost: {
     estimatedDailyUsd: number;
@@ -154,7 +150,6 @@ export interface AiOpsData {
       projectName: string;
       estimatedCostUsd: number;
     }[];
-    pricingNote: string;
   };
   filterOptions: {
     workspaces: { id: string; name: string }[];

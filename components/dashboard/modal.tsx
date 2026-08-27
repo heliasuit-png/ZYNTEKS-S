@@ -7,6 +7,7 @@ import { X } from "lucide-react";
 import type { ReactNode } from "react";
 
 import { cn } from "@/lib/utils";
+import { useDictionary } from "@/components/i18n/locale-provider";
 
 interface ModalProps {
   open: boolean;
@@ -28,6 +29,7 @@ export function Modal({
   footer,
   className,
 }: ModalProps) {
+  const { dict } = useDictionary();
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -95,7 +97,7 @@ export function Modal({
               <button
                 type="button"
                 onClick={onClose}
-                aria-label="Close"
+                aria-label={dict.dash.shell.close}
                 className="rounded-lg p-1 text-zt-muted transition-colors hover:text-zt-text"
               >
                 <X className="size-4" aria-hidden />

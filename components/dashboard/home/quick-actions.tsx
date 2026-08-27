@@ -11,6 +11,7 @@ import {
   PanelTitle,
 } from "@/components/dashboard/panel";
 import { Toast } from "@/components/dashboard/toast";
+import { useDictionary } from "@/components/i18n/locale-provider";
 import { ProjectFormModal } from "@/features/projects/components/project-form-modal";
 import { DASHBOARD_ROUTES } from "@/lib/constants";
 
@@ -24,13 +25,15 @@ const glow =
   "pointer-events-none absolute -right-6 -top-6 size-20 rounded-full opacity-0 blur-2xl transition-opacity duration-300 group-hover:opacity-60";
 
 export function QuickActions() {
+  const { dict } = useDictionary();
+  const t = dict.dash.home.quickActions;
   const [createOpen, setCreateOpen] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
 
   return (
     <Panel>
       <PanelHeader>
-        <PanelTitle>Quick Actions</PanelTitle>
+        <PanelTitle>{t.title}</PanelTitle>
       </PanelHeader>
       <PanelContent>
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
@@ -43,28 +46,28 @@ export function QuickActions() {
             <span className={`${iconWrap} bg-zt-primary/15 text-zt-primary`}>
               <Plus className="size-4" aria-hidden />
             </span>
-            Create Project
+            {t.createProject}
           </button>
           <Link href={DASHBOARD_ROUTES.apiKeys} className={actionClass}>
             <span className={`${glow} bg-zt-accent/40`} aria-hidden />
             <span className={`${iconWrap} bg-zt-accent/15 text-zt-accent`}>
               <KeyRound className="size-4" aria-hidden />
             </span>
-            Generate API Key
+            {t.generateApiKey}
           </Link>
           <Link href={DASHBOARD_ROUTES.aiAssistant} className={actionClass}>
             <span className={`${glow} bg-zt-secondary/40`} aria-hidden />
             <span className={`${iconWrap} bg-zt-secondary/15 text-zt-secondary`}>
               <Sparkles className="size-4" aria-hidden />
             </span>
-            Open AI Assistant
+            {t.openAiAssistant}
           </Link>
           <Link href={DASHBOARD_ROUTES.errors} className={actionClass}>
             <span className={`${glow} bg-zt-danger/40`} aria-hidden />
             <span className={`${iconWrap} bg-zt-danger/15 text-zt-danger`}>
               <Bug className="size-4" aria-hidden />
             </span>
-            View Errors
+            {t.viewErrors}
           </Link>
         </div>
       </PanelContent>

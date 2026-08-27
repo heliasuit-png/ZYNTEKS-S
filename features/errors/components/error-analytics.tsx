@@ -1,3 +1,6 @@
+"use client";
+
+import { useDictionary } from "@/components/i18n/locale-provider";
 import {
   Panel,
   PanelContent,
@@ -15,23 +18,29 @@ interface ErrorAnalyticsStripProps {
 }
 
 export function ErrorAnalyticsStrip({ analytics }: ErrorAnalyticsStripProps) {
+  const { dict } = useDictionary();
+  const t = dict.dash.errors;
+
   if (analytics.totalGroups === 0) return null;
 
   return (
     <Panel>
       <PanelContent>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <Stat label="Error groups" value={formatNumber(analytics.totalGroups)} />
           <Stat
-            label="Total occurrences"
+            label={t.analyticsErrorGroups}
+            value={formatNumber(analytics.totalGroups)}
+          />
+          <Stat
+            label={t.analyticsTotalOccurrences}
             value={formatNumber(analytics.totalOccurrences)}
           />
           <Stat
-            label="Active (7d)"
+            label={t.analyticsActive7d}
             value={formatNumber(analytics.unresolvedCount)}
           />
           <Stat
-            label="Quiet (7d+)"
+            label={t.analyticsQuiet7d}
             value={formatNumber(analytics.resolvedCount)}
           />
         </div>
@@ -39,7 +48,7 @@ export function ErrorAnalyticsStrip({ analytics }: ErrorAnalyticsStripProps) {
         <div className="mt-4 flex flex-col gap-3 border-t border-zt-border pt-4 sm:flex-row sm:items-start sm:justify-between">
           <div>
             <p className="mb-2 text-xs font-medium uppercase tracking-wider text-zt-muted">
-              By severity
+              {t.analyticsBySeverity}
             </p>
             <div className="flex flex-wrap gap-1.5">
               {analytics.byLevel.map((item) => (
@@ -51,7 +60,7 @@ export function ErrorAnalyticsStrip({ analytics }: ErrorAnalyticsStripProps) {
           </div>
           <div>
             <p className="mb-2 text-xs font-medium uppercase tracking-wider text-zt-muted">
-              By environment
+              {t.analyticsByEnvironment}
             </p>
             <div className="flex flex-wrap gap-1.5">
               {analytics.byEnvironment.map((item) => (

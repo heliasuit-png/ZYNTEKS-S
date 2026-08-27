@@ -1,12 +1,9 @@
 "use client";
 
+import { useDictionary } from "@/components/i18n/locale-provider";
 import { FadeIn } from "@/components/dashboard/motion";
 import { Badge } from "@/components/dashboard/badge";
 import type { BadgeProps } from "@/components/dashboard/badge";
-import {
-  NOTIFICATION_CATEGORY_LABELS,
-  NOTIFICATION_CHANNEL_LABELS,
-} from "@/lib/constants";
 import { formatDateTime, formatRelativeTime } from "@/utils/format";
 import type {
   DeliveryActivityItem,
@@ -28,18 +25,17 @@ interface DeliveryPanelProps {
 }
 
 export function DeliveryPanel({ activity, queue }: DeliveryPanelProps) {
+  const { dict, locale } = useDictionary();
+  const t = dict.dash.notifications;
+
   return (
     <div className="grid gap-4 lg:grid-cols-2">
       <FadeIn>
         <section className="rounded-2xl border border-zt-border bg-zt-surface p-4">
-          <h3 className="text-sm font-medium text-zt-text">Delivery status</h3>
-          <p className="mt-1 text-xs text-zt-muted">
-            Email, Slack, and Discord delivery results.
-          </p>
+          <h3 className="text-sm font-medium text-zt-text">{t.deliveryTitle}</h3>
+          <p className="mt-1 text-xs text-zt-muted">{t.deliveryDesc}</p>
           {activity.length === 0 ? (
-            <p className="mt-6 text-sm text-zt-muted">
-              No external deliveries yet.
-            </p>
+            <p className="mt-6 text-sm text-zt-muted">{t.deliveryEmpty}</p>
           ) : (
             <ul className="mt-4 divide-y divide-zt-border">
               {activity.map((item) => (
@@ -50,12 +46,12 @@ export function DeliveryPanel({ activity, queue }: DeliveryPanelProps) {
                     </p>
                     <Badge tone={statusTone[item.status]}>{item.status}</Badge>
                     <Badge tone="default">
-                      {NOTIFICATION_CHANNEL_LABELS[item.channel]}
+                      {t.channels[item.channel]}
                     </Badge>
                   </div>
                   <p className="text-xs text-zt-muted">
-                    {NOTIFICATION_CATEGORY_LABELS[item.category]} ·{" "}
-                    {formatRelativeTime(item.createdAt)} (
+                    {t.categories[item.category]} ·{" "}
+                    {formatRelativeTime(item.createdAt, undefined, locale)} (
                     {formatDateTime(item.createdAt)})
                   </p>
                   {item.error ? (
@@ -72,14 +68,10 @@ export function DeliveryPanel({ activity, queue }: DeliveryPanelProps) {
 
       <FadeIn delay={0.04}>
         <section className="rounded-2xl border border-zt-border bg-zt-surface p-4">
-          <h3 className="text-sm font-medium text-zt-text">Retry queue</h3>
-          <p className="mt-1 text-xs text-zt-muted">
-            Pending, processing, and failed jobs with failure logging.
-          </p>
+          <h3 className="text-sm font-medium text-zt-text">{t.retryQueueTitle}</h3>
+          <p className="mt-1 text-xs text-zt-muted">{t.retryQueueDesc}</p>
           {queue.length === 0 ? (
-            <p className="mt-6 text-sm text-zt-muted">
-              Queue is clear. Nothing waiting to retry.
-            </p>
+            <p className="mt-6 text-sm text-zt-muted">{t.retryQueueEmpty}</p>
           ) : (
             <ul className="mt-4 divide-y divide-zt-border">
               {queue.map((item) => (
@@ -90,12 +82,13 @@ export function DeliveryPanel({ activity, queue }: DeliveryPanelProps) {
                     </p>
                     <Badge tone={statusTone[item.status]}>{item.status}</Badge>
                     <Badge tone="default">
-                      {NOTIFICATION_CHANNEL_LABELS[item.channel]}
+                      {t.channels[item.channel]}
                     </Badge>
                   </div>
                   <p className="text-xs text-zt-muted">
-                    Attempt {item.attempts} · scheduled{" "}
-                    {formatRelativeTime(item.scheduledFor)}
+                    {t.attemptScheduled
+                      .replace("{n}", String(item.attempts))
+                      .replace("{rel}", formatRelativeTime(item.scheduledFor, undefined, locale))}
                   </p>
                   {item.lastError ? (
                     <p className="text-xs text-zt-danger" role="status">

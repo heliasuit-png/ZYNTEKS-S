@@ -4,6 +4,9 @@ import { useId } from "react";
 import { motion } from "framer-motion";
 import type { ReactNode } from "react";
 
+import { useDictionary } from "@/components/i18n/locale-provider";
+import { fillTemplate } from "@/lib/i18n/fill-template";
+
 interface CircularProgressProps {
   /** Percentage 0–100. */
   value: number;
@@ -25,6 +28,7 @@ export function CircularProgress({
   glow = true,
   children,
 }: CircularProgressProps) {
+  const { dict } = useDictionary();
   const rawId = useId().replace(/[^a-zA-Z0-9]/g, "");
   const clamped = Math.min(100, Math.max(0, value));
   const radius = (size - strokeWidth) / 2;
@@ -36,7 +40,9 @@ export function CircularProgress({
       className="relative"
       style={{ width: size, height: size }}
       role="img"
-      aria-label={`${Math.round(clamped)} percent`}
+      aria-label={fillTemplate(dict.dash.shell.percentValue, {
+        value: Math.round(clamped),
+      })}
     >
       {glow ? (
         <div

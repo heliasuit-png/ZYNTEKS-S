@@ -16,6 +16,8 @@ export function renderNotificationEmail(
     details: input.details,
     actionUrl: input.actionUrl,
     actionLabel: input.actionLabel,
+    footerNotice: input.footerNotice,
+    copyrightTemplate: input.copyrightTemplate,
   });
 
   const lines = [input.heading, "", input.intro];
@@ -26,7 +28,10 @@ export function renderNotificationEmail(
     }
   }
   if (input.actionUrl) {
-    lines.push("", `${input.actionLabel ?? "Open"}: ${input.actionUrl}`);
+    lines.push(
+      "",
+      `${input.actionLabel ?? input.openLabel}: ${input.actionUrl}`,
+    );
   }
 
   return { subject: input.subject, html, text: lines.join("\n") };

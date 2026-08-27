@@ -1,3 +1,7 @@
+function toBcp47(locale?: string): string {
+  return locale === "tr" ? "tr" : "en";
+}
+
 export function formatNumber(value: number): string {
   return new Intl.NumberFormat(undefined, { maximumFractionDigits: 0 }).format(
     value,
@@ -21,13 +25,14 @@ export function formatWhen(iso: string): string {
   }).format(new Date(iso));
 }
 
-export function formatRelative(iso: string): string {
-  const delta = Date.now() - new Date(iso).getTime();
-  const minutes = Math.round(delta / 60000);
-  if (minutes < 1) return "just now";
-  if (minutes < 60) return `${minutes}m ago`;
+export function formatRelative(iso: string, locale: string = "en"): string {
+  const deltaMs = Date.now() - new Date(iso).getTime();
+  const minutes = Math.round(deltaMs / 60000);
+  const rtf = new Intl.RelativeTimeFormat(toBcp47(locale), { numeric: "auto" });
+  if (Math.abs(minutes) < 1) return rtf.format(0, "second"); // "now" / "şimdi"
+  if (Math.abs(minutes) < 60) return rtf.format(-minutes, "minute");
   const hours = Math.round(minutes / 60);
-  if (hours < 48) return `${hours}h ago`;
+  if (Math.abs(hours) < 48) return rtf.format(-hours, "hour");
   const days = Math.round(hours / 24);
-  return `${days}d ago`;
+  return rtf.format(-days, "day");
 }

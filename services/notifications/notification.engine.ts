@@ -4,6 +4,7 @@ import { renderNotificationEmail, sendEmail } from "@/emails";
 import type { EmailDetail } from "@/emails/types";
 import { APP_NAME, MONITORING } from "@/lib/constants";
 import { env } from "@/lib/env";
+import { getDictionary } from "@/lib/i18n/get-dictionary";
 import { logger } from "@/lib/logger";
 import {
   categoryForType,
@@ -184,7 +185,7 @@ export async function dispatchNotification(
   admin: Supabase,
   event: NotificationEvent,
 ): Promise<void> {
-  const composed = composeNotification(event);
+  const composed = await composeNotification(event);
   const prefs = await getOrCreatePreferences(admin, event.userId);
   const channels = channelsFor(prefs, composed.type);
   if (channels.length === 0) {
@@ -310,6 +311,7 @@ async function processRow(
         typeof data.__actionPath === "string" ? data.__actionPath : undefined;
       const actionLabel =
         typeof data.__actionLabel === "string" ? data.__actionLabel : undefined;
+      const { dict } = await getDictionary();
       const rendered = renderNotificationEmail({
         type: row.type,
         subject: row.title,
@@ -321,6 +323,9 @@ async function processRow(
           : undefined,
         actionLabel,
         appName: APP_NAME,
+        footerNotice: dict.emails.notification.footerNotice,
+        copyrightTemplate: dict.emails.notification.copyrightTemplate,
+        openLabel: dict.emails.notification.openLabel,
       });
       const result = await sendEmail({
         to: email,

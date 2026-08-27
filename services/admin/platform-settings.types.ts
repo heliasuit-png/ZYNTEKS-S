@@ -11,7 +11,7 @@ export interface PlatformIdentity {
   deploymentStatus: "live" | "maintenance" | "degraded";
   buildVersion: string;
   buildDate: string | null;
-  buildDateNote: string | null;
+  buildDateNoteKey: "missing" | null;
 }
 
 export interface FeatureFlagRow {
@@ -30,36 +30,44 @@ export interface AiSettingsMeta {
   configured: boolean;
   defaultModel: string | null;
   health: HealthTone;
-  healthDetail: string;
+  healthDetailKey: "configured" | "not_configured";
 }
 
 export interface EmailSettingsMeta {
   configured: boolean;
-  verifiedSender: string;
-  deliveryStatus: string;
+  verifiedSenderKey: "not_configured" | "configured" | "domain";
+  verifiedSenderDomain: string | null;
+  deliveryKey: "not_configured" | "ok" | "failed";
+  deliverySent: number;
+  deliveryFailed: number;
   deliveryTone: HealthTone;
   lastTestAt: string | null;
   lastTestStatus: string | null;
 }
 
 export interface DatabaseSettingsMeta {
-  connectionStatus: string;
+  connectionStatusKey: "connected" | "unreachable";
   connectionTone: HealthTone;
-  region: string;
+  regionKey: "value" | "not_exposed" | "unavailable";
+  regionValue: string | null;
   health: HealthTone;
-  healthDetail: string;
+  healthDetailKey: "reachable_ms" | "error";
+  healthDetailMs: number | null;
+  healthDetailMessage: string | null;
   migrationVersion: string;
   tableCount: number | null;
-  tableCountNote: string | null;
+  tableCountNoteKey: "unavailable" | null;
   latencyMs: number | null;
 }
 
 export interface StorageSettingsMeta {
   provider: string;
-  bucketStatus: string;
+  bucketStatusKey: "unavailable" | "error" | "missing" | "ok";
   bucketTone: HealthTone;
+  bucketCount: number | null;
+  bucketMissing: string | null;
+  bucketErrorMessage: string | null;
   buckets: { name: string; public: boolean }[];
-  usage: string;
   usageAvailable: boolean;
 }
 
@@ -67,9 +75,10 @@ export interface SdkSettingsMeta {
   latestVersion: string;
   supportedVersions: string[];
   downloads: number | null;
-  downloadsNote: string | null;
+  downloadsNoteKey: "unavailable" | null;
   health: HealthTone;
-  healthDetail: string;
+  healthDetailKey: "silent" | "heartbeats";
+  healthDetailCount: number | null;
 }
 
 export interface CronJobMeta {
@@ -79,7 +88,6 @@ export interface CronJobMeta {
   enabled: boolean;
   lastRun: string | null;
   health: HealthTone;
-  note: string;
 }
 
 export interface CronSettingsMeta {
@@ -87,7 +95,8 @@ export interface CronSettingsMeta {
   cronSecretConfigured: boolean;
   vercelCronsConfigured: boolean;
   health: HealthTone;
-  healthDetail: string;
+  healthDetailKey: "ok" | "missing_secret" | "no_jobs";
+  healthDetailJobCount: number | null;
 }
 
 export interface SecuritySettingsMeta {
@@ -97,13 +106,10 @@ export interface SecuritySettingsMeta {
     requireUppercase: boolean;
     requireNumber: boolean;
     maxLength: number;
-    source: string;
   };
   sessionTimeoutHours: number;
-  sessionTimeoutNote: string;
-  mfaStatus: string;
   mfaRequired: boolean;
-  rateLimitingStatus: string;
+  rateLimitingMaxPerMin: number;
   rateLimitingTone: HealthTone;
 }
 

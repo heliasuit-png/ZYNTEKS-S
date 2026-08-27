@@ -10,6 +10,7 @@ import {
   Pencil,
 } from "lucide-react";
 
+import { useDictionary } from "@/components/i18n/locale-provider";
 import { cn } from "@/lib/utils";
 import { DASHBOARD_ROUTES } from "@/lib/constants";
 import {
@@ -26,6 +27,8 @@ export function ConversationItem({
   conversation: ConversationListItem;
   active: boolean;
 }) {
+  const { dict } = useDictionary();
+  const t = dict.dash.ai;
   const [menuOpen, setMenuOpen] = useState(false);
   const [renaming, setRenaming] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -51,7 +54,7 @@ export function ConversationItem({
           name="title"
           defaultValue={conversation.title}
           autoFocus
-          aria-label="Rename conversation"
+          aria-label={t.renameConversation}
           onBlur={() => {
             // Submit on blur so renames aren't silently discarded.
             formRef.current?.requestSubmit();
@@ -94,7 +97,7 @@ export function ConversationItem({
       <button
         type="button"
         onClick={() => setMenuOpen((open) => !open)}
-        aria-label="Conversation actions"
+        aria-label={t.conversationActions}
         aria-expanded={menuOpen}
         className="shrink-0 rounded-md p-1 text-zt-muted opacity-100 transition-opacity hover:text-zt-text md:opacity-0 md:group-hover:opacity-100 data-[open=true]:opacity-100"
         data-open={menuOpen}
@@ -125,7 +128,7 @@ export function ConversationItem({
               className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-zt-text hover:bg-zt-surface-2"
             >
               <Pencil className="size-3.5" aria-hidden />
-              Rename
+              {t.rename}
             </button>
             <form
               action={async (fd) => {
@@ -147,12 +150,12 @@ export function ConversationItem({
                 {conversation.pinned ? (
                   <>
                     <PinOff className="size-3.5" aria-hidden />
-                    Unpin
+                    {t.unpin}
                   </>
                 ) : (
                   <>
                     <Pin className="size-3.5" aria-hidden />
-                    Pin
+                    {t.pin}
                   </>
                 )}
               </button>
@@ -170,7 +173,7 @@ export function ConversationItem({
                 className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-zt-danger hover:bg-zt-surface-2"
               >
                 <Trash2 className="size-3.5" aria-hidden />
-                Delete
+                {t.delete}
               </button>
             </form>
           </div>

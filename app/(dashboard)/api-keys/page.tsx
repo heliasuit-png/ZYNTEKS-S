@@ -1,5 +1,6 @@
-import type { Metadata } from "next";
 import { redirect } from "next/navigation";
+import { dashboardPageMetadata } from "@/lib/i18n/dashboard-metadata";
+import { getDictionary } from "@/lib/i18n/get-dictionary";
 
 import { PageHeader } from "@/components/dashboard/page-header";
 import { API_KEY_ENVIRONMENTS, ROUTES } from "@/lib/constants";
@@ -11,7 +12,7 @@ import { ApiKeyConnectionGuide } from "@/features/api-keys/components/connection
 import { ApiKeysExplorer } from "@/features/api-keys/components/api-keys-explorer";
 import type { ApiKeyStatus } from "@/types/database";
 
-export const metadata: Metadata = { title: "API Keys" };
+export const generateMetadata = () => dashboardPageMetadata("apiKeys");
 
 const PAGE_SIZE = 9;
 const STATUS_VALUES: readonly ApiKeyStatus[] = ["active", "revoked"];
@@ -29,6 +30,8 @@ interface ApiKeysPageProps {
 export default async function ApiKeysPage({
   searchParams,
 }: ApiKeysPageProps) {
+  const { dict } = await getDictionary();
+  const pageCopy = dict.dashboard.pageTitles.apiKeys;
   const params = await searchParams;
 
   const supabase = await createSupabaseServerClient();
@@ -64,9 +67,7 @@ export default async function ApiKeysPage({
 
   return (
     <div className="space-y-6">
-      <PageHeader
-        title="API Keys"
-        description="Generate project keys for the SDK and ingest API. Plaintext is shown only once at creation."
+      <PageHeader title={pageCopy.title} description={pageCopy.description}
       />
       <ApiKeyConnectionGuide hasProjects={projects.length > 0} />
       <ApiKeysExplorer

@@ -7,10 +7,14 @@ import {
 import { AdminContainer } from "@/features/admin";
 import { ExecutiveDashboard } from "@/features/admin/components/executive/executive-dashboard";
 import { requireAdminSession } from "@/features/admin/load-admin-session";
+import { getDictionary } from "@/lib/i18n/get-dictionary";
 
-export const metadata: Metadata = {
-  title: "Executive Dashboard · ZYNTEKSIS Admin",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const { dict } = await getDictionary();
+  return {
+    title: `${dict.admin.executive.title}${dict.admin.common.metaTitleSuffix}`,
+  };
+}
 
 export default async function AdminDashboardPage({
   searchParams,

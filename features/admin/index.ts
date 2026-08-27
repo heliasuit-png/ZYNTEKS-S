@@ -1,5 +1,5 @@
 export { adminSignInAction, adminSignOutAction } from "@/features/admin/actions";
-export { ADMIN_NAV_ITEMS } from "@/features/admin/nav";
+export { ADMIN_NAV_ITEMS, resolveAdminNav } from "@/features/admin/nav";
 export { AdminShell } from "@/features/admin/components/admin-shell";
 export { AdminSidebar } from "@/features/admin/components/admin-sidebar";
 export { AdminTopbar } from "@/features/admin/components/admin-topbar";
@@ -22,5 +22,7 @@ export { AdminErrorState } from "@/features/admin/components/ui/admin-error-stat
 export type {
   AdminFormState,
   AdminNavItem,
+  AdminNavItemDef,
+  AdminNavKey,
   AdminShellUser,
 } from "@/features/admin/types";

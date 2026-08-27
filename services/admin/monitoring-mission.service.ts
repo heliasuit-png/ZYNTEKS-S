@@ -194,7 +194,8 @@ async function loadProbes(sdkHeartbeatCount1h: number): Promise<{
   const dayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
 
   let databaseTone: HealthTone = "green";
-  let databaseDetail = "Postgres reachable";
+  let databaseDetailKey = "database_ok";
+  let databaseDetailParams: Record<string, string | number> = { ms: 0 };
   let databaseLatencyMs: number | null = null;
   try {
     const started = performance.now();
@@ -202,23 +203,32 @@ async function loadProbes(sdkHeartbeatCount1h: number): Promise<{
     databaseLatencyMs = Math.round(performance.now() - started);
     if (error) {
       databaseTone = "red";
-      databaseDetail = error.message;
+      databaseDetailKey = "database_error";
+      databaseDetailParams = { message: error.message };
     } else {
-      databaseDetail = `Postgres reachable · ${databaseLatencyMs} ms probe`;
+      databaseDetailKey = "database_ok";
+      databaseDetailParams = { ms: databaseLatencyMs };
     }
   } catch (error) {
     databaseTone = "red";
-    databaseDetail =
-      error instanceof Error ? error.message : "Database unreachable";
+    databaseDetailKey = "database_error";
+    databaseDetailParams = {
+      message:
+        error instanceof Error ? error.message : "Database unreachable",
+    };
   }
 
   let storageTone: HealthTone = "yellow";
-  let storageDetail = "Storage probe unavailable";
+  let storageDetailKey = "storage_error";
+  let storageDetailParams: Record<string, string | number> = {
+    message: "unavailable",
+  };
   try {
     const { data, error } = await admin.storage.listBuckets();
     if (error) {
       storageTone = "red";
-      storageDetail = error.message;
+      storageDetailKey = "storage_error";
+      storageDetailParams = { message: error.message };
     } else {
       const names = new Set((data ?? []).map((bucket) => bucket.name));
       const missing = ["avatars", "workspace-logos"].filter(
@@ -226,23 +236,28 @@ async function loadProbes(sdkHeartbeatCount1h: number): Promise<{
       );
       if (missing.length > 0) {
         storageTone = "yellow";
-        storageDetail = `Missing buckets: ${missing.join(", ")}`;
+        storageDetailKey = "storage_missing";
+        storageDetailParams = { missing: missing.join(", ") };
       } else {
         storageTone = "green";
-        storageDetail = `${data?.length ?? 0} buckets configured`;
+        storageDetailKey = "storage_ok";
+        storageDetailParams = { count: data?.length ?? 0 };
       }
     }
   } catch (error) {
     storageTone = "red";
-    storageDetail =
-      error instanceof Error ? error.message : "Storage unreachable";
+    storageDetailKey = "storage_error";
+    storageDetailParams = {
+      message:
+        error instanceof Error ? error.message : "Storage unreachable",
+    };
   }
 
   const openaiConfigured = Boolean(env.OPENAI_API_KEY);
   const aiTone: HealthTone = openaiConfigured ? "green" : "yellow";
-  const aiDetail = openaiConfigured
-    ? `Model ${env.OPENAI_MODEL}`
-    : "OPENAI_API_KEY not configured";
+  const aiDetailKey = openaiConfigured ? "ai_ok" : "ai_missing_key";
+  const aiDetailParams: Record<string, string | number> | undefined =
+    openaiConfigured ? { model: env.OPENAI_MODEL } : undefined;
 
   const resendConfigured = Boolean(env.RESEND_API_KEY);
   const { count: mailFailed, error: mailErr } = await admin
@@ -254,12 +269,12 @@ async function loadProbes(sdkHeartbeatCount1h: number): Promise<{
   if (mailErr) throw mapPostgrestError(mailErr);
 
   let mailTone: HealthTone = resendConfigured ? "green" : "yellow";
-  let mailDetail = resendConfigured
-    ? "Resend configured"
-    : "RESEND_API_KEY not configured";
+  let mailDetailKey = resendConfigured ? "mail_ok" : "mail_missing_key";
+  let mailDetailParams: Record<string, string | number> | undefined;
   if ((mailFailed ?? 0) > 0) {
     mailTone = "red";
-    mailDetail = `${mailFailed} email failures (24h)`;
+    mailDetailKey = "mail_failures";
+    mailDetailParams = { count: mailFailed ?? 0 };
   }
 
   const [{ count: pending }, { count: failedQueue }] = await Promise.all([
@@ -274,32 +289,39 @@ async function loadProbes(sdkHeartbeatCount1h: number): Promise<{
   ]);
 
   let queueTone: HealthTone = "green";
-  let queueDetail = `${pending ?? 0} pending`;
+  let queueDetailKey = "queue_ok";
+  let queueDetailParams: Record<string, string | number> = {
+    pending: pending ?? 0,
+  };
   if ((failedQueue ?? 0) > 0) {
     queueTone = "red";
-    queueDetail = `${failedQueue} failed · ${pending ?? 0} pending`;
+    queueDetailKey = "queue_failed";
+    queueDetailParams = {
+      failed: failedQueue ?? 0,
+      pending: pending ?? 0,
+    };
   } else if ((pending ?? 0) > 100) {
     queueTone = "yellow";
-    queueDetail = `${pending} pending (elevated)`;
+    queueDetailKey = "queue_elevated";
+    queueDetailParams = { pending: pending ?? 0 };
   }
 
   const cronConfigured = Boolean(env.CRON_SECRET);
   const cronTone: HealthTone = cronConfigured ? "green" : "yellow";
-  const cronDetail = cronConfigured
-    ? "CRON_SECRET configured · run history not persisted"
-    : "CRON_SECRET empty — schedules may be inactive";
+  const cronDetailKey = cronConfigured
+    ? "cron_ok"
+    : "cron_missing_secret";
 
   const apiTone: HealthTone = databaseTone === "red" ? "red" : "green";
-  const apiDetail =
-    databaseTone === "red"
-      ? "API degraded — database errors"
-      : "App API serving Mission Control";
+  const apiDetailKey = databaseTone === "red" ? "api_degraded" : "api_ok";
 
   let sdkTone: HealthTone = "yellow";
-  let sdkDetail = "No SDK heartbeats in the last hour";
+  let sdkDetailKey = "sdk_silent";
+  let sdkDetailParams: Record<string, string | number> | undefined;
   if (sdkHeartbeatCount1h > 0) {
     sdkTone = "green";
-    sdkDetail = `${sdkHeartbeatCount1h} heartbeats (1h)`;
+    sdkDetailKey = "sdk_ok";
+    sdkDetailParams = { count: sdkHeartbeatCount1h };
   }
 
   const tones: HealthTone[] = [
@@ -319,21 +341,48 @@ async function loadProbes(sdkHeartbeatCount1h: number): Promise<{
   const probes: StatusProbe[] = [
     {
       id: "platform",
-      label: "Platform Status",
       tone: platformTone,
-      detail:
-        platformTone === "green"
-          ? "All critical probes healthy"
-          : "One or more subsystems need attention",
+      detailKey:
+        platformTone === "green" ? "platform_healthy" : "platform_attention",
     },
-    { id: "database", label: "Database", tone: databaseTone, detail: databaseDetail },
-    { id: "api", label: "API", tone: apiTone, detail: apiDetail },
-    { id: "sdk", label: "SDK", tone: sdkTone, detail: sdkDetail },
-    { id: "ai", label: "AI", tone: aiTone, detail: aiDetail },
-    { id: "cron", label: "Cron", tone: cronTone, detail: cronDetail },
-    { id: "storage", label: "Storage", tone: storageTone, detail: storageDetail },
-    { id: "mail", label: "Mail", tone: mailTone, detail: mailDetail },
-    { id: "queue", label: "Queue", tone: queueTone, detail: queueDetail },
+    {
+      id: "database",
+      tone: databaseTone,
+      detailKey: databaseDetailKey,
+      detailParams: databaseDetailParams,
+    },
+    { id: "api", tone: apiTone, detailKey: apiDetailKey },
+    {
+      id: "sdk",
+      tone: sdkTone,
+      detailKey: sdkDetailKey,
+      detailParams: sdkDetailParams,
+    },
+    {
+      id: "ai",
+      tone: aiTone,
+      detailKey: aiDetailKey,
+      detailParams: aiDetailParams,
+    },
+    { id: "cron", tone: cronTone, detailKey: cronDetailKey },
+    {
+      id: "storage",
+      tone: storageTone,
+      detailKey: storageDetailKey,
+      detailParams: storageDetailParams,
+    },
+    {
+      id: "mail",
+      tone: mailTone,
+      detailKey: mailDetailKey,
+      detailParams: mailDetailParams,
+    },
+    {
+      id: "queue",
+      tone: queueTone,
+      detailKey: queueDetailKey,
+      detailParams: queueDetailParams,
+    },
   ];
 
   return { probes, platformTone, databaseLatencyMs };
@@ -398,12 +447,6 @@ export async function getMonitoringMissionControl(
       filters: { ...filters, range },
       globalStatus: {
         platformTone,
-        platformLabel:
-          platformTone === "green"
-            ? "Operational"
-            : platformTone === "yellow"
-              ? "Degraded"
-              : "Outage",
         probes,
         responseTimeMs: null,
         uptimePercent30d: 100,
@@ -425,9 +468,6 @@ export async function getMonitoringMissionControl(
       geography: {
         countries: [],
         topRegions: [],
-        cityNote: "City-level telemetry is not stored in this product.",
-        requestProxyNote:
-          "Live request geography uses authenticated session countries as a proxy.",
       },
       health: {
         counts: {
@@ -457,7 +497,6 @@ export async function getMonitoringMissionControl(
         nextRun: null,
         durationMs: null,
         failures: null,
-        note: "Cron execution history is not persisted.",
       })),
       alerts: [],
       filterOptions: { workspaces: [], projects: [] },
@@ -1105,12 +1144,6 @@ export async function getMonitoringMissionControl(
     filters: { ...filters, range },
     globalStatus: {
       platformTone,
-      platformLabel:
-        platformTone === "green"
-          ? "Operational"
-          : platformTone === "yellow"
-            ? "Degraded"
-            : "Outage",
       probes,
       responseTimeMs: liveMetrics.averageResponseTimeMs,
       uptimePercent30d,
@@ -1120,9 +1153,6 @@ export async function getMonitoringMissionControl(
     geography: {
       countries,
       topRegions,
-      cityNote: "City-level telemetry is not stored in this product.",
-      requestProxyNote:
-        "Map activity uses authenticated session countries (live request IP geo is not stored on errors/heartbeats).",
     },
     health: {
       counts,
@@ -1154,7 +1184,6 @@ export async function getMonitoringMissionControl(
       nextRun: null,
       durationMs: null,
       failures: null,
-      note: "Cron execution history is not persisted. Schedules reflect registry definitions.",
     })),
     alerts: alerts
       .sort(

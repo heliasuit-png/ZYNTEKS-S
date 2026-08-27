@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, useTransition } from "react";
 import { Check, Copy, RefreshCw, ThumbsDown, ThumbsUp } from "lucide-react";
 
+import { useDictionary } from "@/components/i18n/locale-provider";
 import { cn } from "@/lib/utils";
 import { submitFeedbackAction } from "@/features/ai/actions";
 import type { ChatMessageView } from "@/features/ai/types";
@@ -49,6 +50,9 @@ function StablePlainText({
 }
 
 function CopyButton({ value }: { value: string }) {
+  const { dict } = useDictionary();
+  const common = dict.dashboardCommon;
+  const t = dict.dash.ai;
   const [copied, setCopied] = useState(false);
   return (
     <button
@@ -63,14 +67,14 @@ function CopyButton({ value }: { value: string }) {
         }
       }}
       className="flex items-center gap-1 rounded-md px-2 py-1 text-xs text-zt-muted transition-colors hover:text-zt-text"
-      aria-label="Copy message"
+      aria-label={t.copyMessage}
     >
       {copied ? (
         <Check className="size-3.5 text-zt-success" aria-hidden />
       ) : (
         <Copy className="size-3.5" aria-hidden />
       )}
-      {copied ? "Copied" : "Copy"}
+      {copied ? common.copied : common.copy}
     </button>
   );
 }
@@ -84,6 +88,9 @@ export function ChatMessage({
   canRegenerate: boolean;
   onRegenerate: () => void;
 }) {
+  const { dict } = useDictionary();
+  const t = dict.dash.ai;
+  const common = dict.dashboardCommon;
   const isUser = message.role === "user";
   const persisted = UUID_RE.test(message.id);
   const [rating, setRating] = useState<"up" | "down" | null>(
@@ -139,7 +146,7 @@ export function ChatMessage({
             <div className="min-h-[1.25rem]">
               <StablePlainText
                 content={message.content}
-                placeholder={message.streaming ? "Thinking…" : ""}
+                placeholder={message.streaming ? t.thinking : ""}
                 className="whitespace-pre-wrap break-words text-sm text-zt-text"
               />
             </div>
@@ -155,7 +162,7 @@ export function ChatMessage({
                       className="flex items-center gap-1 rounded-md px-2 py-1 text-xs text-zt-muted transition-colors hover:text-zt-text"
                     >
                       <RefreshCw className="size-3.5" aria-hidden />
-                      Regenerate
+                      {common.regenerate}
                     </button>
                   ) : null}
                   {persisted ? (
@@ -164,7 +171,7 @@ export function ChatMessage({
                         type="button"
                         onClick={() => rate("up")}
                         disabled={pending}
-                        aria-label="Helpful"
+                        aria-label={t.helpful}
                         aria-pressed={rating === "up"}
                         className={cn(
                           "rounded-md p-1 transition-colors",
@@ -179,7 +186,7 @@ export function ChatMessage({
                         type="button"
                         onClick={() => rate("down")}
                         disabled={pending}
-                        aria-label="Not helpful"
+                        aria-label={t.notHelpful}
                         aria-pressed={rating === "down"}
                         className={cn(
                           "rounded-md p-1 transition-colors",

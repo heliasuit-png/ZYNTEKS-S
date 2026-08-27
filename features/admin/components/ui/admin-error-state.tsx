@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 
+import { useDictionary } from "@/components/i18n/locale-provider";
 import { ADMIN_ROUTES } from "@/lib/constants";
 
 interface AdminErrorStateProps {
@@ -12,12 +13,16 @@ interface AdminErrorStateProps {
 
 /** Professional error / permission-denied surface for admin routes. */
 export function AdminErrorState({
-  title = "Something went wrong",
-  message = "This admin view could not be loaded. Try again or return to the dashboard.",
+  title,
+  message,
   onRetry,
 }: AdminErrorStateProps) {
+  const { dict } = useDictionary();
+  const common = dict.admin.common;
+  const resolvedTitle = title ?? common.somethingWrong;
+  const resolvedMessage = message ?? dict.admin.errors.viewLoadFailed;
   const permissionDenied =
-    /permission|forbidden|access required|insufficient/i.test(message);
+    /permission|forbidden|access required|insufficient/i.test(resolvedMessage);
 
   return (
     <div
@@ -25,12 +30,12 @@ export function AdminErrorState({
       role="alert"
     >
       <p className="admin-eyebrow">
-        {permissionDenied ? "Access" : "Error"}
+        {permissionDenied ? common.access : common.error}
       </p>
       <h2 className="mt-2 text-xl font-semibold text-[var(--admin-text)]">
-        {permissionDenied ? "Permission denied" : title}
+        {permissionDenied ? common.permissionDenied : resolvedTitle}
       </h2>
-      <p className="mt-2 text-sm text-[var(--admin-muted)]">{message}</p>
+      <p className="mt-2 text-sm text-[var(--admin-muted)]">{resolvedMessage}</p>
       <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
         {onRetry ? (
           <button
@@ -38,14 +43,14 @@ export function AdminErrorState({
             onClick={onRetry}
             className="admin-accent-ring rounded-lg bg-[var(--admin-accent)] px-3 py-2 text-sm font-medium text-white"
           >
-            Try again
+            {common.tryAgain}
           </button>
         ) : null}
         <Link
           href={ADMIN_ROUTES.dashboard}
           className="admin-btn-ghost admin-accent-ring inline-flex"
         >
-          Back to dashboard
+          {common.backToDashboard}
         </Link>
       </div>
     </div>

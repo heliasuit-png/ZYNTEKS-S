@@ -3,10 +3,13 @@
 import { useActionState } from "react";
 import { motion } from "framer-motion";
 
+import { useDictionary } from "@/components/i18n/locale-provider";
 import { adminSignInAction } from "@/features/admin/actions";
 import { initialAdminFormState } from "@/features/admin/types";
 
 export function AdminLoginForm({ redirectTo }: { redirectTo?: string }) {
+  const { dict } = useDictionary();
+  const login = dict.admin.login;
   const [state, formAction, pending] = useActionState(
     adminSignInAction,
     initialAdminFormState,
@@ -23,11 +26,9 @@ export function AdminLoginForm({ redirectTo }: { redirectTo?: string }) {
     >
       <div className="space-y-1">
         <h1 className="text-xl font-semibold tracking-tight text-[var(--admin-text)]">
-          Admin sign in
+          {login.title}
         </h1>
-        <p className="text-sm text-[var(--admin-muted)]">
-          Enterprise Admin Control Center. Authorized administrators only.
-        </p>
+        <p className="text-sm text-[var(--admin-muted)]">{login.subtitle}</p>
       </div>
 
       {state.status === "error" && state.message ? (
@@ -44,14 +45,14 @@ export function AdminLoginForm({ redirectTo }: { redirectTo?: string }) {
       ) : null}
 
       <label className="block space-y-1.5 text-sm">
-        <span className="text-[var(--admin-muted)]">Email</span>
+        <span className="text-[var(--admin-muted)]">{login.email}</span>
         <input
           name="email"
           type="email"
           autoComplete="email"
           required
           className="admin-accent-ring w-full rounded-xl border border-[var(--admin-border)] bg-[var(--admin-surface)] px-3 py-2.5 text-[var(--admin-text)] outline-none placeholder:text-[var(--admin-muted)]"
-          placeholder="admin@your-company.com"
+          placeholder={login.emailPlaceholder}
         />
         {state.fieldErrors?.email?.[0] ? (
           <span className="block text-xs text-[var(--admin-danger)]">
@@ -61,7 +62,7 @@ export function AdminLoginForm({ redirectTo }: { redirectTo?: string }) {
       </label>
 
       <label className="block space-y-1.5 text-sm">
-        <span className="text-[var(--admin-muted)]">Password</span>
+        <span className="text-[var(--admin-muted)]">{login.password}</span>
         <input
           name="password"
           type="password"
@@ -81,7 +82,7 @@ export function AdminLoginForm({ redirectTo }: { redirectTo?: string }) {
         disabled={pending}
         className="admin-accent-ring w-full rounded-xl bg-[var(--admin-accent)] px-4 py-2.5 text-sm font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-60"
       >
-        {pending ? "Signing in…" : "Sign in to Admin"}
+        {pending ? login.signingIn : login.submit}
       </button>
     </motion.form>
   );

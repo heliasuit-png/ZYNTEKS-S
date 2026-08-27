@@ -1,4 +1,8 @@
-export default function AiSettingsLoading() {
+import { getDictionary } from "@/lib/i18n/get-dictionary";
+
+export default async function AiSettingsLoading() {
+  const { dict } = await getDictionary();
+
   return (
     <div className="space-y-6" role="status" aria-live="polite">
       <div className="space-y-2">
@@ -14,7 +18,7 @@ export default function AiSettingsLoading() {
         ))}
       </div>
       <div className="h-56 animate-pulse rounded-2xl border border-zt-border bg-zt-surface" />
-      <span className="sr-only">Loading AI settings…</span>
+      <span className="sr-only">{dict.dashboardCommon.loadingStates.aiSettings}</span>
     </div>
   );
 }

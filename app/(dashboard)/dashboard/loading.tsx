@@ -3,10 +3,13 @@ import {
   Skeleton,
   StatCardSkeleton,
 } from "@/components/dashboard/skeleton";
+import { getDictionary } from "@/lib/i18n/get-dictionary";
 
-export default function DashboardHomeLoading() {
+export default async function DashboardHomeLoading() {
+  const { dict } = await getDictionary();
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" role="status" aria-live="polite">
       <div className="space-y-2">
         <Skeleton className="h-6 w-40" />
         <Skeleton className="h-4 w-64" />
@@ -29,6 +32,7 @@ export default function DashboardHomeLoading() {
         <ListPanelSkeleton />
         <ListPanelSkeleton />
       </div>
+      <span className="sr-only">{dict.dashboardCommon.loadingStates.dashboard}</span>
     </div>
   );
 }

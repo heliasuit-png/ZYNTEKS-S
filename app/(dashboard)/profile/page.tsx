@@ -1,5 +1,6 @@
-import type { Metadata } from "next";
 import { redirect } from "next/navigation";
+import { dashboardPageMetadata } from "@/lib/i18n/dashboard-metadata";
+import { getDictionary } from "@/lib/i18n/get-dictionary";
 
 import { PageHeader } from "@/components/dashboard/page-header";
 import { ROUTES } from "@/lib/constants";
@@ -9,9 +10,11 @@ import type { Profile } from "@/services/profile";
 import { createSupabaseServerClient } from "@/supabase/server";
 import { ProfileSettings } from "@/features/settings/components/profile-settings";
 
-export const metadata: Metadata = { title: "Profile" };
+export const generateMetadata = () => dashboardPageMetadata("profile");
 
 export default async function ProfilePage() {
+  const { dict } = await getDictionary();
+  const pageCopy = dict.dashboard.pageTitles.profile;
   const supabase = await createSupabaseServerClient();
   const user = await getAuthenticatedUser(supabase);
   if (!user) {
@@ -31,9 +34,7 @@ export default async function ProfilePage() {
 
   return (
     <div className="space-y-6">
-      <PageHeader
-        title="Profile"
-        description="Manage your personal account, password and verification."
+      <PageHeader title={pageCopy.title} description={pageCopy.description}
       />
       <ProfileSettings
         profile={profile}

@@ -1,38 +1,26 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { z } from "zod";
 
 import { DASHBOARD_ROUTES } from "@/lib/constants";
-import { isAppError } from "@/lib/errors";
+import { getDictionary } from "@/lib/i18n/get-dictionary";
+import {
+  fieldErrorsFromZod,
+  toLocalizedErrorMessage,
+} from "@/lib/i18n/localize-action";
 import { createSupabaseServerClient } from "@/supabase/server";
 import { getAuthenticatedUser } from "@/services/auth";
 import { addIncidentUpdate } from "@/services/incidents";
 import { addIncidentUpdateSchema } from "@/features/incidents/schemas";
 import type { IncidentActionState } from "@/features/incidents/types";
 
-function fieldErrorsFrom(error: z.ZodError): Record<string, string[]> {
-  const flattened = error.flatten().fieldErrors;
-  const result: Record<string, string[]> = {};
-  for (const [key, messages] of Object.entries(flattened)) {
-    if (messages && messages.length > 0) {
-      result[key] = messages;
-    }
-  }
-  return result;
-}
-
-function toErrorMessage(error: unknown): string {
-  if (isAppError(error)) {
-    return error.message;
-  }
-  return "Something went wrong. Please try again.";
-}
-
 export async function addIncidentUpdateAction(
   _prevState: IncidentActionState,
   formData: FormData,
 ): Promise<IncidentActionState> {
+  const { dict } = await getDictionary();
+  const am = dict.actionMessages;
+
   const rawStatus = formData.get("status");
   const parsed = addIncidentUpdateSchema.safeParse({
     incidentId: formData.get("incidentId"),
@@ -41,13 +29,13 @@ export async function addIncidentUpdateAction(
   });
 
   if (!parsed.success) {
-    return { status: "error", fieldErrors: fieldErrorsFrom(parsed.error) };
+    return { status: "error", fieldErrors: fieldErrorsFromZod(parsed.error, am) };
   }
 
   const supabase = await createSupabaseServerClient();
   const user = await getAuthenticatedUser(supabase);
   if (!user) {
-    return { status: "error", message: "You must be signed in." };
+    return { status: "error", message: am.mustSignIn };
   }
 
   try {
@@ -57,8 +45,8 @@ export async function addIncidentUpdateAction(
     });
     revalidatePath(`${DASHBOARD_ROUTES.incidents}/${parsed.data.incidentId}`);
     revalidatePath(DASHBOARD_ROUTES.incidents);
-    return { status: "success", message: "Update posted." };
+    return { status: "success", message: am.updatePosted };
   } catch (error) {
-    return { status: "error", message: toErrorMessage(error) };
+    return { status: "error", message: toLocalizedErrorMessage(error, am) };
   }
 }

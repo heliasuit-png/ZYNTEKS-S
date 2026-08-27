@@ -4,10 +4,14 @@ import { getPlatformSettingsCenter } from "@/services/admin/platform-settings.se
 import { AdminContainer } from "@/features/admin";
 import { PlatformSettingsCenter } from "@/features/admin/components/settings/platform-settings-center";
 import { requireAdminSession } from "@/features/admin/load-admin-session";
+import { getDictionary } from "@/lib/i18n/get-dictionary";
 
-export const metadata: Metadata = {
-  title: "Platform Settings · ZYNTEKSIS Admin",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const { dict } = await getDictionary();
+  return {
+    title: `${dict.admin.settings.pageTitle}${dict.admin.common.metaTitleSuffix}`,
+  };
+}
 
 export const dynamic = "force-dynamic";
 

@@ -22,19 +22,13 @@ import { cn } from "@/lib/utils";
 import { AiOrb } from "@/components/dashboard/home/ai-orb";
 import { SdkInstaller } from "@/components/dashboard/sdk/sdk-installer";
 import { Button } from "@/components/dashboard/button";
+import { useDictionary } from "@/components/i18n/locale-provider";
 import { DASHBOARD_ROUTES } from "@/lib/constants";
-import { SUGGESTED_ANALYSES } from "@/features/ai/prompts";
+import { fillTemplate } from "@/lib/i18n/fill-template";
+import { SUGGESTED_ANALYSES, promptLabelForIntent } from "@/features/ai/prompts";
 
 const STORAGE_KEY = "zt:onboarding:done";
-const STEP_LABELS = [
-  "Welcome",
-  "Try AI",
-  "First prompt",
-  "Credits",
-  "API / SDK",
-  "Heartbeat",
-] as const;
-const TOTAL = STEP_LABELS.length;
+const TOTAL = 6;
 
 const FIRST_PROMPTS = SUGGESTED_ANALYSES.slice(0, 3);
 
@@ -76,6 +70,20 @@ interface StepDef {
 }
 
 export function Onboarding() {
+  const { dict } = useDictionary();
+  const o = dict.dash.onboarding;
+  const common = dict.dashboardCommon;
+  const qa = dict.dash.home.quickActions;
+
+  const stepLabels = [
+    o.tabs.welcome,
+    o.tabs.tryAi,
+    o.tabs.firstPrompt,
+    o.tabs.credits,
+    o.tabs.apiSdk,
+    o.tabs.heartbeat,
+  ] as const;
+
   const [mounted, setMounted] = useState(false);
   const [visible, setVisible] = useState(false);
   const [step, setStep] = useState(0);
@@ -112,43 +120,37 @@ export function Onboarding() {
   const steps: StepDef[] = [
     {
       icon: PartyPopper,
-      title: "Welcome to ZYNTEKSIS",
-      description:
-        "ZYNTEKSIS helps you monitor production health and ask an AI assistant about errors, performance, and architecture — in one workspace.",
+      title: o.welcome,
+      description: o.welcomeDesc,
     },
     {
       icon: Sparkles,
-      title: "Try the AI assistant",
-      description:
-        "Open Code Health Assistant to ask about your projects, incidents, and code health. You can start chatting immediately — no SDK required.",
-      cta: { label: "Open AI Assistant", href: DASHBOARD_ROUTES.aiAssistant },
+      title: o.tryAi,
+      description: o.tryAiDesc,
+      cta: { label: qa.openAiAssistant, href: DASHBOARD_ROUTES.aiAssistant },
     },
     {
       icon: Sparkles,
-      title: "Send your first prompt",
-      description:
-        "Pick a starter question, or write your own. The assistant streams an answer and keeps the conversation in your history.",
+      title: o.firstPrompt,
+      description: o.firstPromptDesc,
     },
     {
       icon: Gauge,
-      title: "Understand your AI credits",
-      description:
-        "Your plan includes a monthly AI message allowance. Remaining usage appears in the AI sidebar. Limits are enforced automatically — nothing to configure.",
-      cta: { label: "View AI usage", href: DASHBOARD_ROUTES.aiAssistant },
+      title: o.credits,
+      description: o.creditsDesc,
+      cta: { label: o.viewAiUsage, href: DASHBOARD_ROUTES.aiAssistant },
     },
     {
       icon: KeyRound,
-      title: "Connect your app (optional)",
-      description:
-        "For live monitoring, create a project, generate an API key, and install the SDK. Skip this if you only want to explore AI for now.",
-      cta: { label: "Open API Keys", href: DASHBOARD_ROUTES.apiKeys },
+      title: o.connectApp,
+      description: o.connectAppDesc,
+      cta: { label: o.openApiKeys, href: DASHBOARD_ROUTES.apiKeys },
     },
     {
       icon: Radio,
-      title: "Verify your first heartbeat",
-      description:
-        "Once the SDK is running, your app sends a heartbeat every 60 seconds. Open Health Monitor to watch it arrive.",
-      cta: { label: "Open Health Monitor", href: DASHBOARD_ROUTES.health },
+      title: o.heartbeat,
+      description: o.heartbeatDesc,
+      cta: { label: o.openHealth, href: DASHBOARD_ROUTES.health },
     },
   ];
 
@@ -176,7 +178,7 @@ export function Onboarding() {
           <motion.div
             role="dialog"
             aria-modal="true"
-            aria-label="Onboarding"
+            aria-label={o.ariaLabel}
             initial={{ opacity: 0, y: 16, scale: 0.98 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 16, scale: 0.98 }}
@@ -185,7 +187,7 @@ export function Onboarding() {
           >
             <div className="flex items-center justify-between gap-4 px-4 pt-5 sm:px-6">
               <div className="flex flex-1 items-center gap-1.5">
-                {STEP_LABELS.map((label, index) => (
+                {stepLabels.map((label, index) => (
                   <div
                     key={label}
                     title={label}
@@ -204,7 +206,7 @@ export function Onboarding() {
                   onClick={finish}
                   className="flex shrink-0 items-center gap-1 text-xs text-zt-muted transition-colors hover:text-zt-text"
                 >
-                  Skip
+                  {o.skip}
                   <X className="size-3.5" aria-hidden />
                 </button>
               ) : null}
@@ -218,11 +220,10 @@ export function Onboarding() {
                     <AiOrb className="size-28 sm:size-32" interactive={false} />
                   </div>
                   <h2 className="text-2xl font-semibold text-zt-text">
-                    You&apos;re ready
+                    {o.readyTitle}
                   </h2>
                   <p className="mt-2 max-w-sm text-sm text-zt-muted">
-                    Ask the AI assistant anything about your code health, or
-                    open the dashboard to monitor your applications.
+                    {o.readyDesc}
                   </p>
                 </div>
               ) : (
@@ -238,7 +239,10 @@ export function Onboarding() {
                       </span>
                     )}
                     <span className="text-xs font-medium uppercase tracking-[0.2em] text-zt-muted">
-                      Step {step + 1} of {TOTAL}
+                      {fillTemplate(o.stepOf, {
+                        current: step + 1,
+                        total: TOTAL,
+                      })}
                     </span>
                     <h2 className="mt-1 text-xl font-semibold text-zt-text">
                       {current.title}
@@ -270,7 +274,13 @@ export function Onboarding() {
                             href={`${DASHBOARD_ROUTES.aiAssistant}?intent=${encodeURIComponent(s.intent)}`}
                             className="block rounded-xl border border-zt-border bg-zt-surface-2/60 px-3 py-2.5 text-left text-sm text-zt-text transition-colors hover:border-zt-border-strong hover:bg-zt-surface-2"
                           >
-                            <span className="font-medium">{s.label}</span>
+                            <span className="font-medium">
+                              {promptLabelForIntent(
+                                s.intent,
+                                dict.dash.ai.prompts,
+                                s.label,
+                              )}
+                            </span>
                             <span className="mt-0.5 block text-xs text-zt-muted line-clamp-2">
                               {s.prompt}
                             </span>
@@ -284,7 +294,7 @@ export function Onboarding() {
                     <div className="mt-5">
                       <div className="mb-3 flex items-center gap-2 text-xs text-zt-muted">
                         <Bug className="size-3.5" aria-hidden />
-                        Install snippet (optional for AI-only use)
+                        {o.installSnippet}
                       </div>
                       <SdkInstaller />
                     </div>
@@ -298,17 +308,17 @@ export function Onboarding() {
                 <>
                   <span className="flex items-center gap-1.5 text-xs text-zt-success">
                     <CheckCircle2 className="size-4" aria-hidden />
-                    Setup complete
+                    {o.setupComplete}
                   </span>
                   <div className="flex flex-wrap justify-end gap-2">
                     <Button asChild variant="secondary" size="md">
                       <Link href={DASHBOARD_ROUTES.aiAssistant}>
-                        Open AI
+                        {o.openAi}
                         <Sparkles aria-hidden />
                       </Link>
                     </Button>
                     <Button onClick={finish} size="md">
-                      Go to dashboard
+                      {o.goToDashboard}
                       <ArrowRight aria-hidden />
                     </Button>
                   </div>
@@ -323,14 +333,14 @@ export function Onboarding() {
                     className={cn(step === 0 && "invisible")}
                   >
                     <ArrowLeft aria-hidden />
-                    Back
+                    {common.back}
                   </Button>
                   <Button onClick={() => setStep((s) => s + 1)} size="md">
                     {step === 0
-                      ? "Get started"
+                      ? o.getStarted
                       : step === TOTAL - 1
-                        ? "Finish setup"
-                        : "Next"}
+                        ? o.finish
+                        : common.next}
                     <ArrowRight aria-hidden />
                   </Button>
                 </>

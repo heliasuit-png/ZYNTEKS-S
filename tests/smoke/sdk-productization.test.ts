@@ -6,6 +6,8 @@ import { readFileSync } from "node:fs";
 import { describe, it } from "node:test";
 import { resolve } from "node:path";
 
+import { dictionaries } from "@/lib/i18n/dictionaries";
+
 const guide = readFileSync(
   resolve(process.cwd(), "features/api-keys/components/connection-guide.tsx"),
   "utf8",
@@ -36,6 +38,9 @@ const envSetup = readFileSync(
   "utf8",
 );
 
+const enApiKeys = dictionaries.en.dash.apiKeys;
+const enShell = dictionaries.en.dash.shell;
+
 describe("SDK productization / connection UX", () => {
   it("exposes production ingest endpoint constant", () => {
     assert.match(constants, /ZYNTEKSIS_PRODUCTION_ENDPOINT/);
@@ -47,13 +52,13 @@ describe("SDK productization / connection UX", () => {
   });
 
   it("connection guide covers install, browser, server, heartbeat, errors, dashboard", () => {
-    assert.match(guide, /Connect an external project/);
-    assert.match(guide, /Browser SDK/);
-    assert.match(guide, /Server HTTP/);
-    assert.match(guide, /Generate Key|key below/);
+    assert.match(guide, /useDictionary|dict\.dash\.apiKeys/);
+    assert.match(enApiKeys.connectionGuide.title, /Connect an external project/i);
+    assert.match(enApiKeys.connectionGuide.tabBrowser, /Browser/i);
+    assert.match(enApiKeys.connectionGuide.tabServer, /Server/i);
     assert.match(guide, /API_ROUTES\.sdkHeartbeat|\/api\/sdk\/heartbeat/);
     assert.match(guide, /API_ROUTES\.sdkError|\/api\/sdk\/error/);
-    assert.match(guide, /service_role/);
+    assert.match(enApiKeys.connectionGuide.warning, /service_role/);
     assert.equal(/service_role\s*[:=]\s*['"]/.test(guide), false);
   });
 
@@ -73,12 +78,14 @@ describe("SDK productization / connection UX", () => {
   it("installer uses path-install + production endpoint + secret warning", () => {
     assert.match(installer, /absolute\/path\/to\/zynteksis\/sdk/);
     assert.match(installer, /ZYNTEKSIS_PRODUCTION_ENDPOINT/);
-    assert.match(installer, /service_role/);
+    assert.match(enShell.sdkWarning, /service_role/);
+    assert.match(installer, /shell\.sdkWarning|dict\.dash\.shell/);
   });
 
   it("reveal modal warns key is not service_role", () => {
-    assert.match(reveal, /service_role/);
-    assert.match(reveal, /never be shown again|won&apos;t be able to view/i);
+    assert.match(reveal, /t\.revealWarning|apiKeys\.revealWarning/);
+    assert.match(enApiKeys.revealWarning, /service_role/);
+    assert.match(enApiKeys.revealWarning, /won't be able to view|won’t be able to view/i);
   });
 
   it("sdk README documents production endpoint and browser-only init", () => {

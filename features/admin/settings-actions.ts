@@ -5,6 +5,7 @@ import { headers } from "next/headers";
 
 import { ADMIN_ROUTES } from "@/lib/constants";
 import { isAppError } from "@/lib/errors";
+import { getDictionary } from "@/lib/i18n/get-dictionary";
 import {
   createFeatureFlagAsAdmin,
   updateFeatureFlagStatusAsAdmin,
@@ -33,13 +34,15 @@ export async function updateFeatureFlagStatusAction(
   flagId: string,
   status: string,
 ): Promise<SettingsActionResult> {
+  const { dict } = await getDictionary();
+  const admin = dict.actionMessages.admin;
   try {
     await updateFeatureFlagStatusAsAdmin(await ctx(), flagId, status);
     revalidatePath(ADMIN_ROUTES.settings);
-    return { ok: true, message: "Feature flag updated." };
+    return { ok: true, message: admin.featureFlagUpdated };
   } catch (error) {
     if (isAppError(error)) return { ok: false, message: error.message };
-    return { ok: false, message: "Failed to update feature flag." };
+    return { ok: false, message: admin.featureFlagUpdateFailed };
   }
 }
 
@@ -50,13 +53,15 @@ export async function createFeatureFlagAction(input: {
   scope: string;
   status: string;
 }): Promise<SettingsActionResult> {
+  const { dict } = await getDictionary();
+  const admin = dict.actionMessages.admin;
   try {
     await createFeatureFlagAsAdmin(await ctx(), input);
     revalidatePath(ADMIN_ROUTES.settings);
-    return { ok: true, message: "Feature flag created." };
+    return { ok: true, message: admin.featureFlagCreated };
   } catch (error) {
     if (isAppError(error)) return { ok: false, message: error.message };
-    return { ok: false, message: "Failed to create feature flag." };
+    return { ok: false, message: admin.featureFlagCreateFailed };
   }
 }
 
@@ -69,12 +74,14 @@ export async function updatePlatformSettingsAction(input: {
   sessionTimeoutHours?: number;
   mfaRequired?: boolean;
 }): Promise<SettingsActionResult> {
+  const { dict } = await getDictionary();
+  const admin = dict.actionMessages.admin;
   try {
     await updatePlatformSystemSettingsAsAdmin(await ctx(), input);
     revalidatePath(ADMIN_ROUTES.settings);
-    return { ok: true, message: "Platform settings saved." };
+    return { ok: true, message: admin.platformSettingsSaved };
   } catch (error) {
     if (isAppError(error)) return { ok: false, message: error.message };
-    return { ok: false, message: "Failed to save platform settings." };
+    return { ok: false, message: admin.platformSettingsFailed };
   }
 }

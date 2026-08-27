@@ -1,5 +1,3 @@
-import type { Metadata } from "next";
-
 import { PageHeader } from "@/components/dashboard/page-header";
 import { FadeIn } from "@/components/dashboard/motion";
 import { STATUS_PAGE_BASE_PATH } from "@/lib/constants";
@@ -13,10 +11,14 @@ import type {
   StatusPageComponent,
   StatusPageMaintenance,
 } from "@/services/status";
+import { dashboardPageMetadata } from "@/lib/i18n/dashboard-metadata";
+import { getDictionary } from "@/lib/i18n/get-dictionary";
 
-export const metadata: Metadata = { title: "Status Pages" };
+export const generateMetadata = () => dashboardPageMetadata("statusPages");
 
 export default async function StatusPagesPage() {
+  const { dict } = await getDictionary();
+  const pageCopy = dict.dashboard.pageTitles.statusPages;
   const supabase = await createSupabaseServerClient();
   const user = await getAuthenticatedUser(supabase);
 
@@ -62,9 +64,7 @@ export default async function StatusPagesPage() {
 
   return (
     <div className="space-y-6">
-      <PageHeader
-        title="Status Pages"
-        description="Publish public status pages with uptime, incidents, and maintenance."
+      <PageHeader title={pageCopy.title} description={pageCopy.description}
       />
       <FadeIn>
         <StatusPageManager

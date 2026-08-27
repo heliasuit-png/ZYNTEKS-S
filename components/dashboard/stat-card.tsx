@@ -3,7 +3,9 @@
 import { Info } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
+import { useDictionary } from "@/components/i18n/locale-provider";
 import { cn } from "@/lib/utils";
+import { fillTemplate } from "@/lib/i18n/fill-template";
 import { CountUp } from "@/components/dashboard/motion";
 import { Tooltip } from "@/components/dashboard/tooltip";
 import { Sparkline } from "@/components/dashboard/sparkline";
@@ -100,6 +102,7 @@ export function StatCard({
   status,
   explanation,
 }: StatCardProps) {
+  const { dict } = useDictionary();
   const meta = toneMeta[tone];
 
   return (
@@ -117,7 +120,7 @@ export function StatCard({
             <Tooltip content={explanation}>
               <button
                 type="button"
-                aria-label={`About ${label}`}
+                aria-label={fillTemplate(dict.dash.shell.aboutStat, { label })}
                 className="rounded-full text-zt-muted/60 transition-colors hover:text-zt-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zt-primary/50"
               >
                 <Info className="size-3.5" aria-hidden />

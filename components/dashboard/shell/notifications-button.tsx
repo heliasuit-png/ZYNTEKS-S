@@ -3,7 +3,9 @@
 import Link from "next/link";
 import { Bell } from "lucide-react";
 
+import { useDictionary } from "@/components/i18n/locale-provider";
 import { cn } from "@/lib/utils";
+import { fillTemplate } from "@/lib/i18n/fill-template";
 import { Dropdown } from "@/components/dashboard/dropdown";
 import { DASHBOARD_ROUTES } from "@/lib/constants";
 import type { NotificationItem, NotificationType } from "@/types/dashboard";
@@ -24,6 +26,9 @@ export function NotificationsButton({
   unreadCount,
   notifications,
 }: NotificationsButtonProps) {
+  const { dict } = useDictionary();
+  const shell = dict.dash.shell;
+
   return (
     <Dropdown
       align="end"
@@ -33,8 +38,10 @@ export function NotificationsButton({
           className="relative flex size-9 items-center justify-center rounded-xl border border-zt-border bg-white/[0.02] text-zt-muted transition-colors hover:border-zt-border-strong hover:text-zt-text"
           aria-label={
             unreadCount > 0
-              ? `Notifications, ${unreadCount} unread`
-              : "Notifications"
+              ? fillTemplate(shell.notificationsUnreadAria, {
+                  count: unreadCount,
+                })
+              : shell.notificationsTitle
           }
         >
           <Bell
@@ -50,11 +57,11 @@ export function NotificationsButton({
       }
     >
       <div className="px-2 py-1.5 text-xs font-semibold uppercase tracking-wide text-zt-muted">
-        Notifications
+        {shell.notificationsTitle}
       </div>
       {notifications.length === 0 ? (
         <p className="px-3 py-6 text-center text-sm text-zt-muted">
-          You&apos;re all caught up.
+          {shell.allCaughtUp}
         </p>
       ) : (
         <ul className="max-h-72 overflow-y-auto">
@@ -84,7 +91,7 @@ export function NotificationsButton({
         href={DASHBOARD_ROUTES.notifications}
         className="mt-1 block rounded-lg px-3 py-2 text-center text-sm font-medium text-zt-primary transition-colors hover:bg-zt-surface-2"
       >
-        View all notifications
+        {shell.viewAllNotifications}
       </Link>
     </Dropdown>
   );

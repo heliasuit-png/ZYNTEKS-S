@@ -1,5 +1,7 @@
 import { AdminLoadingSkeleton } from "@/features/admin/components/ui/admin-loading-skeleton";
+import { getDictionary } from "@/lib/i18n/get-dictionary";
 
-export default function AdminAuditLoading() {
-  return <AdminLoadingSkeleton label="Loading audit" />;
+export default async function AdminAuditLoading() {
+  const { dict } = await getDictionary();
+  return <AdminLoadingSkeleton label={dict.admin.loading.audit} />;
 }

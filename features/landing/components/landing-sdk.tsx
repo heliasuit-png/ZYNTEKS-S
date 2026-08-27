@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Check, Copy } from "lucide-react";
 
+import { useDictionary } from "@/components/i18n/locale-provider";
 import {
   PACKAGE_MANAGERS,
   SDK_FRAMEWORKS,
@@ -12,6 +13,8 @@ import { Reveal } from "@/features/landing/components/reveal";
 import { cn } from "@/lib/utils";
 
 export function LandingSdk() {
+  const { dict } = useDictionary();
+  const copy = dict.landing.sdk;
   const [manager, setManager] = useState<(typeof PACKAGE_MANAGERS)[number]["id"]>(
     "npm",
   );
@@ -27,7 +30,7 @@ export function LandingSdk() {
     SDK_FRAMEWORKS.find((item) => item.id === framework)?.snippet ??
     SDK_FRAMEWORKS[0]!.snippet;
 
-  async function copy(value: string, kind: "install" | "snippet") {
+  async function copyText(value: string, kind: "install" | "snippet") {
     try {
       await navigator.clipboard.writeText(value);
       setCopied(kind);
@@ -40,9 +43,9 @@ export function LandingSdk() {
   return (
     <LandingSection
       id="sdk"
-      eyebrow="SDK"
-      title="Connect the SDK"
-      description="Path-install the local @zynteksis/sdk package (build sdk/ first), generate a project key, then init in the browser."
+      eyebrow={copy.eyebrow}
+      title={copy.title}
+      description={copy.desc}
     >
       <Reveal>
         <div className="overflow-hidden rounded-2xl border border-zt-border bg-[#070d18]">
@@ -71,16 +74,16 @@ export function LandingSdk() {
             </code>
             <button
               type="button"
-              onClick={() => void copy(install, "install")}
+              onClick={() => void copyText(install, "install")}
               className="inline-flex items-center gap-1.5 rounded-lg border border-zt-border px-2.5 py-1.5 text-xs text-zt-muted hover:text-zt-text"
-              aria-label="Copy install command"
+              aria-label={copy.copyInstallAria}
             >
               {copied === "install" ? (
                 <Check className="size-3.5 text-zt-success" />
               ) : (
                 <Copy className="size-3.5" />
               )}
-              Copy
+              {copy.copy}
             </button>
           </div>
 
@@ -98,7 +101,7 @@ export function LandingSdk() {
                 )}
                 aria-pressed={framework === item.id}
               >
-                {item.label}
+                {item.id === "browser" ? copy.anyBrowserApp : item.label}
               </button>
             ))}
           </div>
@@ -109,16 +112,16 @@ export function LandingSdk() {
             </pre>
             <button
               type="button"
-              onClick={() => void copy(snippet, "snippet")}
+              onClick={() => void copyText(snippet, "snippet")}
               className="absolute top-3 right-3 inline-flex items-center gap-1.5 rounded-lg border border-zt-border bg-[#070d18]/90 px-2.5 py-1.5 text-xs text-zt-muted hover:text-zt-text"
-              aria-label="Copy code snippet"
+              aria-label={copy.copySnippetAria}
             >
               {copied === "snippet" ? (
                 <Check className="size-3.5 text-zt-success" />
               ) : (
                 <Copy className="size-3.5" />
               )}
-              Copy
+              {copy.copy}
             </button>
           </div>
         </div>

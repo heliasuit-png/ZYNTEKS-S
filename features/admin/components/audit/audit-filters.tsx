@@ -3,6 +3,7 @@
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useTransition } from "react";
 
+import { useDictionary } from "@/components/i18n/locale-provider";
 import { ADMIN_ROUTES } from "@/lib/constants";
 import type { AuditCenterData } from "@/services/admin/audit-center.types";
 
@@ -11,6 +12,9 @@ export function AuditFilters({
 }: {
   options: AuditCenterData["filterOptions"];
 }) {
+  const { dict } = useDictionary();
+  const t = dict.admin.audit.filters;
+  const common = dict.admin.common;
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -38,28 +42,30 @@ export function AuditFilters({
   return (
     <div className="admin-glass admin-panel space-y-3 rounded-2xl p-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <p className="admin-eyebrow">Search & filters</p>
+        <p className="admin-eyebrow">{t.title}</p>
         <div className="flex flex-wrap items-center gap-2">
           {pending ? (
-            <span className="text-[10px] text-[var(--admin-muted)]">Updating…</span>
+            <span className="text-[10px] text-[var(--admin-muted)]">
+              {common.updating}
+            </span>
           ) : null}
           <a
             href={`${exportBase}?format=csv&${exportQuery}`}
             className="admin-btn-ghost"
           >
-            Export CSV
+            {common.exportCsv}
           </a>
           <a
             href={`${exportBase}?format=json&${exportQuery}`}
             className="admin-btn-ghost"
           >
-            Export JSON
+            {common.exportJson}
           </a>
           <a
             href={ADMIN_ROUTES.auditLogs}
             className="text-xs text-[var(--admin-muted)] hover:text-[var(--admin-accent-text)]"
           >
-            Reset
+            {common.reset}
           </a>
         </div>
       </div>
@@ -67,7 +73,7 @@ export function AuditFilters({
       <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         <input
           className="admin-select xl:col-span-2"
-          placeholder="Search user, workspace, project, action, email…"
+          placeholder={t.searchPlaceholder}
           defaultValue={searchParams.get("q") ?? ""}
           onKeyDown={(e) => {
             if (e.key === "Enter") {
@@ -75,52 +81,52 @@ export function AuditFilters({
             }
           }}
           onBlur={(e) => update("q", e.target.value.trim())}
-          aria-label="Search audit events"
+          aria-label={t.searchAria}
         />
         <select
           className="admin-select"
           value={searchParams.get("range") ?? "30d"}
           onChange={(e) => update("range", e.target.value)}
-          aria-label="Date range"
+          aria-label={common.dateRange}
         >
-          <option value="24h">Last 24h</option>
-          <option value="7d">Last 7d</option>
-          <option value="30d">Last 30d</option>
-          <option value="90d">Last 90d</option>
-          <option value="all">All time</option>
+          <option value="24h">{common.range24h}</option>
+          <option value="7d">{common.range7d}</option>
+          <option value="30d">{common.range30d}</option>
+          <option value="90d">{common.range90d}</option>
+          <option value="all">{common.rangeAll}</option>
         </select>
         <select
           className="admin-select"
           value={searchParams.get("severity") ?? ""}
           onChange={(e) => update("severity", e.target.value)}
-          aria-label="Severity"
+          aria-label={common.severity}
         >
-          <option value="">All severities</option>
-          <option value="critical">Critical</option>
-          <option value="high">High</option>
-          <option value="medium">Medium</option>
-          <option value="low">Low</option>
+          <option value="">{t.allSeverities}</option>
+          <option value="critical">{common.severityCritical}</option>
+          <option value="high">{common.severityHigh}</option>
+          <option value="medium">{common.severityMedium}</option>
+          <option value="low">{common.severityLow}</option>
         </select>
         <select
           className="admin-select"
           value={searchParams.get("category") ?? ""}
           onChange={(e) => update("category", e.target.value)}
-          aria-label="Category"
+          aria-label={t.category}
         >
-          <option value="">All categories</option>
-          <option value="security">Security</option>
-          <option value="admin">Admin</option>
-          <option value="workspace">Workspace</option>
-          <option value="user">User</option>
-          <option value="system">System</option>
+          <option value="">{t.allCategories}</option>
+          <option value="security">{t.categorySecurity}</option>
+          <option value="admin">{t.categoryAdmin}</option>
+          <option value="workspace">{t.categoryWorkspace}</option>
+          <option value="user">{t.categoryUser}</option>
+          <option value="system">{t.categorySystem}</option>
         </select>
         <select
           className="admin-select"
           value={searchParams.get("actorRole") ?? ""}
           onChange={(e) => update("actorRole", e.target.value)}
-          aria-label="Actor role"
+          aria-label={t.actorRole}
         >
-          <option value="">All actor roles</option>
+          <option value="">{t.allActorRoles}</option>
           {options.actorRoles.map((role) => (
             <option key={role} value={role}>
               {role}
@@ -131,9 +137,9 @@ export function AuditFilters({
           className="admin-select"
           value={workspaceId}
           onChange={(e) => update("workspaceId", e.target.value)}
-          aria-label="Workspace"
+          aria-label={common.workspace}
         >
-          <option value="">All workspaces</option>
+          <option value="">{t.allWorkspaces}</option>
           {options.workspaces.map((ws) => (
             <option key={ws.id} value={ws.id}>
               {ws.name}
@@ -144,9 +150,9 @@ export function AuditFilters({
           className="admin-select"
           value={searchParams.get("projectId") ?? ""}
           onChange={(e) => update("projectId", e.target.value)}
-          aria-label="Project"
+          aria-label={common.project}
         >
-          <option value="">All projects</option>
+          <option value="">{t.allProjects}</option>
           {projects.map((project) => (
             <option key={project.id} value={project.id}>
               {project.name}
@@ -157,20 +163,20 @@ export function AuditFilters({
           className="admin-select"
           value={searchParams.get("result") ?? ""}
           onChange={(e) => update("result", e.target.value)}
-          aria-label="Result"
+          aria-label={t.result}
         >
-          <option value="">All results</option>
-          <option value="success">Success</option>
-          <option value="failure">Failure</option>
-          <option value="unknown">Unknown</option>
+          <option value="">{t.allResults}</option>
+          <option value="success">{t.resultSuccess}</option>
+          <option value="failure">{t.resultFailure}</option>
+          <option value="unknown">{t.resultUnknown}</option>
         </select>
         <select
           className="admin-select"
           value={searchParams.get("action") ?? ""}
           onChange={(e) => update("action", e.target.value)}
-          aria-label="Action"
+          aria-label={t.action}
         >
-          <option value="">All actions</option>
+          <option value="">{t.allActions}</option>
           {options.actions.map((action) => (
             <option key={action} value={action}>
               {action}
@@ -182,14 +188,14 @@ export function AuditFilters({
           className="admin-select"
           value={searchParams.get("from")?.slice(0, 10) ?? ""}
           onChange={(e) => update("from", e.target.value)}
-          aria-label="From date"
+          aria-label={common.fromDate}
         />
         <input
           type="date"
           className="admin-select"
           value={searchParams.get("to")?.slice(0, 10) ?? ""}
           onChange={(e) => update("to", e.target.value)}
-          aria-label="To date"
+          aria-label={common.toDate}
         />
       </div>
     </div>

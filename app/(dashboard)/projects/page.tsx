@@ -1,5 +1,6 @@
-import type { Metadata } from "next";
 import { redirect } from "next/navigation";
+import { dashboardPageMetadata } from "@/lib/i18n/dashboard-metadata";
+import { getDictionary } from "@/lib/i18n/get-dictionary";
 
 import { PageHeader } from "@/components/dashboard/page-header";
 import { ROUTES } from "@/lib/constants";
@@ -8,7 +9,7 @@ import { listProjects } from "@/services/projects";
 import { createSupabaseServerClient } from "@/supabase/server";
 import { ProjectsExplorer } from "@/features/projects/components/projects-explorer";
 
-export const metadata: Metadata = { title: "Projects" };
+export const generateMetadata = () => dashboardPageMetadata("projects");
 
 const PAGE_SIZE = 9;
 
@@ -19,6 +20,8 @@ interface ProjectsPageProps {
 export default async function ProjectsPage({
   searchParams,
 }: ProjectsPageProps) {
+  const { dict } = await getDictionary();
+  const pageCopy = dict.dashboard.pageTitles.projects;
   const params = await searchParams;
 
   const supabase = await createSupabaseServerClient();
@@ -36,9 +39,7 @@ export default async function ProjectsPage({
 
   return (
     <div className="space-y-6">
-      <PageHeader
-        title="Projects"
-        description="Create and manage the projects in your workspace."
+      <PageHeader title={pageCopy.title} description={pageCopy.description}
       />
       <ProjectsExplorer
         projects={result.items}

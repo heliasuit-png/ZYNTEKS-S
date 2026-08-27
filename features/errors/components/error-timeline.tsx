@@ -1,3 +1,6 @@
+"use client";
+
+import { useDictionary } from "@/components/i18n/locale-provider";
 import { formatDateTime } from "@/utils/format";
 import { cn } from "@/lib/utils";
 import type { ErrorTimelineEvent } from "@/features/errors/types";
@@ -15,15 +18,16 @@ interface ErrorTimelineProps {
 }
 
 export function ErrorTimeline({ events }: ErrorTimelineProps) {
+  const { dict } = useDictionary();
+  const t = dict.dash.errors;
+
   if (events.length === 0) {
-    return (
-      <p className="text-sm text-zt-muted">No timeline events yet.</p>
-    );
+    return <p className="text-sm text-zt-muted">{t.noTimelineEvents}</p>;
   }
 
   return (
     <ol className="relative space-y-5 border-l border-zt-border pl-5">
-      {events.map((event, index) => (
+      {events.map((event) => (
         <li key={event.id} className="relative">
           <span
             className={cn(

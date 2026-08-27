@@ -5,6 +5,8 @@ import { headers } from "next/headers";
 
 import { ADMIN_ROUTES } from "@/lib/constants";
 import { isAppError } from "@/lib/errors";
+import { fillTemplate } from "@/lib/i18n/fill-template";
+import { getDictionary } from "@/lib/i18n/get-dictionary";
 import {
   changeWorkspaceMemberRoleAsAdmin,
   deleteWorkspaceAsAdmin,
@@ -34,9 +36,10 @@ async function ctx() {
   };
 }
 
-function fail(error: unknown): WorkspaceActionResult {
+async function fail(error: unknown): Promise<WorkspaceActionResult> {
+  const { dict } = await getDictionary();
   if (isAppError(error)) return { ok: false, message: error.message };
-  return { ok: false, message: "Action failed. Please try again." };
+  return { ok: false, message: dict.actionMessages.actionFailed };
 }
 
 export async function loadWorkspaceDetailAction(workspaceId: string) {
@@ -48,10 +51,16 @@ export async function setWorkspaceStatusAction(
   workspaceId: string,
   status: WorkspaceAdminStatus,
 ): Promise<WorkspaceActionResult> {
+  const { dict } = await getDictionary();
   try {
     await setWorkspaceAdminStatus(await ctx(), workspaceId, status);
     revalidatePath(ADMIN_ROUTES.workspaces);
-    return { ok: true, message: `Workspace marked ${status}.` };
+    return {
+      ok: true,
+      message: fillTemplate(dict.actionMessages.admin.workspaceMarked, {
+        status,
+      }),
+    };
   } catch (error) {
     return fail(error);
   }
@@ -61,10 +70,11 @@ export async function renameWorkspaceAction(
   workspaceId: string,
   name: string,
 ): Promise<WorkspaceActionResult> {
+  const { dict } = await getDictionary();
   try {
     await renameWorkspaceAsAdmin(await ctx(), workspaceId, name);
     revalidatePath(ADMIN_ROUTES.workspaces);
-    return { ok: true, message: "Workspace renamed." };
+    return { ok: true, message: dict.actionMessages.admin.workspaceRenamed };
   } catch (error) {
     return fail(error);
   }
@@ -74,10 +84,11 @@ export async function deleteWorkspaceAction(
   workspaceId: string,
   confirmationName: string,
 ): Promise<WorkspaceActionResult> {
+  const { dict } = await getDictionary();
   try {
     await deleteWorkspaceAsAdmin(await ctx(), workspaceId, confirmationName);
     revalidatePath(ADMIN_ROUTES.workspaces);
-    return { ok: true, message: "Workspace deleted." };
+    return { ok: true, message: dict.actionMessages.admin.workspaceDeleted };
   } catch (error) {
     return fail(error);
   }
@@ -87,10 +98,14 @@ export async function transferWorkspaceOwnerAction(
   workspaceId: string,
   newOwnerUserId: string,
 ): Promise<WorkspaceActionResult> {
+  const { dict } = await getDictionary();
   try {
     await transferWorkspaceAsAdmin(await ctx(), workspaceId, newOwnerUserId);
     revalidatePath(ADMIN_ROUTES.workspaces);
-    return { ok: true, message: "Ownership transferred." };
+    return {
+      ok: true,
+      message: dict.actionMessages.admin.ownershipTransferred,
+    };
   } catch (error) {
     return fail(error);
   }
@@ -100,10 +115,11 @@ export async function removeMemberAction(
   workspaceId: string,
   userId: string,
 ): Promise<WorkspaceActionResult> {
+  const { dict } = await getDictionary();
   try {
     await removeWorkspaceMemberAsAdmin(await ctx(), workspaceId, userId);
     revalidatePath(ADMIN_ROUTES.workspaces);
-    return { ok: true, message: "Member removed." };
+    return { ok: true, message: dict.actionMessages.admin.memberRemoved };
   } catch (error) {
     return fail(error);
   }
@@ -113,6 +129,7 @@ export async function promoteMemberAction(
   workspaceId: string,
   userId: string,
 ): Promise<WorkspaceActionResult> {
+  const { dict } = await getDictionary();
   try {
     await changeWorkspaceMemberRoleAsAdmin(
       await ctx(),
@@ -121,7 +138,7 @@ export async function promoteMemberAction(
       "up",
     );
     revalidatePath(ADMIN_ROUTES.workspaces);
-    return { ok: true, message: "Member promoted." };
+    return { ok: true, message: dict.actionMessages.admin.memberPromoted };
   } catch (error) {
     return fail(error);
   }
@@ -131,6 +148,7 @@ export async function demoteMemberAction(
   workspaceId: string,
   userId: string,
 ): Promise<WorkspaceActionResult> {
+  const { dict } = await getDictionary();
   try {
     await changeWorkspaceMemberRoleAsAdmin(
       await ctx(),
@@ -139,7 +157,7 @@ export async function demoteMemberAction(
       "down",
     );
     revalidatePath(ADMIN_ROUTES.workspaces);
-    return { ok: true, message: "Member demoted." };
+    return { ok: true, message: dict.actionMessages.admin.memberDemoted };
   } catch (error) {
     return fail(error);
   }

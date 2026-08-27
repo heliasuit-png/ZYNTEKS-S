@@ -1,3 +1,5 @@
+"use client";
+
 import { Bell } from "lucide-react";
 
 import {
@@ -9,6 +11,7 @@ import {
 import { EmptyState } from "@/components/dashboard/empty-state";
 import { Badge } from "@/components/dashboard/badge";
 import type { BadgeProps } from "@/components/dashboard/badge";
+import { useDictionary } from "@/components/i18n/locale-provider";
 import { formatDate } from "@/utils/format";
 import type { NotificationItem, NotificationType } from "@/types/dashboard";
 
@@ -24,18 +27,17 @@ export function RecentNotifications({
 }: {
   notifications: NotificationItem[];
 }) {
+  const { dict } = useDictionary();
+  const t = dict.dash.home.recentNotifications;
+
   return (
     <Panel className="h-full">
       <PanelHeader>
-        <PanelTitle>Recent Notifications</PanelTitle>
+        <PanelTitle>{t.title}</PanelTitle>
       </PanelHeader>
       <PanelContent>
         {notifications.length === 0 ? (
-          <EmptyState
-            icon={Bell}
-            title="No notifications"
-            description="Account and system notifications will show up here."
-          />
+          <EmptyState icon={Bell} title={t.empty} description={t.emptyDesc} />
         ) : (
           <ul className="space-y-3">
             {notifications.map((notification) => (

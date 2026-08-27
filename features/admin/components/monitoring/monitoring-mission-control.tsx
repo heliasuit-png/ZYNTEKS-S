@@ -5,6 +5,8 @@ import { useEffect, useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 
+import { useDictionary } from "@/components/i18n/locale-provider";
+import { fillTemplate } from "@/lib/i18n/fill-template";
 import type { MonitoringMissionData } from "@/services/admin/monitoring-mission.types";
 import type { HealthTone } from "@/services/admin/executive-dashboard.types";
 import { HealthDot } from "@/features/admin/components/executive/health-dot";
@@ -20,6 +22,16 @@ import { AdminPageHeader } from "@/features/admin/components/ui/admin-page-heade
 import { AdminEmptyState } from "@/features/admin/components/ui/admin-empty-state";
 import { ADMIN_KPI_STAGGER } from "@/features/admin/components/ui/admin-motion";
 
+function WorldMapLoading() {
+  const { dict } = useDictionary();
+  return (
+    <div
+      className="admin-skeleton h-72 w-full"
+      aria-label={dict.admin.monitoring.loadingMap}
+    />
+  );
+}
+
 const WorldMap = dynamic(
   () =>
     import("@/features/admin/components/monitoring/world-map").then(
@@ -27,12 +39,7 @@ const WorldMap = dynamic(
     ),
   {
     ssr: false,
-    loading: () => (
-      <div
-        className="admin-skeleton h-72 w-full"
-        aria-label="Loading world map"
-      />
-    ),
+    loading: () => <WorldMapLoading />,
   },
 );
 
@@ -60,6 +67,8 @@ export function MonitoringMissionControl({
 }: {
   data: MonitoringMissionData;
 }) {
+  const { dict, locale } = useDictionary();
+  const t = dict.admin.monitoring;
   const router = useRouter();
   const [now, setNow] = useState(() => Date.now());
 
@@ -83,16 +92,19 @@ export function MonitoringMissionControl({
   return (
     <div className="space-y-5">
       <AdminPageHeader
-        eyebrow="Mission Control"
-        title="Monitoring"
-        description="Real-time platform telemetry, health, incidents, and operational probes."
+        eyebrow={t.eyebrow}
+        title={t.pageTitle}
+        description={t.description}
         actions={
           <div className="rounded-xl border border-[var(--admin-border)] bg-[var(--admin-surface)] px-3 py-2 text-right">
             <p className="text-[10px] uppercase tracking-wide text-[var(--admin-muted)]">
-              Auto refresh
+              {t.autoRefresh}
             </p>
             <p className="text-sm text-[var(--admin-accent-text)]">
-              {secondsToRefresh}s · updated {formatRelative(data.generatedAt)}
+              {fillTemplate(t.refreshCountdown, {
+                seconds: String(secondsToRefresh),
+                when: formatRelative(data.generatedAt, locale),
+              })}
             </p>
           </div>
         }
@@ -125,8 +137,9 @@ export function MonitoringMissionControl({
 
       {data.unavailable.length > 0 ? (
         <p className="text-[11px] text-[var(--admin-muted)]">
-          Honest gaps: {data.unavailable.join(" · ")}. Values shown are derived
-          only from persisted telemetry.
+          {fillTemplate(t.honestGaps, {
+            items: data.unavailable.join(" · "),
+          })}
         </p>
       ) : null}
     </div>
@@ -134,6 +147,8 @@ export function MonitoringMissionControl({
 }
 
 function GlobalStatus({ data }: { data: MonitoringMissionData }) {
+  const { dict } = useDictionary();
+  const t = dict.admin.monitoring;
   const tone = data.globalStatus.platformTone;
   return (
     <section
@@ -162,26 +177,34 @@ function GlobalStatus({ data }: { data: MonitoringMissionData }) {
           </span>
           <div>
             <p className="text-[11px] uppercase tracking-[0.16em] text-[var(--admin-muted)]">
-              Platform status
+              {t.platformStatus}
             </p>
             <p className={`text-xl font-semibold ${TONE_TEXT[tone]}`}>
-              {data.globalStatus.platformLabel}
+              {t.platformLabels[tone]}
             </p>
           </div>
         </div>
         <div className="flex flex-wrap gap-4 text-xs text-[var(--admin-muted)]">
           <Stat
-            label="Response time"
+            label={t.responseTime}
             value={formatMs(data.globalStatus.responseTimeMs)}
           />
           <Stat
-            label="Uptime (30d)"
+            label={t.uptime30d}
             value={formatPercent(data.globalStatus.uptimePercent30d)}
           />
         </div>
       </div>
       <div className="relative mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-9">
-        {data.globalStatus.probes.map((probe) => (
+        {data.globalStatus.probes.map((probe) => {
+          const detailTemplate =
+            t.probeDetails[
+              probe.detailKey as keyof typeof t.probeDetails
+            ] ?? probe.detailKey;
+          const detail = probe.detailParams
+            ? fillTemplate(detailTemplate, probe.detailParams)
+            : detailTemplate;
+          return (
           <article
             key={probe.id}
             className="rounded-xl border border-[var(--admin-border)] bg-black/20 px-2.5 py-2"
@@ -189,14 +212,15 @@ function GlobalStatus({ data }: { data: MonitoringMissionData }) {
             <div className="flex items-center gap-1.5">
               <HealthDot tone={probe.tone} />
               <p className="text-[11px] font-medium text-[var(--admin-text)]">
-                {probe.label}
+                {t.probes[probe.id]}
               </p>
             </div>
             <p className="mt-1 line-clamp-2 text-[10px] text-[var(--admin-muted)]">
-              {probe.detail}
+              {detail}
             </p>
           </article>
-        ))}
+          );
+        })}
       </div>
     </section>
   );
@@ -207,21 +231,32 @@ function LiveMetricsRow({
 }: {
   metrics: MonitoringMissionData["liveMetrics"];
 }) {
+  const { dict } = useDictionary();
+  const t = dict.admin.monitoring;
   const cards = [
-    { label: "API req/sec", value: metrics.apiRequestsPerSec.toFixed(2) },
-    { label: "Errors/min", value: metrics.errorsPerMin.toFixed(2) },
-    { label: "Heartbeats/min", value: metrics.heartbeatsPerMin.toFixed(2) },
-    { label: "AI req/min", value: metrics.aiRequestsPerMin.toFixed(2) },
-    { label: "Avg response", value: formatMs(metrics.averageResponseTimeMs) },
-    { label: "DB latency", value: formatMs(metrics.databaseLatencyMs) },
+    { label: t.metrics.apiReqSec, value: metrics.apiRequestsPerSec.toFixed(2) },
+    { label: t.metrics.errorsMin, value: metrics.errorsPerMin.toFixed(2) },
     {
-      label: "Memory (SDK)",
+      label: t.metrics.heartbeatsMin,
+      value: metrics.heartbeatsPerMin.toFixed(2),
+    },
+    { label: t.metrics.aiReqMin, value: metrics.aiRequestsPerMin.toFixed(2) },
+    {
+      label: t.metrics.avgResponse,
+      value: formatMs(metrics.averageResponseTimeMs),
+    },
+    {
+      label: t.metrics.dbLatency,
+      value: formatMs(metrics.databaseLatencyMs),
+    },
+    {
+      label: t.metrics.memorySdk,
       value:
         metrics.memoryMbAvg == null
           ? "—"
           : `${metrics.memoryMbAvg.toFixed(1)} MB`,
     },
-    { label: "CPU", value: "Not available" },
+    { label: t.cpu, value: t.notAvailable },
   ];
 
   return (
@@ -251,11 +286,13 @@ function EventStream({
 }: {
   stream: MonitoringMissionData["stream"];
 }) {
+  const { dict, locale } = useDictionary();
+  const t = dict.admin.monitoring;
   return (
-    <Panel title="Live event stream" subtitle="Newest first · auto-refreshed">
+    <Panel title={t.liveStream} subtitle={t.liveStreamDesc}>
       <div className="max-h-[420px] space-y-2 overflow-y-auto pr-1">
         {stream.length === 0 ? (
-          <AdminEmptyState title="No events in the selected range." />
+          <AdminEmptyState title={t.liveStreamEmpty} />
         ) : (
           stream.map((event) => (
             <div
@@ -272,7 +309,7 @@ function EventStream({
                     {event.title}
                   </p>
                   <time className="text-[10px] text-[var(--admin-muted)]">
-                    {formatRelative(event.occurredAt)}
+                    {formatRelative(event.occurredAt, locale)}
                   </time>
                 </div>
                 <p className="mt-0.5 text-[11px] text-[var(--admin-muted)]">
@@ -296,15 +333,33 @@ function HealthOverview({
 }: {
   health: MonitoringMissionData["health"];
 }) {
+  const { dict, locale } = useDictionary();
+  const t = dict.admin.monitoring;
   const buckets = [
-    { key: "healthy", label: "Healthy", tone: "text-emerald-300" },
-    { key: "warning", label: "Warning", tone: "text-amber-300" },
-    { key: "critical", label: "Critical", tone: "text-rose-300" },
-    { key: "offline", label: "Offline", tone: "text-slate-300" },
-  ] as const;
+    {
+      key: "healthy" as const,
+      label: t.healthStatuses.healthy,
+      tone: "text-emerald-300",
+    },
+    {
+      key: "warning" as const,
+      label: t.healthStatuses.warning,
+      tone: "text-amber-300",
+    },
+    {
+      key: "critical" as const,
+      label: t.healthStatuses.critical,
+      tone: "text-rose-300",
+    },
+    {
+      key: "offline" as const,
+      label: t.healthStatuses.offline,
+      tone: "text-slate-300",
+    },
+  ];
 
   return (
-    <Panel title="Health overview" subtitle="Derived from heartbeats, errors, and incidents">
+    <Panel title={t.healthOverview} subtitle={t.healthOverviewDesc}>
       <div className="mb-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
         {buckets.map((bucket) => (
           <div
@@ -322,7 +377,7 @@ function HealthOverview({
       </div>
       <div className="max-h-72 space-y-1.5 overflow-y-auto">
         {health.projects.length === 0 ? (
-          <Empty>No projects in scope.</Empty>
+          <Empty>{t.noProjectsInScope}</Empty>
         ) : (
           health.projects.map((project) => (
             <div
@@ -334,8 +389,10 @@ function HealthOverview({
                 <p className="truncate text-[10px] text-[var(--admin-muted)]">
                   {project.workspaceName}
                   {project.lastHeartbeatAt
-                    ? ` · HB ${formatRelative(project.lastHeartbeatAt)}`
-                    : " · no heartbeat"}
+                    ? ` · ${fillTemplate(t.heartbeatRelative, {
+                        when: formatRelative(project.lastHeartbeatAt, locale),
+                      })}`
+                    : ` · ${t.noHeartbeat}`}
                 </p>
               </div>
               <div className="text-right">
@@ -343,7 +400,11 @@ function HealthOverview({
                   {project.status}
                 </p>
                 <p className="text-[10px] text-[var(--admin-muted)]">
-                  {project.score == null ? "—" : `score ${project.score}`}
+                  {project.score == null
+                    ? "—"
+                    : fillTemplate(t.scoreValue, {
+                        score: String(project.score),
+                      })}
                 </p>
               </div>
             </div>
@@ -359,11 +420,13 @@ function IncidentPanel({
 }: {
   incidents: MonitoringMissionData["incidents"];
 }) {
+  const { dict } = useDictionary();
+  const t = dict.admin.monitoring;
   return (
-    <Panel title="Incident panel" subtitle="Open · monitoring · resolved">
-      <IncidentGroup label="Open" items={incidents.open} />
-      <IncidentGroup label="Monitoring" items={incidents.monitoring} />
-      <IncidentGroup label="Resolved" items={incidents.resolved} />
+    <Panel title={t.incidentPanel} subtitle={t.incidentPanelDesc}>
+      <IncidentGroup label={t.incidentOpen} items={incidents.open} />
+      <IncidentGroup label={t.incidentMonitoring} items={incidents.monitoring} />
+      <IncidentGroup label={t.incidentResolved} items={incidents.resolved} />
     </Panel>
   );
 }
@@ -375,13 +438,15 @@ function IncidentGroup({
   label: string;
   items: MonitoringMissionData["incidents"]["open"];
 }) {
+  const { dict } = useDictionary();
+  const common = dict.admin.common;
   return (
     <div className="mb-3">
       <p className="mb-1.5 text-[10px] uppercase tracking-[0.14em] text-[var(--admin-muted)]">
         {label} ({items.length})
       </p>
       {items.length === 0 ? (
-        <Empty>None</Empty>
+        <Empty>{common.none}</Empty>
       ) : (
         <div className="space-y-1.5">
           {items.slice(0, 8).map((item) => (
@@ -410,10 +475,16 @@ function ErrorAnalytics({
 }: {
   errors: MonitoringMissionData["errors"];
 }) {
+  const { dict } = useDictionary();
+  const t = dict.admin.monitoring;
   const max = Math.max(1, ...errors.trend.map((p) => p.value));
   return (
-    <Panel title="Error analytics" subtitle="Top errors · newest · trend">
-      <div className="mb-3 flex h-16 items-end gap-0.5" role="img" aria-label="Error trend">
+    <Panel title={t.errorAnalytics} subtitle={t.errorAnalyticsDesc}>
+      <div
+        className="mb-3 flex h-16 items-end gap-0.5"
+        role="img"
+        aria-label={t.errorTrendAria}
+      >
         {errors.trend.map((point) => (
           <div
             key={point.label}
@@ -427,8 +498,8 @@ function ErrorAnalytics({
         ))}
       </div>
       <div className="grid gap-3 md:grid-cols-2">
-        <ErrorList title="Top errors" items={errors.top} />
-        <ErrorList title="Newest errors" items={errors.newest} />
+        <ErrorList title={t.topErrors} items={errors.top} />
+        <ErrorList title={t.newestErrors} items={errors.newest} />
       </div>
     </Panel>
   );
@@ -441,6 +512,8 @@ function ErrorList({
   title: string;
   items: MonitoringMissionData["errors"]["top"];
 }) {
+  const { dict, locale } = useDictionary();
+  const t = dict.admin.monitoring;
   return (
     <div>
       <p className="mb-1.5 text-[10px] uppercase tracking-[0.14em] text-[var(--admin-muted)]">
@@ -448,7 +521,7 @@ function ErrorList({
       </p>
       <div className="max-h-56 space-y-1.5 overflow-y-auto">
         {items.length === 0 ? (
-          <Empty>No errors.</Empty>
+          <Empty>{t.noErrors}</Empty>
         ) : (
           items.map((item) => (
             <div
@@ -458,7 +531,7 @@ function ErrorList({
               <p className="line-clamp-2 text-[var(--admin-text)]">{item.message}</p>
               <p className="mt-0.5 text-[10px] text-[var(--admin-muted)]">
                 {item.level} · {item.occurrences}× · {item.projectName} ·{" "}
-                {formatRelative(item.lastSeen)}
+                {formatRelative(item.lastSeen, locale)}
               </p>
               {item.stackSummary ? (
                 <p className="mt-0.5 truncate font-mono text-[10px] text-rose-200/70">
@@ -480,19 +553,21 @@ function PerformancePanel({
   performance: MonitoringMissionData["performance"];
   metrics: MonitoringMissionData["liveMetrics"];
 }) {
+  const { dict } = useDictionary();
+  const t = dict.admin.monitoring;
   return (
-    <Panel title="Performance" subtitle="Endpoints · latency percentiles">
+    <Panel title={t.performance} subtitle={t.performanceDesc}>
       <div className="mb-3 grid grid-cols-3 gap-2 text-xs">
-        <Stat label="Avg" value={formatMs(metrics.averageResponseTimeMs)} />
-        <Stat label="p95" value={formatMs(metrics.p95ResponseTimeMs)} />
-        <Stat label="p99" value={formatMs(metrics.p99ResponseTimeMs)} />
+        <Stat label={t.avg} value={formatMs(metrics.averageResponseTimeMs)} />
+        <Stat label={t.p95} value={formatMs(metrics.p95ResponseTimeMs)} />
+        <Stat label={t.p99} value={formatMs(metrics.p99ResponseTimeMs)} />
       </div>
       <p className="mb-1.5 text-[10px] uppercase tracking-[0.14em] text-[var(--admin-muted)]">
-        Largest endpoints
+        {t.largestEndpoints}
       </p>
       <EndpointTable rows={performance.endpoints} />
       <p className="mb-1.5 mt-3 text-[10px] uppercase tracking-[0.14em] text-[var(--admin-muted)]">
-        Slowest requests (by p95)
+        {t.slowestRequests}
       </p>
       <EndpointTable rows={performance.slowest} />
     </Panel>
@@ -504,7 +579,9 @@ function EndpointTable({
 }: {
   rows: MonitoringMissionData["performance"]["endpoints"];
 }) {
-  if (rows.length === 0) return <Empty>No performance samples.</Empty>;
+  const { dict } = useDictionary();
+  const t = dict.admin.monitoring;
+  if (rows.length === 0) return <Empty>{t.noPerformanceSamples}</Empty>;
   return (
     <div className="max-h-40 space-y-1 overflow-y-auto">
       {rows.slice(0, 8).map((row) => (
@@ -523,17 +600,32 @@ function EndpointTable({
 }
 
 function SdkOverview({ sdk }: { sdk: MonitoringMissionData["sdk"] }) {
+  const { dict, locale } = useDictionary();
+  const t = dict.admin.monitoring;
+  const common = dict.admin.common;
   return (
-    <Panel title="SDK overview" subtitle="Versions · environments · heartbeats">
+    <Panel title={t.sdkOverview} subtitle={t.sdkOverviewDesc}>
       <div className="mb-3 grid grid-cols-2 gap-2 text-xs">
-        <Stat label="Production" value={formatNumber(sdk.productionHeartbeats)} />
-        <Stat label="Development" value={formatNumber(sdk.developmentHeartbeats)} />
-        <Stat label="Staging" value={formatNumber(sdk.stagingHeartbeats)} />
-        <Stat label="Silent projects" value={formatNumber(sdk.silentProjects)} />
+        <Stat
+          label={common.envProduction}
+          value={formatNumber(sdk.productionHeartbeats)}
+        />
+        <Stat
+          label={common.envDevelopment}
+          value={formatNumber(sdk.developmentHeartbeats)}
+        />
+        <Stat
+          label={common.envStaging}
+          value={formatNumber(sdk.stagingHeartbeats)}
+        />
+        <Stat
+          label={t.silentProjects}
+          value={formatNumber(sdk.silentProjects)}
+        />
       </div>
       <div className="max-h-56 space-y-1.5 overflow-y-auto">
         {sdk.versions.length === 0 ? (
-          <Empty>No SDK heartbeat versions in range.</Empty>
+          <Empty>{t.noSdkVersions}</Empty>
         ) : (
           sdk.versions.map((row) => (
             <div
@@ -543,7 +635,7 @@ function SdkOverview({ sdk }: { sdk: MonitoringMissionData["sdk"] }) {
               <p className="text-[var(--admin-text)]">{row.release}</p>
               <p className="text-[10px] text-[var(--admin-muted)]">
                 {row.environment} · {row.heartbeats} HB ·{" "}
-                {formatRelative(row.lastSeen)}
+                {formatRelative(row.lastSeen, locale)}
               </p>
             </div>
           ))
@@ -554,8 +646,10 @@ function SdkOverview({ sdk }: { sdk: MonitoringMissionData["sdk"] }) {
 }
 
 function CronCenter({ cron }: { cron: MonitoringMissionData["cron"] }) {
+  const { dict } = useDictionary();
+  const t = dict.admin.monitoring;
   return (
-    <Panel title="Cron center" subtitle="Registered jobs">
+    <Panel title={t.cronCenter} subtitle={t.cronCenterDesc}>
       <div className="space-y-2">
         {cron.map((job) => (
           <div
@@ -570,11 +664,18 @@ function CronCenter({ cron }: { cron: MonitoringMissionData["cron"] }) {
             </div>
             <p className="mt-1 text-[10px] text-[var(--admin-muted)]">{job.path}</p>
             <p className="mt-1 text-[10px] text-[var(--admin-muted)]">
-              Last run: {job.lastRun ?? "—"} · Next: {job.nextRun ?? "—"} ·
-              Duration: {job.durationMs == null ? "—" : `${job.durationMs} ms`} ·
-              Failures: {job.failures ?? "—"}
+              {fillTemplate(t.cronJobMeta, {
+                last: job.lastRun ?? "—",
+                next: job.nextRun ?? "—",
+                duration:
+                  job.durationMs == null ? "—" : `${job.durationMs} ms`,
+                failures:
+                  job.failures == null ? "—" : String(job.failures),
+              })}
             </p>
-            <p className="mt-1 text-[10px] text-amber-200/70">{job.note}</p>
+            <p className="mt-1 text-[10px] text-amber-200/70">
+              {t.notes.cronHistory}
+            </p>
           </div>
         ))}
       </div>
@@ -583,11 +684,13 @@ function CronCenter({ cron }: { cron: MonitoringMissionData["cron"] }) {
 }
 
 function AlertCenter({ alerts }: { alerts: MonitoringMissionData["alerts"] }) {
+  const { dict, locale } = useDictionary();
+  const t = dict.admin.monitoring;
   return (
-    <Panel title="Alert center" subtitle="Current operational alerts">
+    <Panel title={t.alertCenter} subtitle={t.alertCenterDesc}>
       <div className="max-h-72 space-y-1.5 overflow-y-auto">
         {alerts.length === 0 ? (
-          <Empty>No active alerts.</Empty>
+          <Empty>{t.noActiveAlerts}</Empty>
         ) : (
           alerts.map((alert) => (
             <div
@@ -600,9 +703,9 @@ function AlertCenter({ alerts }: { alerts: MonitoringMissionData["alerts"] }) {
               </div>
               <p className="mt-0.5 text-[10px] text-[var(--admin-muted)]">
                 {alert.source} ·{" "}
-                {alert.acknowledged ? "acknowledged" : "unacked"} ·{" "}
-                {alert.resolved ? "resolved" : "open"} ·{" "}
-                {formatRelative(alert.occurredAt)}
+                {alert.acknowledged ? t.acknowledged : t.unacked} ·{" "}
+                {alert.resolved ? t.alertResolved : t.alertOpen} ·{" "}
+                {formatRelative(alert.occurredAt, locale)}
               </p>
             </div>
           ))

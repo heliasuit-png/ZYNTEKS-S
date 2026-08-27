@@ -126,18 +126,15 @@ export function getPlanDefinition(planId: string): PlanDefinition {
 
 export function comparePlans(): {
   featureIds: string[];
-  featureLabels: Record<string, string>;
   plans: readonly PlanDefinition[];
 } {
   const featureIds: string[] = [];
-  const featureLabels: Record<string, string> = {};
   for (const plan of BILLING_CATALOG) {
     for (const feature of plan.features) {
       if (!featureIds.includes(feature.id)) {
         featureIds.push(feature.id);
-        featureLabels[feature.id] = feature.label;
       }
     }
   }
-  return { featureIds, featureLabels, plans: BILLING_CATALOG };
+  return { featureIds, plans: BILLING_CATALOG };
 }

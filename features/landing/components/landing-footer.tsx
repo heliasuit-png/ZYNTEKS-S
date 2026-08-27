@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { LanguageSwitcher } from "@/components/i18n/language-switcher";
+import { PaymentMethodsRow } from "@/features/landing/components/payment-methods-row";
 import { APP_NAME, ROUTES } from "@/lib/constants";
 import { getDictionary } from "@/lib/i18n/get-dictionary";
 
@@ -54,16 +55,27 @@ export async function LandingFooter() {
         <FooterColumn title={dict.footer.legal} links={LEGAL} />
       </div>
 
-      <div className="mx-auto mt-12 flex max-w-6xl flex-col gap-2 border-t border-zt-border pt-6 text-xs text-zt-muted sm:flex-row sm:items-center sm:justify-between">
+      <PaymentMethodsRow
+        title={dict.footer.paymentMethods}
+        labels={{
+          visa: dict.footer.paymentVisa,
+          mastercard: dict.footer.paymentMastercard,
+          amex: dict.footer.paymentAmex,
+          discover: dict.footer.paymentDiscover,
+          diners: dict.footer.paymentDiners,
+        }}
+      />
+
+      <div className="mx-auto mt-8 flex max-w-6xl flex-col gap-2 border-t border-zt-border pt-6 text-xs text-zt-muted sm:flex-row sm:items-center sm:justify-between">
         <p>
           © <span suppressHydrationWarning>{year}</span> {APP_NAME}.{" "}
           {dict.footer.rights}
         </p>
-        <p>
+        <p className="flex flex-wrap items-center gap-x-3 gap-y-1">
           <Link href={ROUTES.login} className="hover:text-zt-text">
             {dict.common.signIn}
           </Link>
-          {" · "}
+          <span aria-hidden>·</span>
           <Link href={ROUTES.register} className="hover:text-zt-text">
             {dict.common.startFree}
           </Link>

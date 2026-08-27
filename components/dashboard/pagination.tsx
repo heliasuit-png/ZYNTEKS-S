@@ -3,6 +3,8 @@
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
 import { cn } from "@/lib/utils";
+import { useDictionary } from "@/components/i18n/locale-provider";
+import { fillTemplate } from "@/lib/i18n/fill-template";
 
 interface PaginationProps {
   page: number;
@@ -21,13 +23,15 @@ export function Pagination({
   onPageChange,
   className,
 }: PaginationProps) {
+  const { dict } = useDictionary();
+  const shell = dict.dash.shell;
   const canPrev = page > 1;
   const canNext = page < totalPages;
 
   return (
     <div className={cn("flex items-center justify-between gap-4", className)}>
       <p className="text-xs text-zt-muted">
-        Page <span className="text-zt-text">{page}</span> of {totalPages}
+        {fillTemplate(shell.pageOf, { current: page, total: totalPages })}
       </p>
       <div className="flex items-center gap-2">
         <button
@@ -35,7 +39,7 @@ export function Pagination({
           className={buttonClass}
           onClick={() => onPageChange(page - 1)}
           disabled={!canPrev}
-          aria-label="Previous page"
+          aria-label={shell.previousPage}
         >
           <ChevronLeft className="size-4" aria-hidden />
         </button>
@@ -44,7 +48,7 @@ export function Pagination({
           className={buttonClass}
           onClick={() => onPageChange(page + 1)}
           disabled={!canNext}
-          aria-label="Next page"
+          aria-label={shell.nextPage}
         >
           <ChevronRight className="size-4" aria-hidden />
         </button>

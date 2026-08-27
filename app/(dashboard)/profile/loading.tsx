@@ -1,4 +1,8 @@
-export default function ProfileLoading() {
+import { getDictionary } from "@/lib/i18n/get-dictionary";
+
+export default async function ProfileLoading() {
+  const { dict } = await getDictionary();
+
   return (
     <div className="space-y-6" role="status" aria-live="polite">
       <div className="space-y-2">
@@ -8,7 +12,7 @@ export default function ProfileLoading() {
       <div className="h-28 animate-pulse rounded-2xl border border-zt-border bg-zt-surface" />
       <div className="h-64 animate-pulse rounded-2xl border border-zt-border bg-zt-surface" />
       <div className="h-40 animate-pulse rounded-2xl border border-zt-border bg-zt-surface" />
-      <span className="sr-only">Loading profile…</span>
+      <span className="sr-only">{dict.dashboardCommon.loadingStates.profile}</span>
     </div>
   );
 }

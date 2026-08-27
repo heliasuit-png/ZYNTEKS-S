@@ -1,4 +1,8 @@
-export default function ErrorDetailLoading() {
+import { getDictionary } from "@/lib/i18n/get-dictionary";
+
+export default async function ErrorDetailLoading() {
+  const { dict } = await getDictionary();
+
   return (
     <div className="space-y-6" role="status" aria-live="polite">
       <div className="h-4 w-32 animate-pulse rounded bg-zt-surface-2" />
@@ -16,7 +20,7 @@ export default function ErrorDetailLoading() {
       </div>
       <div className="h-64 animate-pulse rounded-2xl border border-zt-border bg-zt-surface" />
       <div className="h-80 animate-pulse rounded-2xl border border-zt-border bg-zt-surface" />
-      <span className="sr-only">Loading error details…</span>
+      <span className="sr-only">{dict.dashboardCommon.loadingStates.errorDetails}</span>
     </div>
   );
 }

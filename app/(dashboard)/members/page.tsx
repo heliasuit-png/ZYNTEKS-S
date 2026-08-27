@@ -1,6 +1,7 @@
-import type { Metadata } from "next";
 import dynamic from "next/dynamic";
 import { redirect } from "next/navigation";
+import { dashboardPageMetadata } from "@/lib/i18n/dashboard-metadata";
+import { getDictionary } from "@/lib/i18n/get-dictionary";
 
 import { PageHeader } from "@/components/dashboard/page-header";
 import { DASHBOARD_ROUTES } from "@/lib/constants";
@@ -19,9 +20,11 @@ const MembersView = dynamic(
   { ssr: true },
 );
 
-export const metadata: Metadata = { title: "Members" };
+export const generateMetadata = () => dashboardPageMetadata("members");
 
 export default async function MembersPage() {
+  const { dict } = await getDictionary();
+  const pageCopy = dict.dashboard.pageTitles.members;
   const supabase = await createSupabaseServerClient();
   const user = await getAuthenticatedUser(supabase);
   if (!user) redirect(DASHBOARD_ROUTES.dashboard);
@@ -39,10 +42,7 @@ export default async function MembersPage() {
 
   return (
     <div className="space-y-6">
-      <PageHeader
-        title="Team members"
-        description={`Manage people in ${active.name}. Roles control project, API, billing and AI access.`}
-      />
+      <PageHeader title={pageCopy.title} description={pageCopy.description} />
       <MembersView
         workspaceId={active.id}
         members={members}

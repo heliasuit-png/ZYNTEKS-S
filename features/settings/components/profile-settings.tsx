@@ -2,6 +2,7 @@
 
 import { useActionState } from "react";
 
+import { useDictionary } from "@/components/i18n/locale-provider";
 import { Badge } from "@/components/dashboard/badge";
 import {
   Panel,
@@ -37,6 +38,10 @@ export function ProfileSettings({
   profile: Profile;
   emailVerified: boolean;
 }) {
+  const { dict, locale } = useDictionary();
+  const t = dict.dash.settings.profile;
+  const common = dict.dashboardCommon;
+
   const [profileState, profileAction, profilePending] = useActionState(
     updateProfileAction,
     initialSettingsActionState,
@@ -75,7 +80,7 @@ export function ProfileSettings({
               // eslint-disable-next-line @next/next/no-img-element
               <img
                 src={profile.avatar_url}
-                alt="Profile avatar"
+                alt={t.avatarAlt}
                 className="size-16 rounded-2xl border border-zt-border object-cover"
               />
             ) : (
@@ -92,13 +97,13 @@ export function ProfileSettings({
                 <Badge tone="primary">{profile.role}</Badge>
                 <Badge tone="success">{profile.subscription_plan}</Badge>
                 <Badge tone={emailVerified ? "success" : "warning"}>
-                  {emailVerified ? "Email verified" : "Email unverified"}
+                  {emailVerified ? t.emailVerified : t.emailUnverified}
                 </Badge>
               </div>
             </div>
             <form action={avatarAction} className="space-y-2">
               <label className="block text-xs font-medium text-zt-muted">
-                Avatar upload
+                {t.avatarUpload}
                 <input
                   type="file"
                   name="avatar"
@@ -108,7 +113,7 @@ export function ProfileSettings({
                 />
               </label>
               <button type="submit" disabled={avatarPending} className={ghostClass}>
-                {avatarPending ? "Uploading…" : "Upload avatar"}
+                {avatarPending ? t.uploading : t.uploadAvatar}
               </button>
               {avatarState.message ? (
                 <p
@@ -125,15 +130,13 @@ export function ProfileSettings({
       <FadeIn delay={0.04}>
         <Panel>
           <PanelHeader>
-            <PanelTitle>Profile</PanelTitle>
-            <PanelDescription>
-              Display name, avatar URL, language and timezone.
-            </PanelDescription>
+            <PanelTitle>{t.sectionTitle}</PanelTitle>
+            <PanelDescription>{t.sectionDesc}</PanelDescription>
           </PanelHeader>
           <PanelContent>
             <form action={profileAction} className="grid gap-3 sm:grid-cols-2">
               <label className="space-y-1 text-xs text-zt-muted sm:col-span-2">
-                Display name
+                {t.displayName}
                 <input
                   name="fullName"
                   required
@@ -142,7 +145,7 @@ export function ProfileSettings({
                 />
               </label>
               <label className="space-y-1 text-xs text-zt-muted sm:col-span-2">
-                Avatar URL
+                {t.avatarUrl}
                 <input
                   name="avatarUrl"
                   type="url"
@@ -152,7 +155,7 @@ export function ProfileSettings({
                 />
               </label>
               <label className="space-y-1 text-xs text-zt-muted">
-                Language
+                {t.language}
                 <select
                   name="language"
                   defaultValue={profile.language ?? "en"}
@@ -166,7 +169,7 @@ export function ProfileSettings({
                 </select>
               </label>
               <label className="space-y-1 text-xs text-zt-muted">
-                Timezone
+                {t.timezone}
                 <input
                   name="timezone"
                   defaultValue={profile.timezone ?? "UTC"}
@@ -176,7 +179,7 @@ export function ProfileSettings({
               </label>
               <div className="flex items-center gap-3 sm:col-span-2">
                 <button type="submit" disabled={profilePending} className={buttonClass}>
-                  {profilePending ? "Saving…" : "Save profile"}
+                  {profilePending ? common.saving : t.saveProfile}
                 </button>
                 {profileState.message ? (
                   <span
@@ -194,15 +197,13 @@ export function ProfileSettings({
       <FadeIn delay={0.08}>
         <Panel>
           <PanelHeader>
-            <PanelTitle>Email</PanelTitle>
-            <PanelDescription>
-              Change email or resend verification.
-            </PanelDescription>
+            <PanelTitle>{t.emailSectionTitle}</PanelTitle>
+            <PanelDescription>{t.emailSectionDesc}</PanelDescription>
           </PanelHeader>
           <PanelContent className="space-y-4">
             <form action={emailAction} className="flex flex-col gap-3 sm:flex-row sm:items-end">
               <label className="min-w-0 flex-1 space-y-1 text-xs text-zt-muted">
-                Email address
+                {t.email}
                 <input
                   name="email"
                   type="email"
@@ -212,13 +213,13 @@ export function ProfileSettings({
                 />
               </label>
               <button type="submit" disabled={emailPending} className={buttonClass}>
-                {emailPending ? "Saving…" : "Update email"}
+                {emailPending ? common.saving : t.updateEmail}
               </button>
             </form>
             {!emailVerified ? (
               <form action={verifyAction}>
                 <button type="submit" disabled={verifyPending} className={ghostClass}>
-                  {verifyPending ? "Sending…" : "Resend verification email"}
+                  {verifyPending ? t.sending : t.resendVerification}
                 </button>
               </form>
             ) : null}
@@ -236,17 +237,19 @@ export function ProfileSettings({
       <FadeIn delay={0.12}>
         <Panel>
           <PanelHeader>
-            <PanelTitle>Change password</PanelTitle>
+            <PanelTitle>{t.changePassword}</PanelTitle>
             <PanelDescription>
               {profile.password_changed_at
-                ? `Last changed ${formatRelativeTime(profile.password_changed_at)} (${formatDate(profile.password_changed_at)})`
-                : "No password change recorded yet."}
+                ? t.lastChanged
+                    .replace("{rel}", formatRelativeTime(profile.password_changed_at, undefined, locale))
+                    .replace("{date}", formatDate(profile.password_changed_at))
+                : t.noPasswordChange}
             </PanelDescription>
           </PanelHeader>
           <PanelContent>
             <form action={passwordAction} className="grid gap-3 sm:grid-cols-3">
               <label className="space-y-1 text-xs text-zt-muted">
-                Current password
+                {t.currentPassword}
                 <input
                   name="currentPassword"
                   type="password"
@@ -256,7 +259,7 @@ export function ProfileSettings({
                 />
               </label>
               <label className="space-y-1 text-xs text-zt-muted">
-                New password
+                {t.newPassword}
                 <input
                   name="newPassword"
                   type="password"
@@ -266,7 +269,7 @@ export function ProfileSettings({
                 />
               </label>
               <label className="space-y-1 text-xs text-zt-muted">
-                Confirm password
+                {t.confirmPassword}
                 <input
                   name="confirmPassword"
                   type="password"
@@ -277,7 +280,7 @@ export function ProfileSettings({
               </label>
               <div className="flex items-center gap-3 sm:col-span-3">
                 <button type="submit" disabled={passwordPending} className={buttonClass}>
-                  {passwordPending ? "Updating…" : "Update password"}
+                  {passwordPending ? t.updating : t.updatePassword}
                 </button>
                 {passwordState.message ? (
                   <span
@@ -295,16 +298,15 @@ export function ProfileSettings({
       <FadeIn delay={0.16}>
         <Panel className="border-zt-danger/30">
           <PanelHeader>
-            <PanelTitle>Delete account</PanelTitle>
+            <PanelTitle>{t.deleteAccount}</PanelTitle>
             <PanelDescription>
-              Permanently delete your account and associated personal data.
-              Type DELETE to confirm.
+              {t.deleteAccountDesc} {t.deleteAccountHint}
             </PanelDescription>
           </PanelHeader>
           <PanelContent>
             <form action={deleteAction} className="flex flex-col gap-3 sm:flex-row sm:items-end">
               <label className="min-w-0 flex-1 space-y-1 text-xs text-zt-muted">
-                Confirmation
+                {t.confirmation}
                 <input
                   name="confirmation"
                   required
@@ -317,7 +319,7 @@ export function ProfileSettings({
                 disabled={deletePending}
                 className="rounded-lg border border-zt-danger/40 px-3 py-2 text-sm text-zt-danger transition-colors hover:bg-zt-danger/10 disabled:opacity-60"
               >
-                {deletePending ? "Deleting…" : "Delete account"}
+                {deletePending ? t.deleting : t.deleteAccountConfirm}
               </button>
             </form>
             {deleteState.message ? (

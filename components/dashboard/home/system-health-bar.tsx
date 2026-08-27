@@ -18,30 +18,28 @@ import {
   PanelHeader,
   PanelTitle,
 } from "@/components/dashboard/panel";
+import { useDictionary } from "@/components/i18n/locale-provider";
 import type { HealthState } from "@/types/dashboard";
 
 type Status = "operational" | "degraded" | "down";
 
-const statusMeta: Record<
+const statusStyles: Record<
   Status,
-  { label: string; dot: string; text: string; bar: string; glow: string }
+  { dot: string; text: string; bar: string; glow: string }
 > = {
   operational: {
-    label: "Operational",
     dot: "bg-zt-success",
     text: "text-zt-success",
     bar: "from-zt-success/60 to-zt-success/20",
     glow: "shadow-[0_0_12px_rgba(34,197,94,0.6)]",
   },
   degraded: {
-    label: "Degraded",
     dot: "bg-zt-warning",
     text: "text-zt-warning",
     bar: "from-zt-warning/60 to-zt-warning/20",
     glow: "shadow-[0_0_12px_rgba(245,158,11,0.6)]",
   },
   down: {
-    label: "Down",
     dot: "bg-zt-danger",
     text: "text-zt-danger",
     bar: "from-zt-danger/60 to-zt-danger/20",
@@ -63,17 +61,26 @@ export function SystemHealthBar({
   openIncidents: number;
   errorsToday: number;
 }) {
+  const { dict } = useDictionary();
+  const t = dict.dash.home.systemHealth;
+
+  const statusLabels: Record<Status, string> = {
+    operational: t.operational,
+    degraded: t.degraded,
+    down: t.down,
+  };
+
   const base: Status = overall;
   const incidentState: Status = openIncidents > 0 ? "degraded" : "operational";
   const errorState: Status = errorsToday > 0 ? "degraded" : "operational";
 
   const sections: Array<{ label: string; icon: LucideIcon; state: Status }> = [
-    { label: "API", icon: Server, state: worse(base, errorState) },
-    { label: "Database", icon: Database, state: base },
-    { label: "Heartbeat", icon: Activity, state: worse(base, incidentState) },
-    { label: "AI", icon: Bot, state: base },
-    { label: "Email", icon: Mail, state: base },
-    { label: "Monitoring", icon: Radar, state: worse(base, incidentState) },
+    { label: t.api, icon: Server, state: worse(base, errorState) },
+    { label: t.database, icon: Database, state: base },
+    { label: t.heartbeat, icon: Activity, state: worse(base, incidentState) },
+    { label: t.ai, icon: Bot, state: base },
+    { label: t.email, icon: Mail, state: base },
+    { label: t.monitoring, icon: Radar, state: worse(base, incidentState) },
   ];
 
   return (
@@ -82,7 +89,7 @@ export function SystemHealthBar({
         <PanelTitle>
           <span className="flex items-center gap-2">
             <Radar className="size-4 text-zt-primary" aria-hidden />
-            System Health
+            {t.title}
           </span>
         </PanelTitle>
         <span className="flex items-center gap-1.5 text-xs text-zt-muted">
@@ -90,13 +97,13 @@ export function SystemHealthBar({
             <span className="absolute inline-flex size-full animate-ping rounded-full bg-zt-success/70" />
             <span className="relative size-2 rounded-full bg-zt-success" />
           </span>
-          Live
+          {t.live}
         </span>
       </PanelHeader>
       <PanelContent>
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
           {sections.map((section, index) => {
-            const meta = statusMeta[section.state];
+            const meta = statusStyles[section.state];
             const Icon = section.icon;
             return (
               <motion.div
@@ -136,7 +143,7 @@ export function SystemHealthBar({
                   />
                 </div>
                 <p className={cn("mt-2 text-[11px] font-medium", meta.text)}>
-                  {meta.label}
+                  {statusLabels[section.state]}
                 </p>
               </motion.div>
             );

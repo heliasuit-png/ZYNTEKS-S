@@ -1,4 +1,8 @@
-export default function ErrorsLoading() {
+import { getDictionary } from "@/lib/i18n/get-dictionary";
+
+export default async function ErrorsLoading() {
+  const { dict } = await getDictionary();
+
   return (
     <div className="space-y-6" role="status" aria-live="polite">
       <div className="space-y-2">
@@ -16,7 +20,7 @@ export default function ErrorsLoading() {
           />
         ))}
       </div>
-      <span className="sr-only">Loading errors…</span>
+      <span className="sr-only">{dict.dashboardCommon.loadingStates.errors}</span>
     </div>
   );
 }

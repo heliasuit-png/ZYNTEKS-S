@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 
+import { useDictionary } from "@/components/i18n/locale-provider";
 import type { AdminPlatformRole } from "@/services/admin/types";
 import type {
   AdminWorkspaceListItem,
@@ -33,14 +34,16 @@ export function WorkspacesManagement({
   search,
   role,
 }: WorkspacesManagementProps) {
+  const { dict } = useDictionary();
+  const t = dict.admin.workspaces;
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
   return (
     <div className="space-y-5">
       <AdminPageHeader
-        eyebrow="Command center"
-        title="Workspace Command Center"
-        description="Platform-wide workspace administration, health, and membership controls."
+        eyebrow={t.eyebrow}
+        title={t.pageTitle}
+        description={t.description}
       />
 
       <WorkspacesOverview stats={overview} />

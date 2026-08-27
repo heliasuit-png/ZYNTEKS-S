@@ -14,10 +14,7 @@ export default async function ResetPasswordPage() {
   const { dict } = await getDictionary();
 
   return (
-    <AuthCard
-      title="Set a new password"
-      description="Choose a strong password for your account"
-    >
+    <AuthCard title={dict.auth.resetTitle} description={dict.auth.resetDesc}>
       <ResetPasswordForm />
       <AuthLegalLinks dict={dict} />
     </AuthCard>

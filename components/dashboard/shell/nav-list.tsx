@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { motion } from "framer-motion";
 
 import { resolveNavItems } from "@/components/dashboard/shell/nav-config";
+import { useDictionary } from "@/components/i18n/locale-provider";
 import { useDashboard } from "@/features/dashboard/hooks/use-dashboard";
 import { cn } from "@/lib/utils";
 
@@ -16,10 +17,11 @@ interface NavListProps {
 export function NavList({ onNavigate, collapsed = false }: NavListProps) {
   const pathname = usePathname();
   const { navLabels } = useDashboard();
+  const { dict } = useDictionary();
   const items = resolveNavItems(navLabels);
 
   return (
-    <nav className="flex flex-col gap-1" aria-label="Dashboard">
+    <nav className="flex flex-col gap-1" aria-label={dict.dash.shell.navLabel}>
       {items.map((item) => {
         const isActive =
           pathname === item.href || pathname.startsWith(`${item.href}/`);

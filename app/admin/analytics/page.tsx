@@ -6,10 +6,14 @@ import type { ApiKeyEnvironment } from "@/types/database";
 import { AdminContainer } from "@/features/admin";
 import { AnalyticsIntelligence } from "@/features/admin/components/analytics/analytics-intelligence";
 import { requireAdminSession } from "@/features/admin/load-admin-session";
+import { getDictionary } from "@/lib/i18n/get-dictionary";
 
-export const metadata: Metadata = {
-  title: "Analytics Intelligence Center · ZYNTEKSIS Admin",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const { dict } = await getDictionary();
+  return {
+    title: `${dict.admin.analytics.pageTitle}${dict.admin.common.metaTitleSuffix}`,
+  };
+}
 
 export const dynamic = "force-dynamic";
 

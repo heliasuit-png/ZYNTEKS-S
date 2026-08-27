@@ -1,5 +1,8 @@
+"use client";
+
 import { LogOut } from "lucide-react";
 
+import { useDictionary } from "@/components/i18n/locale-provider";
 import { Button } from "@/components/ui/button";
 import type { ButtonProps } from "@/components/ui/button";
 import { signOutAction } from "@/features/auth/actions";
@@ -12,11 +15,13 @@ export function SignOutButton({
   size,
   className,
 }: SignOutButtonProps) {
+  const { dict } = useDictionary();
+
   return (
     <form action={signOutAction}>
       <Button type="submit" variant={variant} size={size} className={className}>
         <LogOut aria-hidden />
-        Sign out
+        {dict.dash.shell.signOut}
       </Button>
     </form>
   );

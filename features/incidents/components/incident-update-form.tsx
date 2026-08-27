@@ -3,7 +3,7 @@
 import { useActionState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 
-import { INCIDENT_STATUS_LABELS } from "@/lib/constants";
+import { useDictionary } from "@/components/i18n/locale-provider";
 import { allowedNextStatuses } from "@/features/incidents/lib/transitions";
 import { addIncidentUpdateAction } from "@/features/incidents/actions";
 import { initialIncidentActionState } from "@/features/incidents/types";
@@ -14,10 +14,19 @@ interface IncidentUpdateFormProps {
   currentStatus: IncidentStatus;
 }
 
+function fill(template: string, vars: Record<string, string | number>) {
+  return Object.entries(vars).reduce(
+    (s, [k, v]) => s.replaceAll(`{${k}}`, String(v)),
+    template,
+  );
+}
+
 export function IncidentUpdateForm({
   incidentId,
   currentStatus,
 }: IncidentUpdateFormProps) {
+  const { dict } = useDictionary();
+  const t = dict.dash.incidents;
   const router = useRouter();
   const [state, formAction, isPending] = useActionState(
     addIncidentUpdateAction,
@@ -35,6 +44,9 @@ export function IncidentUpdateForm({
     }
   }, [state, router]);
 
+  const errorMessage =
+    state.status === "error" && state.message ? state.message : null;
+
   return (
     <form ref={formRef} action={formAction} className="space-y-3">
       <input type="hidden" name="incidentId" value={incidentId} />
@@ -43,14 +55,14 @@ export function IncidentUpdateForm({
           htmlFor="incident-message"
           className="text-xs font-medium text-zt-muted"
         >
-          Post an update
+          {t.postAnUpdate}
         </label>
         <textarea
           id="incident-message"
           name="message"
           rows={3}
           required
-          placeholder="Describe the latest status…"
+          placeholder={t.postUpdatePlaceholder}
           className="w-full rounded-xl border border-zt-border bg-zt-surface-2 px-3 py-2 text-sm text-zt-text outline-none transition-colors focus:border-zt-primary"
         />
         {state.fieldErrors?.message ? (
@@ -63,15 +75,15 @@ export function IncidentUpdateForm({
         <select
           name="status"
           defaultValue=""
-          aria-label="Change incident status"
+          aria-label={t.changeStatusAria}
           className="rounded-xl border border-zt-border bg-zt-surface-2 px-3 py-2 text-sm text-zt-text outline-none transition-colors focus:border-zt-primary"
         >
           <option value="">
-            Keep status ({INCIDENT_STATUS_LABELS[currentStatus]})
+            {fill(t.keepStatus, { status: t.statuses[currentStatus] })}
           </option>
           {nextStatuses.map((status) => (
             <option key={status} value={status}>
-              Set to {INCIDENT_STATUS_LABELS[status]}
+              {fill(t.setTo, { status: t.statuses[status] })}
             </option>
           ))}
         </select>
@@ -80,16 +92,13 @@ export function IncidentUpdateForm({
           disabled={isPending}
           className="rounded-lg bg-zt-primary px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-zt-primary/90 disabled:opacity-60"
         >
-          {isPending ? "Posting…" : "Post update"}
+          {isPending ? t.posting : t.postUpdate}
         </button>
-        {state.status === "error" && state.message ? (
-          <span className="text-xs text-zt-danger">{state.message}</span>
+        {errorMessage ? (
+          <span className="text-xs text-zt-danger">{errorMessage}</span>
         ) : null}
       </div>
-      <p className="text-[11px] text-zt-muted">
-        Flow: Investigating → Identified → Monitoring → Resolved. Backward
-        transitions are blocked.
-      </p>
+      <p className="text-[11px] text-zt-muted">{t.statusFlowHint}</p>
     </form>
   );
 }

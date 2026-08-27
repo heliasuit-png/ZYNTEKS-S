@@ -3,6 +3,7 @@
 import { useActionState } from "react";
 import Link from "next/link";
 
+import { useDictionary } from "@/components/i18n/locale-provider";
 import {
   Panel,
   PanelContent,
@@ -38,6 +39,10 @@ export function AiSettingsPanel({
   envModel: string;
   conversationCount: number;
 }) {
+  const { dict } = useDictionary();
+  const t = dict.dash.settings.ai;
+  const common = dict.dashboardCommon;
+
   const [state, action, pending] = useActionState(
     updateAiPreferencesAction,
     initialSettingsActionState,
@@ -48,40 +53,41 @@ export function AiSettingsPanel({
   );
 
   const limitLabel =
-    usage.limit === null ? "Unlimited" : `${usage.used} / ${usage.limit}`;
+    usage.limit === null
+      ? t.unlimited
+      : `${usage.used} / ${usage.limit}`;
 
   return (
     <div className="space-y-6">
       <FadeIn>
         <div className="grid gap-4 sm:grid-cols-3">
-          <Stat label="Monthly usage" value={limitLabel} />
+          <Stat label={t.monthlyUsage} value={limitLabel} />
           <Stat
-            label="Tokens this month"
+            label={t.tokensThisMonth}
             value={usage.tokensThisMonth.toLocaleString()}
           />
-          <Stat label="Conversations" value={String(conversationCount)} />
+          <Stat label={t.conversations} value={String(conversationCount)} />
         </div>
       </FadeIn>
 
       <FadeIn delay={0.04}>
         <Panel>
           <PanelHeader>
-            <PanelTitle>AI preferences</PanelTitle>
-            <PanelDescription>
-              Default model preference and streaming. Platform default is{" "}
-              <code className="text-zt-text">{envModel}</code>.
-            </PanelDescription>
+            <PanelTitle>{t.prefsTitle}</PanelTitle>
+            <PanelDescription>{t.prefsDesc}</PanelDescription>
           </PanelHeader>
           <PanelContent>
             <form action={action} className="space-y-4">
               <label className="block space-y-1 text-xs text-zt-muted">
-                Default model
+                {t.defaultModel}
                 <select
                   name="defaultModel"
                   defaultValue={preferences.defaultModel || envModel}
                   className={inputClass}
                 >
-                  <option value={envModel}>{envModel} (platform)</option>
+                  <option value={envModel}>
+                    {t.platformModel.replace("{model}", envModel)}
+                  </option>
                   <option value="gpt-4o-mini">gpt-4o-mini</option>
                   <option value="gpt-4o">gpt-4o</option>
                   <option value="gpt-4.1-mini">gpt-4.1-mini</option>
@@ -94,17 +100,17 @@ export function AiSettingsPanel({
                   defaultChecked={preferences.streaming}
                   className="size-4 accent-zt-primary"
                 />
-                Enable streaming responses
+                {t.enableStreaming}
               </label>
               <div className="flex items-center gap-3">
                 <button type="submit" disabled={pending} className={buttonClass}>
-                  {pending ? "Saving…" : "Save AI settings"}
+                  {pending ? common.saving : t.saveAiSettings}
                 </button>
                 <Link
                   href={DASHBOARD_ROUTES.aiAssistant}
                   className="text-sm text-zt-primary hover:underline"
                 >
-                  Open AI Assistant
+                  {t.openAiAssistant}
                 </Link>
                 {state.message ? (
                   <span
@@ -122,16 +128,17 @@ export function AiSettingsPanel({
       <FadeIn delay={0.08}>
         <Panel className="border-zt-danger/30">
           <PanelHeader>
-            <PanelTitle>Conversation history</PanelTitle>
-            <PanelDescription>
-              Delete all AI conversations and messages for your account.
-            </PanelDescription>
+            <PanelTitle>{t.historyTitle}</PanelTitle>
+            <PanelDescription>{t.historyDesc}</PanelDescription>
           </PanelHeader>
           <PanelContent className="space-y-3">
             <p className="text-sm text-zt-muted">
               {conversationCount === 0
-                ? "No conversation history yet."
-                : `${conversationCount} conversation${conversationCount === 1 ? "" : "s"} stored.`}
+                ? t.noHistory
+                : t.conversationsStored.replace(
+                    "{count}",
+                    String(conversationCount),
+                  )}
             </p>
             <form action={deleteAction}>
               <button
@@ -139,7 +146,7 @@ export function AiSettingsPanel({
                 disabled={deletePending || conversationCount === 0}
                 className={dangerClass}
               >
-                {deletePending ? "Deleting…" : "Delete history"}
+                {deletePending ? t.deleting : t.deleteHistory}
               </button>
             </form>
             {deleteState.message ? (

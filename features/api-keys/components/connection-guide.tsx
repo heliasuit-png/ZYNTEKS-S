@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import Link from "next/link";
 import { AlertTriangle, BookOpen, LayoutDashboard } from "lucide-react";
 
+import { useDictionary } from "@/components/i18n/locale-provider";
 import { CopyButton } from "@/components/dashboard/copy-button";
 import {
   API_ROUTES,
@@ -83,15 +84,6 @@ await fetch(\`\${endpoint}${API_ROUTES.sdkHeartbeat}\`, {
 
 type TabId = "install" | "browser" | "server" | "heartbeat" | "error" | "monitor";
 
-const TABS: { id: TabId; label: string }[] = [
-  { id: "install", label: "Install" },
-  { id: "browser", label: "Browser SDK" },
-  { id: "server", label: "Server HTTP" },
-  { id: "heartbeat", label: "Heartbeat" },
-  { id: "error", label: "Errors" },
-  { id: "monitor", label: "Dashboard" },
-];
-
 function CodeBlock({
   title,
   code,
@@ -123,7 +115,22 @@ export function ApiKeyConnectionGuide({
   className?: string;
   hasProjects?: boolean;
 }) {
+  const { dict } = useDictionary();
+  const t = dict.dash.apiKeys.connectionGuide;
   const [tab, setTab] = useState<TabId>("install");
+
+  const tabs = useMemo(
+    () =>
+      [
+        { id: "install" as const, label: t.tabInstall },
+        { id: "browser" as const, label: t.tabBrowser },
+        { id: "server" as const, label: t.tabServer },
+        { id: "heartbeat" as const, label: t.tabHeartbeat },
+        { id: "error" as const, label: t.tabErrors },
+        { id: "monitor" as const, label: t.tabDashboard },
+      ] satisfies { id: TabId; label: string }[],
+    [t],
+  );
 
   return (
     <section
@@ -139,12 +146,10 @@ export function ApiKeyConnectionGuide({
             id="connection-guide-heading"
             className="text-base font-semibold text-zt-text"
           >
-            Connect an external project
+            {t.title}
           </h2>
           <p className="mt-1 max-w-2xl text-sm text-zt-muted">
-            {hasProjects
-              ? "Create a project key below (Generate Key), install the SDK or call ingest HTTP, then watch Errors, Health, and Insights."
-              : "Create a project first, then generate a key below and connect your app with the SDK or HTTP ingest."}
+            {hasProjects ? t.descWithProjects : t.descNoProjects}
           </p>
           {!hasProjects ? (
             <p className="mt-2 text-sm text-zt-text">
@@ -152,9 +157,9 @@ export function ApiKeyConnectionGuide({
                 href={DASHBOARD_ROUTES.projects}
                 className="font-medium text-zt-primary hover:underline"
               >
-                Go to Projects
+                {t.goToProjects}
               </Link>{" "}
-              to create one — then return here for the key and install steps.
+              {t.createThenReturn}
             </p>
           ) : null}
         </div>
@@ -163,24 +168,17 @@ export function ApiKeyConnectionGuide({
           className="inline-flex items-center gap-1.5 text-xs font-medium text-zt-primary hover:underline"
         >
           <BookOpen className="size-3.5" aria-hidden />
-          Full SDK docs
+          {t.fullDocs}
         </Link>
       </div>
 
       <div className="flex items-start gap-2 rounded-xl border border-zt-warning/30 bg-zt-warning/10 px-3 py-2 text-xs text-zt-warning">
         <AlertTriangle className="mt-0.5 size-4 shrink-0" aria-hidden />
-        <p>
-          Use only the <strong className="font-semibold">ZYN-KEY-…</strong>{" "}
-          project API key from this page. It is{" "}
-          <strong className="font-semibold">not</strong> a Supabase{" "}
-          <code className="rounded bg-black/20 px-1">service_role</code> key,
-          anon key, or database password. Never put service_role or other
-          platform secrets in browser code or SDK examples.
-        </p>
+        <p>{t.warning}</p>
       </div>
 
-      <div className="flex flex-wrap gap-1.5" role="tablist" aria-label="Connection steps">
-        {TABS.map((item) => {
+      <div className="flex flex-wrap gap-1.5" role="tablist" aria-label={t.stepsAria}>
+        {tabs.map((item) => {
           const active = item.id === tab;
           return (
             <button
@@ -206,38 +204,22 @@ export function ApiKeyConnectionGuide({
         <div className="space-y-3">
           <CodeBlock title="terminal" code={INSTALL_PATH} />
           <CodeBlock title="optional-private-registry" code={INSTALL_NPM_NOTE} />
-          <p className="text-xs text-zt-muted">
-            Build first: <code className="text-zt-text">cd sdk && npm install && npm run build</code>
-          </p>
+          <p className="text-xs text-zt-muted">{t.buildFirst}</p>
         </div>
       ) : null}
 
       {tab === "browser" ? (
         <div className="space-y-3">
-          <CodeBlock title="app entry (browser)" code={browserInitExample()} />
-          <p className="text-xs text-zt-muted">
-            Header sent by the SDK:{" "}
-            <code className="text-zt-text">X-Zynteksis-Key</code>. CORS is enabled
-            on ingest routes for browser clients.
-          </p>
-          <p className="text-xs text-zt-muted">
-            React Native / native mobile: do not use{" "}
-            <code className="text-zt-text">@zynteksis/sdk</code>{" "}
-            <code className="text-zt-text">init()</code>. POST to ingest with{" "}
-            <code className="text-zt-text">X-Zynteksis-Key</code> instead (see
-            Server tab).
-          </p>
+          <CodeBlock title={t.codeBrowserEntry} code={browserInitExample()} />
+          <p className="text-xs text-zt-muted">{t.browserHeader}</p>
+          <p className="text-xs text-zt-muted">{t.browserNative}</p>
         </div>
       ) : null}
 
       {tab === "server" ? (
         <div className="space-y-3">
           <CodeBlock title="server.mjs" code={serverHttpExample()} />
-          <p className="text-xs text-zt-muted">
-            <code className="text-zt-text">zyn.init()</code> is browser-only;
-            servers and React Native should POST to the ingest endpoints with{" "}
-            <code className="text-zt-text">X-Zynteksis-Key</code>.
-          </p>
+          <p className="text-xs text-zt-muted">{t.serverOnly}</p>
         </div>
       ) : null}
 
@@ -246,39 +228,39 @@ export function ApiKeyConnectionGuide({
       ) : null}
 
       {tab === "error" ? (
-        <CodeBlock title="error reporting" code={errorExample()} />
+        <CodeBlock title={t.codeErrorReporting} code={errorExample()} />
       ) : null}
 
       {tab === "monitor" ? (
         <div className="space-y-3 text-sm text-zt-muted">
-          <p>After traffic starts flowing, monitor here:</p>
+          <p>{t.monitorIntro}</p>
           <ul className="list-inside list-disc space-y-1.5">
             <li>
               <Link
                 href={DASHBOARD_ROUTES.errors}
                 className="font-medium text-zt-primary hover:underline"
               >
-                Errors
+                {t.tabErrors}
               </Link>{" "}
-              — ingested exceptions and messages
+              {t.monitorErrors}
             </li>
             <li>
               <Link
                 href={DASHBOARD_ROUTES.health}
                 className="font-medium text-zt-primary hover:underline"
               >
-                Health
+                {t.linkHealth}
               </Link>{" "}
-              — heartbeats / uptime signals
+              {t.monitorHealth}
             </li>
             <li>
               <Link
                 href={DASHBOARD_ROUTES.insights}
                 className="font-medium text-zt-primary hover:underline"
               >
-                Insights
+                {t.linkInsights}
               </Link>{" "}
-              — performance and trends
+              {t.monitorInsights}
             </li>
             <li>
               <Link
@@ -286,9 +268,9 @@ export function ApiKeyConnectionGuide({
                 className="inline-flex items-center gap-1 font-medium text-zt-primary hover:underline"
               >
                 <LayoutDashboard className="size-3.5" aria-hidden />
-                Overview
+                {t.linkOverview}
               </Link>{" "}
-              — live activity
+              {t.monitorOverview}
             </li>
           </ul>
         </div>

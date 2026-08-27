@@ -4,10 +4,11 @@ import { headers } from "next/headers";
 
 import { APP_NAME, STATUS_PAGE_BASE_PATH } from "@/lib/constants";
 import { env } from "@/lib/env";
+import { fillTemplate } from "@/lib/i18n/fill-template";
+import { getDictionary } from "@/lib/i18n/get-dictionary";
 import { getPublicStatusPage } from "@/services/status";
 import { createSupabaseAdminClient } from "@/supabase/admin";
 import { PublicStatusView } from "@/features/status/components/public-status-view";
-import { COMPONENT_STATUS_LABELS } from "@/lib/constants";
 
 export const dynamic = "force-dynamic";
 
@@ -22,15 +23,22 @@ export async function generateMetadata({
   params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
   const { slug } = await params;
+  const { dict } = await getDictionary();
+  const statusLabel = dict.system.status;
+  const t = dict.dash.statusPages;
   const data = await loadStatusPage(slug);
   if (!data) {
-    return { title: "Status" };
+    return { title: statusLabel };
   }
 
-  const title = `${data.name} · Status`;
+  const title = `${data.name} · ${statusLabel}`;
   const description =
     data.description?.trim() ||
-    `${data.projectName} status: ${COMPONENT_STATUS_LABELS[data.currentStatus]}. Current uptime ${data.currentUptime.toFixed(2)}%.`;
+    fillTemplate(t.metaFallbackDescription, {
+      projectName: data.projectName,
+      status: t.componentStatuses[data.currentStatus],
+      uptime: data.currentUptime.toFixed(2),
+    });
   const url = `${env.NEXT_PUBLIC_APP_URL}${STATUS_PAGE_BASE_PATH}/${data.slug}`;
 
   return {
@@ -43,7 +51,12 @@ export async function generateMetadata({
       siteName: APP_NAME,
       type: "website",
       images: data.logoUrl
-        ? [{ url: data.logoUrl, alt: `${data.name} logo` }]
+        ? [
+            {
+              url: data.logoUrl,
+              alt: fillTemplate(t.logoAlt, { name: data.name }),
+            },
+          ]
         : undefined,
     },
     twitter: {
@@ -62,6 +75,8 @@ export default async function PublicStatusPageRoute({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
+  const { dict } = await getDictionary();
+  const t = dict.dash.statusPages;
   const data = await loadStatusPage(slug);
   if (!data) {
     notFound();
@@ -80,7 +95,9 @@ export default async function PublicStatusPageRoute({
     name: data.name,
     description:
       data.description ??
-      `Live status and uptime for ${data.projectName}.`,
+      fillTemplate(t.liveStatusDescription, {
+        projectName: data.projectName,
+      }),
     url: shareUrl,
     dateModified: data.updatedAt,
     isPartOf: {

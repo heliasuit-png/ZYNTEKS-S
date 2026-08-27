@@ -5,6 +5,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { KeyRound, Plus, Search } from "lucide-react";
 import Link from "next/link";
 
+import { useDictionary } from "@/components/i18n/locale-provider";
 import { EmptyState } from "@/components/dashboard/empty-state";
 import { Pagination } from "@/components/dashboard/pagination";
 import { FadeIn } from "@/components/dashboard/motion";
@@ -12,7 +13,6 @@ import { Toast } from "@/components/dashboard/toast";
 import type { ToastVariant } from "@/components/dashboard/toast";
 import {
   API_KEY_ENVIRONMENTS,
-  API_KEY_ENVIRONMENT_LABELS,
   API_ROUTES,
   DASHBOARD_ROUTES,
 } from "@/lib/constants";
@@ -57,6 +57,8 @@ export function ApiKeysExplorer({
   search,
   filters,
 }: ApiKeysExplorerProps) {
+  const { dict } = useDictionary();
+  const t = dict.dash.apiKeys;
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -71,6 +73,7 @@ export function ApiKeysExplorer({
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
 
   const projectNames = new Map(projects.map((p) => [p.id, p.name]));
+  const errorCopy = t.errors;
 
   useEffect(() => {
     setSearchValue(search);
@@ -137,10 +140,11 @@ export function ApiKeysExplorer({
         if (!response.ok || payload?.success === false) {
           showToast({
             variant: "error",
-            title: "Revoke failed",
+            title: t.toasts.revokeFailed,
             message: apiKeyActionErrorMessage(
               response.status,
               payload?.error?.message ?? payload?.message,
+              errorCopy,
             ),
           });
           return;
@@ -148,21 +152,21 @@ export function ApiKeysExplorer({
 
         showToast({
           variant: "success",
-          title: "Key revoked",
-          message: "The API key can no longer authenticate requests.",
+          title: t.toasts.revoked,
+          message: t.toasts.revokedDesc,
         });
         router.refresh();
       } catch {
         showToast({
           variant: "error",
-          title: "Revoke failed",
-          message: apiKeyActionErrorMessage(null),
+          title: t.toasts.revokeFailed,
+          message: apiKeyActionErrorMessage(null, null, errorCopy),
         });
       } finally {
         setBusyId(null);
       }
     },
-    [router, showToast],
+    [router, showToast, t.toasts, errorCopy],
   );
 
   const handleRegenerate = useCallback(
@@ -183,10 +187,11 @@ export function ApiKeysExplorer({
         if (!response.ok || !payload?.success || !payload.data?.plainKey) {
           showToast({
             variant: "error",
-            title: "Regenerate failed",
+            title: t.toasts.regenerateFailed,
             message: apiKeyActionErrorMessage(
               response.status,
               payload?.error?.message ?? payload?.message,
+              errorCopy,
             ),
           });
           return;
@@ -195,21 +200,21 @@ export function ApiKeysExplorer({
         setRevealKey(payload.data.plainKey);
         showToast({
           variant: "success",
-          title: "Key regenerated",
-          message: "Copy the new key now — it will not be shown again.",
+          title: t.toasts.regenerated,
+          message: t.toasts.copyNewNow,
         });
         router.refresh();
       } catch {
         showToast({
           variant: "error",
-          title: "Regenerate failed",
-          message: apiKeyActionErrorMessage(null),
+          title: t.toasts.regenerateFailed,
+          message: apiKeyActionErrorMessage(null, null, errorCopy),
         });
       } finally {
         setBusyId(null);
       }
     },
-    [router, showToast],
+    [router, showToast, t.toasts, errorCopy],
   );
 
   const handleCreated = useCallback(
@@ -217,22 +222,22 @@ export function ApiKeysExplorer({
       setRevealKey(plainKey);
       showToast({
         variant: "success",
-        title: "API key created",
-        message: "Copy the key now — it will not be shown again.",
+        title: t.toasts.created,
+        message: t.toasts.copyNow,
       });
     },
-    [showToast],
+    [showToast, t.toasts],
   );
 
   const handleCreateError = useCallback(
     (message: string) => {
       showToast({
         variant: "error",
-        title: "Could not create key",
-        message: apiKeyActionErrorMessage(null, message),
+        title: t.toasts.createFailed,
+        message: apiKeyActionErrorMessage(null, message, errorCopy),
       });
     },
-    [showToast],
+    [showToast, t.toasts.createFailed, errorCopy],
   );
 
   const hasProjects = projects.length > 0;
@@ -253,19 +258,19 @@ export function ApiKeysExplorer({
               type="search"
               value={searchValue}
               onChange={(event) => setSearchValue(event.target.value)}
-              placeholder="Search keys…"
-              aria-label="Search API keys"
+              placeholder={t.searchPlaceholder}
+              aria-label={t.searchAria}
               className="h-9 w-full rounded-xl border border-zt-border bg-zt-surface pl-9 pr-3 text-sm text-zt-text placeholder:text-zt-muted focus:outline-none focus:ring-2 focus:ring-zt-primary/40"
             />
           </div>
 
           <select
-            aria-label="Filter by project"
+            aria-label={t.filterProjectAria}
             value={filters.projectId}
             onChange={(event) => updateParam("projectId", event.target.value)}
             className={selectClass}
           >
-            <option value="">All projects</option>
+            <option value="">{t.allProjects}</option>
             {projects.map((project) => (
               <option key={project.id} value={project.id}>
                 {project.name}
@@ -274,28 +279,28 @@ export function ApiKeysExplorer({
           </select>
 
           <select
-            aria-label="Filter by environment"
+            aria-label={t.filterEnvironmentAria}
             value={filters.environment}
             onChange={(event) => updateParam("environment", event.target.value)}
             className={selectClass}
           >
-            <option value="">All environments</option>
+            <option value="">{t.allEnvironments}</option>
             {API_KEY_ENVIRONMENTS.map((environment) => (
               <option key={environment} value={environment}>
-                {API_KEY_ENVIRONMENT_LABELS[environment]}
+                {t.environments[environment]}
               </option>
             ))}
           </select>
 
           <select
-            aria-label="Filter by status"
+            aria-label={t.filterStatusAria}
             value={filters.status}
             onChange={(event) => updateParam("status", event.target.value)}
             className={selectClass}
           >
-            <option value="">All statuses</option>
-            <option value="active">Active</option>
-            <option value="revoked">Revoked</option>
+            <option value="">{t.allStatuses}</option>
+            <option value="active">{t.statuses.active}</option>
+            <option value="revoked">{t.statuses.revoked}</option>
           </select>
         </div>
 
@@ -306,7 +311,7 @@ export function ApiKeysExplorer({
           className="inline-flex items-center justify-center gap-2 rounded-xl bg-zt-primary px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-zt-primary/90 disabled:opacity-60"
         >
           <Plus className="size-4" aria-hidden />
-          Generate Key
+          {t.generate}
         </button>
       </div>
 
@@ -314,25 +319,23 @@ export function ApiKeysExplorer({
         !hasProjects ? (
           <EmptyState
             icon={KeyRound}
-            title="Create a project first"
-            description="API keys belong to a project. Create a project to get started."
+            title={t.createProjectFirst}
+            description={t.createProjectFirstDesc}
             action={
               <Link
                 href={DASHBOARD_ROUTES.projects}
                 className="inline-flex items-center gap-2 rounded-xl bg-zt-primary px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-zt-primary/90"
               >
-                Go to Projects
+                {t.connectionGuide.goToProjects}
               </Link>
             }
           />
         ) : (
           <EmptyState
             icon={KeyRound}
-            title={hasActiveFilters ? "No matching keys" : "No API keys yet"}
+            title={hasActiveFilters ? t.noMatching : t.noKeys}
             description={
-              hasActiveFilters
-                ? "No API keys match your filters."
-                : "Generate an API key to start authenticating requests."
+              hasActiveFilters ? t.emptyFilterDesc : t.emptyDesc
             }
             action={
               hasActiveFilters ? undefined : (
@@ -342,7 +345,7 @@ export function ApiKeysExplorer({
                   className="inline-flex items-center gap-2 rounded-xl bg-zt-primary px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-zt-primary/90"
                 >
                   <Plus className="size-4" aria-hidden />
-                  Generate Key
+                  {t.generate}
                 </button>
               )
             }
@@ -355,7 +358,9 @@ export function ApiKeysExplorer({
               <FadeIn key={apiKey.id} delay={index * 0.03}>
                 <ApiKeyCard
                   apiKey={apiKey}
-                  projectName={projectNames.get(apiKey.project_id) ?? "Project"}
+                  projectName={
+                    projectNames.get(apiKey.project_id) ?? t.projectFallback
+                  }
                   busy={busyId === apiKey.id}
                   onRevoke={handleRevoke}
                   onRegenerate={handleRegenerate}

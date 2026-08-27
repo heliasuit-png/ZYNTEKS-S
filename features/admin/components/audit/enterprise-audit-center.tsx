@@ -4,6 +4,8 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useState, useTransition } from "react";
 import { motion } from "framer-motion";
 
+import { useDictionary } from "@/components/i18n/locale-provider";
+import { fillTemplate } from "@/lib/i18n/fill-template";
 import type {
   AuditCenterData,
   AuditSeverity,
@@ -28,6 +30,9 @@ const SEVERITY_CLASS: Record<AuditSeverity, string> = {
 };
 
 export function EnterpriseAuditCenter({ data }: { data: AuditCenterData }) {
+  const { dict, locale } = useDictionary();
+  const t = dict.admin.audit;
+  const common = dict.admin.common;
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const router = useRouter();
   const pathname = usePathname();
@@ -43,22 +48,25 @@ export function EnterpriseAuditCenter({ data }: { data: AuditCenterData }) {
   }
 
   const kpis = [
-    { label: "Total audit events", value: data.overview.totalEvents },
-    { label: "Today", value: data.overview.today },
-    { label: "This week", value: data.overview.thisWeek },
-    { label: "Security events", value: data.overview.securityEvents },
-    { label: "Admin actions", value: data.overview.adminActions },
-    { label: "Workspace actions", value: data.overview.workspaceActions },
-    { label: "User actions", value: data.overview.userActions },
-    { label: "System actions", value: data.overview.systemActions },
+    { label: t.overview.totalEvents, value: data.overview.totalEvents },
+    { label: t.overview.today, value: data.overview.today },
+    { label: t.overview.thisWeek, value: data.overview.thisWeek },
+    { label: t.overview.securityEvents, value: data.overview.securityEvents },
+    { label: t.overview.adminActions, value: data.overview.adminActions },
+    {
+      label: t.overview.workspaceActions,
+      value: data.overview.workspaceActions,
+    },
+    { label: t.overview.userActions, value: data.overview.userActions },
+    { label: t.overview.systemActions, value: data.overview.systemActions },
   ];
 
   return (
     <div className="space-y-5">
       <AdminPageHeader
-        eyebrow="Compliance plane"
-        title="Enterprise Audit Center"
-        description="Searchable, filterable platform audit trail from admin_audit_logs — real events only."
+        eyebrow={t.eyebrow}
+        title={t.pageTitle}
+        description={t.description}
       />
 
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-8">
@@ -84,30 +92,54 @@ export function EnterpriseAuditCenter({ data }: { data: AuditCenterData }) {
 
       <div className="grid gap-5 xl:grid-cols-[1.4fr_1fr]">
         <SectionCard
-          title="Audit table"
-          description={`${formatNumber(data.totalFiltered)} matching events · page ${data.page}/${data.pageCount}`}
+          title={t.auditTable}
+          description={fillTemplate(t.matchingPage, {
+            count: formatNumber(data.totalFiltered),
+            page: String(data.page),
+            pages: String(data.pageCount),
+          })}
         >
           {data.events.length === 0 ? (
             <AdminEmptyState
-              title="No audit events match the current filters."
-              description="Adjust search or filters to broaden results."
+              title={t.empty.title}
+              description={t.empty.description}
             />
           ) : (
             <div className="overflow-x-auto rounded-xl border border-[var(--admin-border)]">
               <table className="min-w-[1100px] w-full text-left text-xs">
                 <thead className="bg-[var(--admin-surface)] text-[10px] uppercase tracking-wide text-[var(--admin-muted)]">
                   <tr>
-                    <th className="px-2.5 py-2.5 font-medium">Timestamp</th>
-                    <th className="px-2.5 py-2.5 font-medium">Actor</th>
-                    <th className="px-2.5 py-2.5 font-medium">Role</th>
-                    <th className="px-2.5 py-2.5 font-medium">Action</th>
-                    <th className="px-2.5 py-2.5 font-medium">Category</th>
-                    <th className="px-2.5 py-2.5 font-medium">Target</th>
-                    <th className="px-2.5 py-2.5 font-medium">Workspace</th>
-                    <th className="px-2.5 py-2.5 font-medium">Project</th>
-                    <th className="px-2.5 py-2.5 font-medium">Severity</th>
-                    <th className="px-2.5 py-2.5 font-medium">IP</th>
-                    <th className="px-2.5 py-2.5 font-medium">Result</th>
+                    <th className="px-2.5 py-2.5 font-medium">
+                      {t.columns.timestamp}
+                    </th>
+                    <th className="px-2.5 py-2.5 font-medium">
+                      {t.columns.actor}
+                    </th>
+                    <th className="px-2.5 py-2.5 font-medium">
+                      {t.columns.role}
+                    </th>
+                    <th className="px-2.5 py-2.5 font-medium">
+                      {t.columns.action}
+                    </th>
+                    <th className="px-2.5 py-2.5 font-medium">
+                      {t.columns.category}
+                    </th>
+                    <th className="px-2.5 py-2.5 font-medium">
+                      {t.columns.target}
+                    </th>
+                    <th className="px-2.5 py-2.5 font-medium">
+                      {t.columns.workspace}
+                    </th>
+                    <th className="px-2.5 py-2.5 font-medium">
+                      {t.columns.project}
+                    </th>
+                    <th className="px-2.5 py-2.5 font-medium">
+                      {t.columns.severity}
+                    </th>
+                    <th className="px-2.5 py-2.5 font-medium">{t.columns.ip}</th>
+                    <th className="px-2.5 py-2.5 font-medium">
+                      {t.columns.result}
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
@@ -119,7 +151,7 @@ export function EnterpriseAuditCenter({ data }: { data: AuditCenterData }) {
                     >
                       <td className="px-2.5 py-2.5 whitespace-nowrap text-[var(--admin-muted)]">
                         <span title={formatWhen(event.timestamp)}>
-                          {formatRelative(event.timestamp)}
+                          {formatRelative(event.timestamp, locale)}
                         </span>
                       </td>
                       <td className="px-2.5 py-2.5">
@@ -163,10 +195,13 @@ export function EnterpriseAuditCenter({ data }: { data: AuditCenterData }) {
               onClick={() => goPage(data.page - 1)}
               className="admin-btn-ghost disabled:opacity-40"
             >
-              Previous
+              {common.previous}
             </button>
             <span>
-              Page {data.page} of {data.pageCount}
+              {fillTemplate(common.pageOf, {
+                page: String(data.page),
+                pages: String(data.pageCount),
+              })}
             </span>
             <button
               type="button"
@@ -174,17 +209,14 @@ export function EnterpriseAuditCenter({ data }: { data: AuditCenterData }) {
               onClick={() => goPage(data.page + 1)}
               className="admin-btn-ghost disabled:opacity-40"
             >
-              Next
+              {common.next}
             </button>
           </div>
         </SectionCard>
 
-        <SectionCard
-          title="Timeline"
-          description="Newest first · open an event for full metadata"
-        >
+        <SectionCard title={t.timeline} description={t.timelineDesc}>
           {data.timeline.length === 0 ? (
-            <AdminEmptyState title="No timeline events in this window." />
+            <AdminEmptyState title={t.timelineEmpty} />
           ) : (
             <ol className="space-y-3">
               {data.timeline.map((event) => (
@@ -210,8 +242,8 @@ export function EnterpriseAuditCenter({ data }: { data: AuditCenterData }) {
                         {event.summary}
                       </span>
                       <span className="mt-1 block text-[10px] text-[var(--admin-muted)]">
-                        {formatRelative(event.timestamp)} ·{" "}
-                        {event.actorEmail || "unknown actor"}
+                        {formatRelative(event.timestamp, locale)} ·{" "}
+                        {event.actorEmail || common.unknownActor}
                       </span>
                     </span>
                   </button>
@@ -223,19 +255,39 @@ export function EnterpriseAuditCenter({ data }: { data: AuditCenterData }) {
       </div>
 
       <div className="grid gap-5 lg:grid-cols-2 xl:grid-cols-3">
-        <InsightCard title="Most common actions" rows={data.insights.mostCommonActions} />
-        <InsightCard title="Most active admins" rows={data.insights.mostActiveAdmins} />
         <InsightCard
-          title="Most modified workspaces"
-          rows={data.insights.mostModifiedWorkspaces}
+          title={t.insights.mostCommonActions}
+          rows={data.insights.mostCommonActions}
+          emptyLabel={t.noDataInWindow}
         />
-        <InsightCard title="Most modified users" rows={data.insights.mostModifiedUsers} />
-        <InsightCard title="Top security events" rows={data.insights.topSecurityEvents} />
-        <SectionCard title="Retention" description="Storage policy for admin_audit_logs">
+        <InsightCard
+          title={t.insights.mostActiveAdmins}
+          rows={data.insights.mostActiveAdmins}
+          emptyLabel={t.noDataInWindow}
+        />
+        <InsightCard
+          title={t.insights.mostModifiedWorkspaces}
+          rows={data.insights.mostModifiedWorkspaces}
+          emptyLabel={t.noDataInWindow}
+        />
+        <InsightCard
+          title={t.insights.mostModifiedUsers}
+          rows={data.insights.mostModifiedUsers}
+          emptyLabel={t.noDataInWindow}
+        />
+        <InsightCard
+          title={t.insights.topSecurityEvents}
+          rows={data.insights.topSecurityEvents}
+          emptyLabel={t.noDataInWindow}
+        />
+        <SectionCard
+          title={t.insights.retention}
+          description={t.insights.retentionDesc}
+        >
           <dl className="space-y-2 text-sm">
             <div>
               <dt className="text-[11px] uppercase tracking-wide text-[var(--admin-muted)]">
-                Retention policy
+                {t.retentionPolicy}
               </dt>
               <dd className="mt-1 text-[var(--admin-text)]">
                 {data.retention.policy}
@@ -243,7 +295,7 @@ export function EnterpriseAuditCenter({ data }: { data: AuditCenterData }) {
             </div>
             <div>
               <dt className="text-[11px] uppercase tracking-wide text-[var(--admin-muted)]">
-                Stored records
+                {t.storedRecords}
               </dt>
               <dd className="mt-1 text-[var(--admin-text)]">
                 {formatNumber(data.retention.storedRecords)}
@@ -251,7 +303,7 @@ export function EnterpriseAuditCenter({ data }: { data: AuditCenterData }) {
             </div>
             <div>
               <dt className="text-[11px] uppercase tracking-wide text-[var(--admin-muted)]">
-                Oldest record
+                {t.oldestRecord}
               </dt>
               <dd className="mt-1 text-[var(--admin-text)]">
                 {data.retention.oldestRecordAt
@@ -261,7 +313,7 @@ export function EnterpriseAuditCenter({ data }: { data: AuditCenterData }) {
             </div>
             <div>
               <dt className="text-[11px] uppercase tracking-wide text-[var(--admin-muted)]">
-                Newest record
+                {t.newestRecord}
               </dt>
               <dd className="mt-1 text-[var(--admin-text)]">
                 {data.retention.newestRecordAt
@@ -278,7 +330,9 @@ export function EnterpriseAuditCenter({ data }: { data: AuditCenterData }) {
 
       {data.unavailable.length > 0 ? (
         <p className="text-xs text-[var(--admin-muted)]">
-          Honest gaps: {data.unavailable.join(", ")}
+          {fillTemplate(t.honestGaps, {
+            items: data.unavailable.join(", "),
+          })}
         </p>
       ) : null}
 
@@ -290,9 +344,11 @@ export function EnterpriseAuditCenter({ data }: { data: AuditCenterData }) {
 function InsightCard({
   title,
   rows,
+  emptyLabel,
 }: {
   title: string;
   rows: { key: string; label: string; count: number }[];
+  emptyLabel: string;
 }) {
   return (
     <SectionCard title={title}>
@@ -309,7 +365,7 @@ function InsightCard({
           </li>
         ))}
         {rows.length === 0 ? (
-          <li className="text-xs text-[var(--admin-muted)]">No data in window.</li>
+          <li className="text-xs text-[var(--admin-muted)]">{emptyLabel}</li>
         ) : null}
       </ul>
     </SectionCard>

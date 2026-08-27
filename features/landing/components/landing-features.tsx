@@ -11,7 +11,8 @@ import {
   type LucideIcon,
 } from "lucide-react";
 
-import { FEATURES } from "@/features/landing/data/content";
+import { useDictionary } from "@/components/i18n/locale-provider";
+import { getFeatures } from "@/features/landing/data/content";
 import { LandingSection } from "@/features/landing/components/section";
 import { Reveal } from "@/features/landing/components/reveal";
 
@@ -26,15 +27,19 @@ const ICONS: Record<string, LucideIcon> = {
 };
 
 export function LandingFeatures() {
+  const { dict } = useDictionary();
+  const features = getFeatures(dict);
+  const copy = dict.landing.features;
+
   return (
     <LandingSection
       id="features"
-      eyebrow="Features"
-      title="Everything your production stack needs"
-      description="Monitoring, AI analysis, projects, keys, health, notifications, and status pages — one coherent operations surface."
+      eyebrow={copy.eyebrow}
+      title={copy.title}
+      description={copy.desc}
     >
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {FEATURES.map((feature, index) => {
+        {features.map((feature, index) => {
           const Icon = ICONS[feature.icon] ?? Activity;
           return (
             <Reveal key={feature.id} delay={index * 0.05}>

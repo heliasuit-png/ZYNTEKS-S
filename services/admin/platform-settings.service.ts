@@ -35,7 +35,7 @@ function readLatestMigrationVersion(): string {
 function resolveBuildMeta(): {
   buildVersion: string;
   buildDate: string | null;
-  buildDateNote: string | null;
+  buildDateNoteKey: "missing" | null;
   environment: string;
 } {
   const sha =
@@ -52,33 +52,39 @@ function resolveBuildMeta(): {
   return {
     buildVersion,
     buildDate,
-    buildDateNote: buildDate
-      ? null
-      : "Build timestamp is not set in this deployment environment",
+    buildDateNoteKey: buildDate ? null : "missing",
     environment,
   };
 }
 
-function resolveDatabaseRegion(): string {
+function resolveDatabaseRegion(): {
+  regionKey: "value" | "not_exposed" | "unavailable";
+  regionValue: string | null;
+} {
   const explicit =
     process.env.SUPABASE_REGION?.trim() ||
     process.env.NEXT_PUBLIC_SUPABASE_REGION?.trim();
-  if (explicit) return explicit;
+  if (explicit) return { regionKey: "value", regionValue: explicit };
   try {
     const host = new URL(env.NEXT_PUBLIC_SUPABASE_URL).hostname;
     // Newer Supabase hosts embed region (e.g. aws-0-eu-central-1.pooler.supabase.com)
     const match = host.match(
       /(?:^|\.)((?:aws|us|eu|ap|sa|ca|af)-[a-z0-9-]+)\./i,
     );
-    if (match?.[1]) return match[1];
-    return "Not exposed via project URL";
+    if (match?.[1]) return { regionKey: "value", regionValue: match[1] };
+    return { regionKey: "not_exposed", regionValue: null };
   } catch {
-    return "unavailable";
+    return { regionKey: "unavailable", regionValue: null };
   }
 }
 
-function senderDomainMeta(fromConfigured: boolean): string {
-  if (!fromConfigured) return "Not configured";
+function senderDomainMeta(fromConfigured: boolean): {
+  verifiedSenderKey: "not_configured" | "configured" | "domain";
+  verifiedSenderDomain: string | null;
+} {
+  if (!fromConfigured) {
+    return { verifiedSenderKey: "not_configured", verifiedSenderDomain: null };
+  }
   try {
     const raw = env.EMAIL_FROM;
     // Prefer RFC-style "Name <email@domain>" or bare email — never return full secret value.
@@ -86,12 +92,12 @@ function senderDomainMeta(fromConfigured: boolean): string {
     const address = (angle?.[1] ?? raw).trim();
     const at = address.lastIndexOf("@");
     if (at <= 0 || at === address.length - 1) {
-      return "Sender address configured";
+      return { verifiedSenderKey: "configured", verifiedSenderDomain: null };
     }
     const domain = address.slice(at + 1);
-    return `Configured · ***@${domain}`;
+    return { verifiedSenderKey: "domain", verifiedSenderDomain: domain };
   } catch {
-    return "Sender address configured";
+    return { verifiedSenderKey: "configured", verifiedSenderDomain: null };
   }
 }
 
@@ -172,7 +178,9 @@ export async function getPlatformSettingsCenter(
 
   // Database probe
   let databaseTone: HealthTone = "green";
-  let databaseDetail = "Postgres reachable";
+  let databaseHealthDetailKey: "reachable_ms" | "error" = "reachable_ms";
+  let databaseHealthDetailMs: number | null = null;
+  let databaseHealthDetailMessage: string | null = null;
   let latencyMs: number | null = null;
   try {
     const started = performance.now();
@@ -180,21 +188,23 @@ export async function getPlatformSettingsCenter(
     latencyMs = Math.round(performance.now() - started);
     if (error) {
       databaseTone = "red";
-      databaseDetail = error.message;
+      databaseHealthDetailKey = "error";
+      databaseHealthDetailMessage = error.message;
     } else {
-      databaseDetail = `Postgres reachable · ${latencyMs} ms probe`;
+      databaseHealthDetailKey = "reachable_ms";
+      databaseHealthDetailMs = latencyMs;
     }
   } catch (error) {
     databaseTone = "red";
-    databaseDetail =
+    databaseHealthDetailKey = "error";
+    databaseHealthDetailMessage =
       error instanceof Error ? error.message : "Database unreachable";
   }
 
   let tableCount: number | null = null;
-  let tableCountNote: string | null = null;
+  let tableCountNoteKey: "unavailable" | null = null;
   if (tableCountRes.error) {
-    tableCountNote =
-      "Table count RPC unavailable — apply migration 0013 or grant service role";
+    tableCountNoteKey = "unavailable";
     unavailable.push("database_table_count");
   } else if (typeof tableCountRes.data === "number") {
     tableCount = tableCountRes.data;
@@ -202,13 +212,18 @@ export async function getPlatformSettingsCenter(
 
   // Storage probe
   let bucketTone: HealthTone = "yellow";
-  let bucketStatus = "Storage probe unavailable";
+  let bucketStatusKey: "unavailable" | "error" | "missing" | "ok" =
+    "unavailable";
+  let bucketCount: number | null = null;
+  let bucketMissing: string | null = null;
+  let bucketErrorMessage: string | null = null;
   let buckets: { name: string; public: boolean }[] = [];
   try {
     const { data, error } = await admin.storage.listBuckets();
     if (error) {
       bucketTone = "red";
-      bucketStatus = error.message;
+      bucketStatusKey = "error";
+      bucketErrorMessage = error.message;
     } else {
       buckets = (data ?? []).map((bucket) => ({
         name: bucket.name,
@@ -218,15 +233,18 @@ export async function getPlatformSettingsCenter(
       const missing = REQUIRED_BUCKETS.filter((name) => !names.has(name));
       if (missing.length > 0) {
         bucketTone = "yellow";
-        bucketStatus = `Missing buckets: ${missing.join(", ")}`;
+        bucketStatusKey = "missing";
+        bucketMissing = missing.join(", ");
       } else {
         bucketTone = "green";
-        bucketStatus = `${buckets.length} buckets · required buckets present`;
+        bucketStatusKey = "ok";
+        bucketCount = buckets.length;
       }
     }
   } catch (error) {
     bucketTone = "red";
-    bucketStatus =
+    bucketStatusKey = "error";
+    bucketErrorMessage =
       error instanceof Error ? error.message : "Storage unreachable";
   }
 
@@ -235,9 +253,6 @@ export async function getPlatformSettingsCenter(
   // AI
   const openaiConfigured = Boolean(env.OPENAI_API_KEY);
   const aiTone: HealthTone = openaiConfigured ? "green" : "yellow";
-  const aiDetail = openaiConfigured
-    ? "Provider credentials configured"
-    : "Provider credentials not configured";
 
   // Email — never expose EMAIL_FROM / API keys
   const resendConfigured = Boolean(env.RESEND_API_KEY);
@@ -246,12 +261,12 @@ export async function getPlatformSettingsCenter(
   const mailFailed = mailFailedRes.count ?? 0;
   const mailSent = mailOkRes.count ?? 0;
   let deliveryTone: HealthTone = emailConfigured ? "green" : "yellow";
-  let deliveryStatus = emailConfigured
-    ? `${mailSent} sent · ${mailFailed} failed (24h)`
-    : "Email provider not fully configured";
+  let deliveryKey: "not_configured" | "ok" | "failed" = emailConfigured
+    ? "ok"
+    : "not_configured";
   if (mailFailed > 0) {
     deliveryTone = "red";
-    deliveryStatus = `${mailFailed} failed deliveries (24h) · ${mailSent} sent`;
+    deliveryKey = "failed";
   }
 
   // SDK
@@ -265,10 +280,12 @@ export async function getPlatformSettingsCenter(
   const supportedVersions = [...releaseSet].sort();
   const hbCount = heartbeatRes.data?.length ?? 0;
   let sdkTone: HealthTone = "yellow";
-  let sdkDetail = "No SDK heartbeats in the last hour";
+  let sdkHealthDetailKey: "silent" | "heartbeats" = "silent";
+  let sdkHealthDetailCount: number | null = null;
   if (hbCount > 0) {
     sdkTone = "green";
-    sdkDetail = `${hbCount} heartbeats (1h)`;
+    sdkHealthDetailKey = "heartbeats";
+    sdkHealthDetailCount = hbCount;
   }
   unavailable.push("sdk_npm_downloads");
 
@@ -277,12 +294,15 @@ export async function getPlatformSettingsCenter(
   const vercelCronsConfigured = cronJobs.length > 0;
   let cronTone: HealthTone =
     cronSecretConfigured && vercelCronsConfigured ? "green" : "yellow";
-  let cronDetail = cronSecretConfigured
-    ? `${cronJobs.length} jobs registered · vercel.json schedules wired · execution history not persisted`
-    : "CRON_SECRET empty — Vercel Cron Authorization Bearer will fail";
+  let cronHealthDetailKey: "ok" | "missing_secret" | "no_jobs" =
+    cronSecretConfigured ? "ok" : "missing_secret";
+  let cronHealthDetailJobCount: number | null = cronSecretConfigured
+    ? cronJobs.length
+    : null;
   if (!vercelCronsConfigured) {
     cronTone = "yellow";
-    cronDetail = "No jobs in cron registry";
+    cronHealthDetailKey = "no_jobs";
+    cronHealthDetailJobCount = null;
   }
   unavailable.push("cron_history");
 
@@ -292,6 +312,9 @@ export async function getPlatformSettingsCenter(
       ? "degraded"
       : "live";
 
+  const region = resolveDatabaseRegion();
+  const sender = senderDomainMeta(fromConfigured);
+
   return {
     platform: {
       platformName: settings.platform_name,
@@ -300,7 +323,7 @@ export async function getPlatformSettingsCenter(
       deploymentStatus,
       buildVersion: build.buildVersion,
       buildDate: build.buildDate,
-      buildDateNote: build.buildDateNote,
+      buildDateNoteKey: build.buildDateNoteKey,
     },
     featureFlags: (flagsRes.data ?? []).map((row) => ({
       id: row.id,
@@ -317,43 +340,52 @@ export async function getPlatformSettingsCenter(
       configured: openaiConfigured,
       defaultModel: openaiConfigured ? env.OPENAI_MODEL : null,
       health: aiTone,
-      healthDetail: aiDetail,
+      healthDetailKey: openaiConfigured ? "configured" : "not_configured",
     },
     email: {
       configured: emailConfigured,
-      verifiedSender: senderDomainMeta(fromConfigured),
-      deliveryStatus,
+      verifiedSenderKey: sender.verifiedSenderKey,
+      verifiedSenderDomain: sender.verifiedSenderDomain,
+      deliveryKey,
+      deliverySent: mailSent,
+      deliveryFailed: mailFailed,
       deliveryTone,
       lastTestAt: mailLastRes.data?.created_at ?? null,
       lastTestStatus: mailLastRes.data?.status ?? null,
     },
     database: {
-      connectionStatus:
-        databaseTone === "green" ? "Connected" : "Unreachable",
+      connectionStatusKey:
+        databaseTone === "green" ? "connected" : "unreachable",
       connectionTone: databaseTone,
-      region: resolveDatabaseRegion(),
+      regionKey: region.regionKey,
+      regionValue: region.regionValue,
       health: databaseTone,
-      healthDetail: databaseDetail,
+      healthDetailKey: databaseHealthDetailKey,
+      healthDetailMs: databaseHealthDetailMs,
+      healthDetailMessage: databaseHealthDetailMessage,
       migrationVersion,
       tableCount,
-      tableCountNote,
+      tableCountNoteKey,
       latencyMs,
     },
     storage: {
       provider: "Supabase Storage",
-      bucketStatus,
+      bucketStatusKey,
       bucketTone,
+      bucketCount,
+      bucketMissing,
+      bucketErrorMessage,
       buckets,
-      usage: "Byte-level usage requires Supabase management API — unavailable",
       usageAvailable: false,
     },
     sdk: {
       latestVersion: packageSdkVersion,
       supportedVersions,
       downloads: null,
-      downloadsNote: "npm download counts are not wired for @zynteksis/sdk",
+      downloadsNoteKey: "unavailable",
       health: sdkTone,
-      healthDetail: sdkDetail,
+      healthDetailKey: sdkHealthDetailKey,
+      healthDetailCount: sdkHealthDetailCount,
     },
     cron: {
       registeredJobs: cronJobs.map((job) => ({
@@ -363,12 +395,12 @@ export async function getPlatformSettingsCenter(
         enabled: cronSecretConfigured,
         lastRun: null,
         health: cronSecretConfigured ? "yellow" : "yellow",
-        note: "Last run is not stored. Enabled reflects CRON_SECRET presence; schedules are defined in vercel.json.",
       })),
       cronSecretConfigured,
       vercelCronsConfigured,
       health: cronTone,
-      healthDetail: cronDetail,
+      healthDetailKey: cronHealthDetailKey,
+      healthDetailJobCount: cronHealthDetailJobCount,
     },
     security: {
       passwordPolicy: {
@@ -377,16 +409,10 @@ export async function getPlatformSettingsCenter(
         requireUppercase: true,
         requireNumber: true,
         maxLength: 72,
-        source: "platform_settings.min + auth schema complexity rules",
       },
       sessionTimeoutHours: settings.session_timeout_hours,
-      sessionTimeoutNote:
-        "Stored platform policy. Product session lifetime also follows Supabase JWT / refresh configuration.",
       mfaRequired: settings.mfa_required,
-      mfaStatus: settings.mfa_required
-        ? "Required (policy) — product TOTP enrollment not yet enforced"
-        : "Optional — product TOTP enrollment not yet available",
-      rateLimitingStatus: `In-process fixed windows active (e.g. SDK ingest ${SDK_INGEST.rateLimit.max}/min per project instance)`,
+      rateLimitingMaxPerMin: SDK_INGEST.rateLimit.max,
       rateLimitingTone: "green",
     },
     system: {

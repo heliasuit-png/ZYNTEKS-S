@@ -2,11 +2,15 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { z } from "zod";
 
 import { DASHBOARD_ROUTES, ROUTES } from "@/lib/constants";
 import { env } from "@/lib/env";
-import { isAppError } from "@/lib/errors";
+import { getDictionary } from "@/lib/i18n/get-dictionary";
+import {
+  fieldErrorsFromZod,
+  firstZodMessage,
+  toLocalizedErrorMessage,
+} from "@/lib/i18n/localize-action";
 import { rateLimit } from "@/lib/rate-limit";
 import {
   changePassword,
@@ -26,26 +30,12 @@ import {
   deleteAccountSchema,
   updateProfileSchema,
 } from "@/features/settings/schemas";
-import { mergePreferences, parsePreferences } from "@/features/settings/lib/preferences";
+import { mergePreferences } from "@/features/settings/lib/preferences";
 import {
   initialSettingsActionState,
   type SettingsActionState,
 } from "@/features/settings/types";
 import type { Json } from "@/types/database";
-
-function fieldErrorsFrom(error: z.ZodError): Record<string, string[]> {
-  const flattened = error.flatten().fieldErrors;
-  const result: Record<string, string[]> = {};
-  for (const [key, messages] of Object.entries(flattened)) {
-    if (messages && messages.length > 0) result[key] = messages;
-  }
-  return result;
-}
-
-function toErrorMessage(error: unknown): string {
-  if (isAppError(error)) return error.message;
-  return "Something went wrong. Please try again.";
-}
 
 function checkbox(formData: FormData, name: string): boolean {
   const value = formData.get(name);
@@ -62,6 +52,9 @@ export async function updateProfileAction(
   _prev: SettingsActionState,
   formData: FormData,
 ): Promise<SettingsActionState> {
+  const { dict } = await getDictionary();
+  const am = dict.actionMessages;
+
   const parsed = updateProfileSchema.safeParse({
     fullName: formData.get("fullName"),
     avatarUrl: formData.get("avatarUrl") ?? "",
@@ -71,13 +64,13 @@ export async function updateProfileAction(
   if (!parsed.success) {
     return {
       status: "error",
-      fieldErrors: fieldErrorsFrom(parsed.error),
-      message: parsed.error.issues[0]?.message,
+      fieldErrors: fieldErrorsFromZod(parsed.error, am),
+      message: firstZodMessage(parsed.error, am),
     };
   }
 
   const { supabase, user } = await resolveUser();
-  if (!user) return { status: "error", message: "You must be signed in." };
+  if (!user) return { status: "error", message: am.mustSignIn };
 
   try {
     await updateProfile(supabase, user.id, {
@@ -88,9 +81,9 @@ export async function updateProfileAction(
     });
     revalidatePath(DASHBOARD_ROUTES.profile);
     revalidatePath(DASHBOARD_ROUTES.settings);
-    return { status: "success", message: "Profile updated." };
+    return { status: "success", message: am.profileUpdated };
   } catch (error) {
-    return { status: "error", message: toErrorMessage(error) };
+    return { status: "error", message: toLocalizedErrorMessage(error, am) };
   }
 }
 
@@ -98,19 +91,22 @@ export async function uploadAvatarAction(
   _prev: SettingsActionState,
   formData: FormData,
 ): Promise<SettingsActionState> {
+  const { dict } = await getDictionary();
+  const am = dict.actionMessages;
+
   const file = formData.get("avatar");
   if (!(file instanceof File) || file.size === 0) {
-    return { status: "error", message: "Choose an image to upload." };
+    return { status: "error", message: am.avatarChooseImage };
   }
   if (file.size > 2 * 1024 * 1024) {
-    return { status: "error", message: "Avatar must be 2MB or smaller." };
+    return { status: "error", message: am.avatarTooLarge };
   }
   if (!file.type.startsWith("image/")) {
-    return { status: "error", message: "Upload a PNG, JPEG, WebP, or GIF image." };
+    return { status: "error", message: am.avatarInvalidType };
   }
 
   const { supabase, user } = await resolveUser();
-  if (!user) return { status: "error", message: "You must be signed in." };
+  if (!user) return { status: "error", message: am.mustSignIn };
 
   const ext = file.name.split(".").pop()?.toLowerCase() || "png";
   const path = `${user.id}/avatar-${Date.now()}.${ext}`;
@@ -126,9 +122,9 @@ export async function uploadAvatarAction(
     const { data } = supabase.storage.from("avatars").getPublicUrl(path);
     await updateProfile(supabase, user.id, { avatar_url: data.publicUrl });
     revalidatePath(DASHBOARD_ROUTES.profile);
-    return { status: "success", message: "Avatar uploaded." };
+    return { status: "success", message: am.avatarUploaded };
   } catch (error) {
-    return { status: "error", message: toErrorMessage(error) };
+    return { status: "error", message: toLocalizedErrorMessage(error, am) };
   }
 }
 
@@ -136,6 +132,9 @@ export async function changePasswordAction(
   _prev: SettingsActionState,
   formData: FormData,
 ): Promise<SettingsActionState> {
+  const { dict } = await getDictionary();
+  const am = dict.actionMessages;
+
   const parsed = changePasswordSchema.safeParse({
     currentPassword: formData.get("currentPassword"),
     newPassword: formData.get("newPassword"),
@@ -144,21 +143,21 @@ export async function changePasswordAction(
   if (!parsed.success) {
     return {
       status: "error",
-      fieldErrors: fieldErrorsFrom(parsed.error),
-      message: parsed.error.issues[0]?.message,
+      fieldErrors: fieldErrorsFromZod(parsed.error, am),
+      message: firstZodMessage(parsed.error, am),
     };
   }
 
   const { supabase, user } = await resolveUser();
   if (!user?.email) {
-    return { status: "error", message: "You must be signed in." };
+    return { status: "error", message: am.mustSignIn };
   }
 
   const passwordLimit = rateLimit(`settings:password:${user.id}`, 5, 60_000);
   if (!passwordLimit.allowed) {
     return {
       status: "error",
-      message: "Too many password change attempts. Please try again shortly.",
+      message: am.passwordChangeRateLimited,
     };
   }
 
@@ -174,9 +173,9 @@ export async function changePasswordAction(
     });
     revalidatePath(DASHBOARD_ROUTES.profile);
     revalidatePath(DASHBOARD_ROUTES.security);
-    return { status: "success", message: "Password updated." };
+    return { status: "success", message: am.passwordUpdated };
   } catch (error) {
-    return { status: "error", message: toErrorMessage(error) };
+    return { status: "error", message: toLocalizedErrorMessage(error, am) };
   }
 }
 
@@ -184,15 +183,18 @@ export async function changeEmailAction(
   _prev: SettingsActionState,
   formData: FormData,
 ): Promise<SettingsActionState> {
+  const { dict } = await getDictionary();
+  const am = dict.actionMessages;
+
   const parsed = changeEmailSchema.safeParse({
     email: formData.get("email"),
   });
   if (!parsed.success) {
-    return { status: "error", message: parsed.error.issues[0]?.message };
+    return { status: "error", message: firstZodMessage(parsed.error, am) };
   }
 
   const { supabase, user } = await resolveUser();
-  if (!user) return { status: "error", message: "You must be signed in." };
+  if (!user) return { status: "error", message: am.mustSignIn };
 
   try {
     await updateEmail(supabase, parsed.data.email);
@@ -200,10 +202,10 @@ export async function changeEmailAction(
     revalidatePath(DASHBOARD_ROUTES.profile);
     return {
       status: "success",
-      message: "Check your inbox to confirm the new email address.",
+      message: am.emailConfirmSent,
     };
   } catch (error) {
-    return { status: "error", message: toErrorMessage(error) };
+    return { status: "error", message: toLocalizedErrorMessage(error, am) };
   }
 }
 
@@ -211,9 +213,12 @@ export async function resendVerificationAction(
   _prev: SettingsActionState = initialSettingsActionState,
   _formData?: FormData,
 ): Promise<SettingsActionState> {
+  const { dict } = await getDictionary();
+  const am = dict.actionMessages;
+
   const { supabase, user } = await resolveUser();
   if (!user?.email) {
-    return { status: "error", message: "You must be signed in." };
+    return { status: "error", message: am.mustSignIn };
   }
   try {
     await resendEmailVerification(
@@ -221,9 +226,9 @@ export async function resendVerificationAction(
       user.email,
       `${env.NEXT_PUBLIC_APP_URL}/auth/confirm`,
     );
-    return { status: "success", message: "Verification email sent." };
+    return { status: "success", message: am.verificationEmailSent };
   } catch (error) {
-    return { status: "error", message: toErrorMessage(error) };
+    return { status: "error", message: toLocalizedErrorMessage(error, am) };
   }
 }
 
@@ -231,21 +236,24 @@ export async function deleteAccountAction(
   _prev: SettingsActionState,
   formData: FormData,
 ): Promise<SettingsActionState> {
+  const { dict } = await getDictionary();
+  const am = dict.actionMessages;
+
   const parsed = deleteAccountSchema.safeParse({
     confirmation: formData.get("confirmation"),
   });
   if (!parsed.success) {
-    return { status: "error", message: parsed.error.issues[0]?.message };
+    return { status: "error", message: firstZodMessage(parsed.error, am) };
   }
 
   const { supabase, user } = await resolveUser();
-  if (!user) return { status: "error", message: "You must be signed in." };
+  if (!user) return { status: "error", message: am.mustSignIn };
 
   const deleteLimit = rateLimit(`settings:delete:${user.id}`, 3, 3_600_000);
   if (!deleteLimit.allowed) {
     return {
       status: "error",
-      message: "Too many account deletion attempts. Please try again later.",
+      message: am.accountDeleteRateLimited,
     };
   }
 
@@ -257,7 +265,7 @@ export async function deleteAccountAction(
     }
     await signOut(supabase);
   } catch (error) {
-    return { status: "error", message: toErrorMessage(error) };
+    return { status: "error", message: toLocalizedErrorMessage(error, am) };
   }
   redirect(ROUTES.login);
 }
@@ -266,6 +274,9 @@ export async function updateAppearanceAction(
   _prev: SettingsActionState,
   formData: FormData,
 ): Promise<SettingsActionState> {
+  const { dict } = await getDictionary();
+  const am = dict.actionMessages;
+
   const parsed = appearancePreferencesSchema.safeParse({
     theme: formData.get("theme") ?? "dark",
     accent: formData.get("accent") ?? "blue",
@@ -274,11 +285,11 @@ export async function updateAppearanceAction(
     density: formData.get("density") ?? "comfortable",
   });
   if (!parsed.success) {
-    return { status: "error", message: parsed.error.issues[0]?.message };
+    return { status: "error", message: firstZodMessage(parsed.error, am) };
   }
 
   const { supabase, user } = await resolveUser();
-  if (!user) return { status: "error", message: "You must be signed in." };
+  if (!user) return { status: "error", message: am.mustSignIn };
 
   try {
     const { data: profile } = await supabase
@@ -293,9 +304,9 @@ export async function updateAppearanceAction(
       preferences: next,
     });
     revalidatePath(DASHBOARD_ROUTES.settingsAppearance);
-    return { status: "success", message: "Appearance preferences saved." };
+    return { status: "success", message: am.appearanceSaved };
   } catch (error) {
-    return { status: "error", message: toErrorMessage(error) };
+    return { status: "error", message: toLocalizedErrorMessage(error, am) };
   }
 }
 
@@ -303,16 +314,19 @@ export async function updateAiPreferencesAction(
   _prev: SettingsActionState,
   formData: FormData,
 ): Promise<SettingsActionState> {
+  const { dict } = await getDictionary();
+  const am = dict.actionMessages;
+
   const parsed = aiPreferencesSchema.safeParse({
     defaultModel: formData.get("defaultModel") ?? "gpt-4o-mini",
     streaming: checkbox(formData, "streaming"),
   });
   if (!parsed.success) {
-    return { status: "error", message: parsed.error.issues[0]?.message };
+    return { status: "error", message: firstZodMessage(parsed.error, am) };
   }
 
   const { supabase, user } = await resolveUser();
-  if (!user) return { status: "error", message: "You must be signed in." };
+  if (!user) return { status: "error", message: am.mustSignIn };
 
   try {
     const { data: profile } = await supabase
@@ -325,9 +339,9 @@ export async function updateAiPreferencesAction(
     });
     await updateProfile(supabase, user.id, { preferences: next });
     revalidatePath(DASHBOARD_ROUTES.settingsAi);
-    return { status: "success", message: "AI preferences saved." };
+    return { status: "success", message: am.aiPreferencesSaved };
   } catch (error) {
-    return { status: "error", message: toErrorMessage(error) };
+    return { status: "error", message: toLocalizedErrorMessage(error, am) };
   }
 }
 
@@ -335,8 +349,11 @@ export async function deleteAllAiHistoryAction(
   _prev: SettingsActionState = initialSettingsActionState,
   _formData?: FormData,
 ): Promise<SettingsActionState> {
+  const { dict } = await getDictionary();
+  const am = dict.actionMessages;
+
   const { supabase, user } = await resolveUser();
-  if (!user) return { status: "error", message: "You must be signed in." };
+  if (!user) return { status: "error", message: am.mustSignIn };
 
   try {
     const { error } = await supabase
@@ -346,9 +363,9 @@ export async function deleteAllAiHistoryAction(
     if (error) throw error;
     revalidatePath(DASHBOARD_ROUTES.settingsAi);
     revalidatePath(DASHBOARD_ROUTES.aiAssistant);
-    return { status: "success", message: "Conversation history deleted." };
+    return { status: "success", message: am.conversationHistoryDeleted };
   } catch (error) {
-    return { status: "error", message: toErrorMessage(error) };
+    return { status: "error", message: toLocalizedErrorMessage(error, am) };
   }
 }
 

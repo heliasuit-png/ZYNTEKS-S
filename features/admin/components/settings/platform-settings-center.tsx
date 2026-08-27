@@ -2,6 +2,8 @@
 
 import { motion } from "framer-motion";
 
+import { useDictionary } from "@/components/i18n/locale-provider";
+import { fillTemplate } from "@/lib/i18n/fill-template";
 import { hasAdminPermission } from "@/services/admin/permissions";
 import type { AdminPlatformRole } from "@/services/admin/types";
 import type { PlatformSettingsData } from "@/services/admin/platform-settings.types";
@@ -26,14 +28,17 @@ export function PlatformSettingsCenter({
   data: PlatformSettingsData;
   role: AdminPlatformRole;
 }) {
+  const { dict, locale } = useDictionary();
+  const t = dict.admin.settings;
+  const common = dict.admin.common;
   const canWrite = hasAdminPermission(role, "admin:settings:write");
 
   return (
     <div className="space-y-5">
       <AdminPageHeader
-        eyebrow="Control plane"
-        title="Platform Settings & Feature Flags"
-        description="Configuration metadata and safe operational controls. Secrets and API keys are never displayed."
+        eyebrow={t.eyebrow}
+        title={t.pageTitle}
+        description={t.description}
       />
 
       <motion.div
@@ -41,26 +46,26 @@ export function PlatformSettingsCenter({
         transition={{ ...ADMIN_FADE_UP.transition }}
       >
         <SectionCard
-          title="Platform"
-          description="Identity, build, and deployment metadata"
+          title={t.sections.platform}
+          description={t.sections.platformDesc}
         >
           <MetaGrid
             items={[
               {
-                label: "Platform name",
+                label: t.meta.platformName,
                 value: data.platform.platformName,
               },
               {
-                label: "Version",
+                label: t.meta.version,
                 value: data.platform.version,
                 hint: "package.json",
               },
               {
-                label: "Environment",
+                label: t.meta.environment,
                 value: data.platform.environment,
               },
               {
-                label: "Deployment status",
+                label: t.meta.deploymentStatus,
                 value: data.platform.deploymentStatus,
                 tone:
                   data.platform.deploymentStatus === "live"
@@ -70,16 +75,19 @@ export function PlatformSettingsCenter({
                       : "red",
               },
               {
-                label: "Build version",
+                label: t.meta.buildVersion,
                 value: data.platform.buildVersion,
-                hint: "Git SHA when available, else app version",
+                hint: t.meta.buildVersionHint,
               },
               {
-                label: "Build date",
+                label: t.meta.buildDate,
                 value: data.platform.buildDate
                   ? formatWhen(data.platform.buildDate)
                   : "—",
-                hint: data.platform.buildDateNote ?? undefined,
+                hint:
+                  data.platform.buildDateNoteKey === "missing"
+                    ? t.notes.buildDateMissing
+                    : undefined,
               },
             ]}
           />
@@ -94,113 +102,166 @@ export function PlatformSettingsCenter({
         }}
       >
         <SectionCard
-          title="Feature flags"
-          description="Enable, disable, beta, and internal rollout controls"
+          title={t.featureFlags}
+          description={t.featureFlagsDesc}
         >
           <FeatureFlagsPanel flags={data.featureFlags} canWrite={canWrite} />
         </SectionCard>
       </motion.div>
 
       <div className="grid gap-5 xl:grid-cols-2">
-        <SectionCard title="AI settings" description="Provider metadata only">
+        <SectionCard title={t.sections.ai} description={t.sections.aiDesc}>
           <MetaGrid
             items={[
-              { label: "Provider", value: data.ai.provider },
+              { label: t.meta.provider, value: data.ai.provider },
               {
-                label: "Configured",
-                value: data.ai.configured ? "Yes" : "No",
+                label: t.meta.configured,
+                value: data.ai.configured ? common.yes : common.no,
                 tone: data.ai.configured ? "green" : "yellow",
               },
               {
-                label: "Default model",
+                label: t.meta.defaultModel,
                 value: data.ai.defaultModel ?? "—",
                 hint: data.ai.configured
-                  ? "Non-secret model id"
-                  : "Hidden until credentials exist",
+                  ? t.meta.defaultModelHint
+                  : t.meta.defaultModelHidden,
               },
               {
-                label: "Health",
-                value: data.ai.healthDetail,
+                label: t.meta.health,
+                value:
+                  data.ai.healthDetailKey === "configured"
+                    ? t.notes.aiConfigured
+                    : t.notes.aiNotConfigured,
                 tone: data.ai.health,
               },
             ]}
           />
         </SectionCard>
 
-        <SectionCard title="Email settings" description="No sender secrets">
+        <SectionCard title={t.sections.email} description={t.sections.emailDesc}>
           <MetaGrid
             items={[
               {
-                label: "Configured",
-                value: data.email.configured ? "Yes" : "No",
+                label: t.meta.configured,
+                value: data.email.configured ? common.yes : common.no,
                 tone: data.email.configured ? "green" : "yellow",
               },
               {
-                label: "Verified sender",
-                value: data.email.verifiedSender,
-                hint: "Domain metadata only",
+                label: t.meta.verifiedSender,
+                value:
+                  data.email.verifiedSenderKey === "domain"
+                    ? fillTemplate(t.notes.senderDomain, {
+                        domain: data.email.verifiedSenderDomain ?? "",
+                      })
+                    : data.email.verifiedSenderKey === "configured"
+                      ? t.notes.senderConfigured
+                      : t.notes.senderNotConfigured,
+                hint: t.meta.verifiedSenderHint,
               },
               {
-                label: "Delivery status",
-                value: data.email.deliveryStatus,
+                label: t.meta.deliveryStatus,
+                value:
+                  data.email.deliveryKey === "not_configured"
+                    ? t.notes.emailNotConfigured
+                    : data.email.deliveryKey === "failed"
+                      ? fillTemplate(t.notes.emailDeliveryFailed, {
+                          failed: data.email.deliveryFailed,
+                          sent: data.email.deliverySent,
+                        })
+                      : fillTemplate(t.notes.emailDeliveryOk, {
+                          sent: data.email.deliverySent,
+                          failed: data.email.deliveryFailed,
+                        }),
                 tone: data.email.deliveryTone,
               },
               {
-                label: "Last test",
+                label: t.meta.lastTest,
                 value: data.email.lastTestAt
-                  ? `${formatRelative(data.email.lastTestAt)} · ${data.email.lastTestStatus}`
-                  : "No email deliveries logged",
+                  ? `${formatRelative(data.email.lastTestAt, locale)} · ${data.email.lastTestStatus}`
+                  : t.meta.noEmailDeliveries,
               },
             ]}
           />
         </SectionCard>
 
-        <SectionCard title="Database" description="Connection health metadata">
+        <SectionCard title={t.sections.database} description={t.sections.databaseDesc}>
           <MetaGrid
             items={[
               {
-                label: "Connection status",
-                value: data.database.connectionStatus,
+                label: t.meta.connectionStatus,
+                value:
+                  data.database.connectionStatusKey === "connected"
+                    ? t.notes.dbConnected
+                    : t.notes.dbUnreachable,
                 tone: data.database.connectionTone,
               },
-              { label: "Region", value: data.database.region },
               {
-                label: "Health",
-                value: data.database.healthDetail,
+                label: t.meta.region,
+                value:
+                  data.database.regionKey === "value"
+                    ? (data.database.regionValue ?? "—")
+                    : data.database.regionKey === "not_exposed"
+                      ? t.notes.regionNotExposed
+                      : t.notes.regionUnavailable,
+              },
+              {
+                label: t.meta.health,
+                value:
+                  data.database.healthDetailKey === "reachable_ms"
+                    ? fillTemplate(t.notes.dbReachableMs, {
+                        ms: data.database.healthDetailMs ?? 0,
+                      })
+                    : (data.database.healthDetailMessage ?? "—"),
                 tone: data.database.health,
               },
               {
-                label: "Migration version",
+                label: t.meta.migrationVersion,
                 value: data.database.migrationVersion,
-                hint: "Latest supabase/migrations file",
+                hint: t.meta.migrationHint,
               },
               {
-                label: "Table count",
+                label: t.meta.tableCount,
                 value:
                   data.database.tableCount == null
                     ? "—"
                     : String(data.database.tableCount),
-                hint: data.database.tableCountNote ?? "public schema",
+                hint:
+                  data.database.tableCountNoteKey === "unavailable"
+                    ? t.notes.tableCountUnavailable
+                    : t.meta.publicSchema,
               },
             ]}
           />
         </SectionCard>
 
-        <SectionCard title="Storage" description="Bucket status without keys">
+        <SectionCard title={t.sections.storage} description={t.sections.storageDesc}>
           <MetaGrid
             items={[
-              { label: "Provider", value: data.storage.provider },
+              { label: t.meta.provider, value: data.storage.provider },
               {
-                label: "Bucket status",
-                value: data.storage.bucketStatus,
+                label: t.meta.bucketStatus,
+                value:
+                  data.storage.bucketStatusKey === "ok"
+                    ? fillTemplate(t.notes.bucketsOk, {
+                        count: data.storage.bucketCount ?? 0,
+                      })
+                    : data.storage.bucketStatusKey === "missing"
+                      ? fillTemplate(t.notes.bucketsMissing, {
+                          missing: data.storage.bucketMissing ?? "",
+                        })
+                      : data.storage.bucketStatusKey === "error"
+                        ? (data.storage.bucketErrorMessage ?? "—")
+                        : t.notes.bucketsUnavailable,
                 tone: data.storage.bucketTone,
               },
               {
-                label: "Usage",
-                value: data.storage.usage,
+                label: t.meta.usage,
+                value: data.storage.usageAvailable
+                  ? "—"
+                  : t.notes.storageUsageUnavailable,
                 hint: data.storage.usageAvailable
                   ? undefined
-                  : "Honest gap — management API not connected",
+                  : t.meta.storageGap,
               },
             ]}
           />
@@ -208,71 +269,87 @@ export function PlatformSettingsCenter({
             <ul className="mt-3 space-y-1 text-xs text-[var(--admin-muted)]">
               {data.storage.buckets.map((bucket) => (
                 <li key={bucket.name}>
-                  {bucket.name} · {bucket.public ? "public" : "private"}
+                  {bucket.name} ·{" "}
+                  {bucket.public ? t.meta.publicAccess : t.meta.privateAccess}
                 </li>
               ))}
             </ul>
           ) : null}
         </SectionCard>
 
-        <SectionCard title="SDK" description="Package and heartbeat signals">
+        <SectionCard title={t.sections.sdk} description={t.sections.sdkDesc}>
           <MetaGrid
             items={[
               {
-                label: "Latest version",
+                label: t.meta.latestVersion,
                 value: data.sdk.latestVersion,
-                hint: "@zynteksis/sdk package",
+                hint: t.meta.sdkPackageHint,
               },
               {
-                label: "Supported versions",
+                label: t.meta.supportedVersions,
                 value:
                   data.sdk.supportedVersions.length > 0
                     ? data.sdk.supportedVersions.join(", ")
                     : "—",
-                hint: "Package version + releases seen in heartbeats (1h)",
+                hint: t.meta.sdkVersionsHint,
               },
               {
-                label: "Downloads",
+                label: t.meta.downloads,
                 value:
                   data.sdk.downloads == null
                     ? "—"
                     : String(data.sdk.downloads),
-                hint: data.sdk.downloadsNote ?? undefined,
+                hint:
+                  data.sdk.downloadsNoteKey === "unavailable"
+                    ? t.notes.downloadsUnavailable
+                    : undefined,
               },
               {
-                label: "Health",
-                value: data.sdk.healthDetail,
+                label: t.meta.health,
+                value:
+                  data.sdk.healthDetailKey === "heartbeats"
+                    ? fillTemplate(t.notes.sdkHeartbeats, {
+                        count: data.sdk.healthDetailCount ?? 0,
+                      })
+                    : t.notes.sdkSilent,
                 tone: data.sdk.health,
               },
             ]}
           />
         </SectionCard>
 
-        <SectionCard title="Cron" description="Registered jobs from registry">
+        <SectionCard title={t.sections.cron} description={t.sections.cronDesc}>
           <MetaGrid
             items={[
               {
-                label: "Registered jobs",
+                label: t.meta.registeredJobs,
                 value: String(data.cron.registeredJobs.length),
               },
               {
-                label: "CRON_SECRET",
+                label: t.meta.cronSecret,
                 value: data.cron.cronSecretConfigured
-                  ? "Configured"
-                  : "Not configured",
+                  ? common.configured
+                  : common.notConfigured,
                 tone: data.cron.cronSecretConfigured ? "green" : "yellow",
-                hint: "Presence only — value never shown",
+                hint: t.meta.cronSecretHint,
               },
               {
-                label: "Vercel schedules",
+                label: t.meta.vercelSchedules,
                 value: data.cron.vercelCronsConfigured
-                  ? "Configured"
-                  : "Empty (vercel.json)",
+                  ? common.configured
+                  : t.meta.vercelEmpty,
                 tone: "yellow",
               },
               {
-                label: "Health",
-                value: data.cron.healthDetail,
+                label: t.meta.health,
+                value:
+                  data.cron.healthDetailKey === "ok"
+                    ? fillTemplate(t.notes.cronOk, {
+                        count: data.cron.healthDetailJobCount ?? 0,
+                      })
+                    : data.cron.healthDetailKey === "no_jobs"
+                      ? t.notes.cronNoJobs
+                      : t.notes.cronMissingSecret,
                 tone: data.cron.health,
               },
             ]}
@@ -281,10 +358,10 @@ export function PlatformSettingsCenter({
             <table className="min-w-full text-left text-xs">
               <thead className="bg-[var(--admin-surface)] text-[11px] uppercase tracking-wide text-[var(--admin-muted)]">
                 <tr>
-                  <th className="px-3 py-2 font-medium">Job</th>
-                  <th className="px-3 py-2 font-medium">Enabled</th>
-                  <th className="px-3 py-2 font-medium">Schedule</th>
-                  <th className="px-3 py-2 font-medium">Last run</th>
+                  <th className="px-3 py-2 font-medium">{t.meta.job}</th>
+                  <th className="px-3 py-2 font-medium">{t.meta.enabled}</th>
+                  <th className="px-3 py-2 font-medium">{t.meta.schedule}</th>
+                  <th className="px-3 py-2 font-medium">{t.meta.lastRun}</th>
                 </tr>
               </thead>
               <tbody>
@@ -298,11 +375,13 @@ export function PlatformSettingsCenter({
                       <p className="text-[var(--admin-muted)]">{job.path}</p>
                     </td>
                     <td className="px-3 py-2">
-                      {job.enabled ? "Yes" : "No"}
+                      {job.enabled ? common.yes : common.no}
                     </td>
                     <td className="px-3 py-2 font-mono">{job.schedule}</td>
                     <td className="px-3 py-2 text-[var(--admin-muted)]">
-                      {job.lastRun ? formatRelative(job.lastRun) : "Not stored"}
+                      {job.lastRun
+                        ? formatRelative(job.lastRun, locale)
+                        : common.notStored}
                     </td>
                   </tr>
                 ))}
@@ -313,28 +392,37 @@ export function PlatformSettingsCenter({
       </div>
 
       <SectionCard
-        title="Security settings"
-        description="Policy metadata — no secrets"
+        title={t.sections.security}
+        description={t.sections.securityDesc}
       >
         <MetaGrid
           items={[
             {
-              label: "Password policy",
-              value: `Min ${data.security.passwordPolicy.minLength}, max ${data.security.passwordPolicy.maxLength}; lower/upper/number required`,
-              hint: data.security.passwordPolicy.source,
+              label: t.meta.passwordPolicy,
+              value: fillTemplate(t.notes.passwordPolicyValue, {
+                min: data.security.passwordPolicy.minLength,
+                max: data.security.passwordPolicy.maxLength,
+              }),
+              hint: t.notes.passwordPolicySource,
             },
             {
-              label: "Session timeout",
-              value: `${data.security.sessionTimeoutHours} hours`,
-              hint: data.security.sessionTimeoutNote,
+              label: t.meta.sessionTimeout,
+              value: fillTemplate(t.notes.sessionTimeoutHours, {
+                hours: data.security.sessionTimeoutHours,
+              }),
+              hint: t.notes.sessionTimeout,
             },
             {
-              label: "MFA status",
-              value: data.security.mfaStatus,
+              label: t.meta.mfaStatus,
+              value: data.security.mfaRequired
+                ? t.notes.mfaRequired
+                : t.notes.mfaOptional,
             },
             {
-              label: "Rate limiting",
-              value: data.security.rateLimitingStatus,
+              label: t.meta.rateLimiting,
+              value: fillTemplate(t.notes.rateLimiting, {
+                max: data.security.rateLimitingMaxPerMin,
+              }),
               tone: data.security.rateLimitingTone,
             },
           ]}
@@ -342,8 +430,8 @@ export function PlatformSettingsCenter({
       </SectionCard>
 
       <SectionCard
-        title="System settings"
-        description="Maintenance mode and registration gate"
+        title={t.systemSettings}
+        description={t.systemSettingsDesc}
       >
         <SystemSettingsPanel
           system={data.system}
@@ -355,7 +443,9 @@ export function PlatformSettingsCenter({
 
       {data.unavailable.length > 0 ? (
         <p className="text-xs text-[var(--admin-muted)]">
-          Honest gaps: {data.unavailable.join(", ")}
+          {fillTemplate(t.honestGaps, {
+            items: data.unavailable.join(", "),
+          })}
         </p>
       ) : null}
     </div>

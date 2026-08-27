@@ -1,10 +1,11 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Bug, Download, Search } from "lucide-react";
 
+import { useDictionary } from "@/components/i18n/locale-provider";
 import { EmptyState } from "@/components/dashboard/empty-state";
 import { Pagination } from "@/components/dashboard/pagination";
 import { FadeIn } from "@/components/dashboard/motion";
@@ -14,7 +15,6 @@ import { Badge } from "@/components/dashboard/badge";
 import { CopyButton } from "@/components/dashboard/copy-button";
 import {
   API_KEY_ENVIRONMENTS,
-  API_KEY_ENVIRONMENT_LABELS,
   DASHBOARD_ROUTES,
 } from "@/lib/constants";
 import { ERROR_LEVEL_TONE } from "@/features/errors/lib/level-tone";
@@ -51,6 +51,13 @@ interface ErrorsExplorerProps {
   filters: ErrorsFilters;
 }
 
+function fill(template: string, vars: Record<string, string | number>) {
+  return Object.entries(vars).reduce(
+    (s, [k, v]) => s.replaceAll(`{${k}}`, String(v)),
+    template,
+  );
+}
+
 export function ErrorsExplorer({
   errors,
   projects,
@@ -60,6 +67,9 @@ export function ErrorsExplorer({
   search,
   filters,
 }: ErrorsExplorerProps) {
+  const { dict, locale } = useDictionary();
+  const t = dict.dash.errors;
+  const common = dict.dashboardCommon;
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -150,67 +160,67 @@ export function ErrorsExplorer({
       filters.to,
   );
 
-  const columns: Column<ErrorEvent>[] = [
-    {
-      key: "message",
-      header: "Error group",
-      render: (event) => (
-        <div className="min-w-0 max-w-md">
-          <Link
-            href={`${DASHBOARD_ROUTES.errors}/${event.id}`}
-            className="line-clamp-2 font-medium text-zt-text transition-colors hover:text-zt-primary"
-          >
-            {event.message}
-          </Link>
-          <p className="mt-0.5 truncate font-mono text-[11px] text-zt-muted">
-            {event.fingerprint.slice(0, 16)}…
-          </p>
-        </div>
-      ),
-    },
-    {
-      key: "level",
-      header: "Severity",
-      render: (event) => (
-        <Badge tone={ERROR_LEVEL_TONE[event.level]}>{event.level}</Badge>
-      ),
-    },
-    {
-      key: "project",
-      header: "Project",
-      render: (event) => (
-        <span className="text-zt-muted">{event.projectName}</span>
-      ),
-    },
-    {
-      key: "environment",
-      header: "Env",
-      render: (event) => (
-        <span className="capitalize text-zt-muted">{event.environment}</span>
-      ),
-    },
-    {
-      key: "occurrences",
-      header: "Occurrences",
-      align: "right",
-      render: (event) => (
-        <span className="tabular-nums text-zt-text">{event.occurrences}</span>
-      ),
-    },
-    {
-      key: "lastSeen",
-      header: "Last seen",
-      align: "right",
-      render: (event) => (
-        <span
-          className="text-zt-muted"
-          title={formatDate(event.lastSeenAt)}
-        >
-          {formatRelativeTime(event.lastSeenAt)}
-        </span>
-      ),
-    },
-  ];
+  const columns: Column<ErrorEvent>[] = useMemo(
+    () => [
+      {
+        key: "message",
+        header: t.colErrorGroup,
+        render: (event) => (
+          <div className="min-w-0 max-w-md">
+            <Link
+              href={`${DASHBOARD_ROUTES.errors}/${event.id}`}
+              className="line-clamp-2 font-medium text-zt-text transition-colors hover:text-zt-primary"
+            >
+              {event.message}
+            </Link>
+            <p className="mt-0.5 truncate font-mono text-[11px] text-zt-muted">
+              {event.fingerprint.slice(0, 16)}…
+            </p>
+          </div>
+        ),
+      },
+      {
+        key: "level",
+        header: t.colSeverity,
+        render: (event) => (
+          <Badge tone={ERROR_LEVEL_TONE[event.level]}>{event.level}</Badge>
+        ),
+      },
+      {
+        key: "project",
+        header: t.colProject,
+        render: (event) => (
+          <span className="text-zt-muted">{event.projectName}</span>
+        ),
+      },
+      {
+        key: "environment",
+        header: t.colEnv,
+        render: (event) => (
+          <span className="capitalize text-zt-muted">{event.environment}</span>
+        ),
+      },
+      {
+        key: "occurrences",
+        header: t.colOccurrences,
+        align: "right",
+        render: (event) => (
+          <span className="tabular-nums text-zt-text">{event.occurrences}</span>
+        ),
+      },
+      {
+        key: "lastSeen",
+        header: t.colLastSeen,
+        align: "right",
+        render: (event) => (
+          <span className="text-zt-muted" title={formatDate(event.lastSeenAt)}>
+            {formatRelativeTime(event.lastSeenAt, undefined, locale)}
+          </span>
+        ),
+      },
+    ],
+    [t],
+  );
 
   const csvPreview = errors
     .map(
@@ -232,8 +242,8 @@ export function ErrorsExplorer({
               type="search"
               value={searchValue}
               onChange={(event) => setSearchValue(event.target.value)}
-              placeholder="Search message, URL, project, release…"
-              aria-label="Search errors"
+              placeholder={t.searchPlaceholder}
+              aria-label={t.searchAria}
               className="h-9 w-full rounded-xl border border-zt-border bg-zt-surface pl-9 pr-3 text-sm text-zt-text placeholder:text-zt-muted focus:outline-none focus:ring-2 focus:ring-zt-primary/40"
             />
           </div>
@@ -241,7 +251,7 @@ export function ErrorsExplorer({
           <div className="flex flex-wrap items-center gap-2">
             <CopyButton
               value={csvPreview || "id,message,level,occurrences,environment"}
-              label="Copy"
+              label={common.copy}
             />
             <button
               type="button"
@@ -249,7 +259,7 @@ export function ErrorsExplorer({
               className="inline-flex items-center gap-1.5 rounded-lg border border-zt-border bg-zt-surface-2 px-2.5 py-1.5 text-xs font-medium text-zt-muted transition-colors hover:text-zt-text"
             >
               <Download className="size-3.5" aria-hidden />
-              Export CSV
+              {t.exportCsv}
             </button>
             {hasActiveFilters ? (
               <button
@@ -257,7 +267,7 @@ export function ErrorsExplorer({
                 onClick={clearFilters}
                 className="text-xs font-medium text-zt-primary hover:underline"
               >
-                Clear filters
+                {t.clearFilters}
               </button>
             ) : null}
           </div>
@@ -265,12 +275,12 @@ export function ErrorsExplorer({
 
         <div className="flex flex-wrap items-center gap-2">
           <select
-            aria-label="Filter by project"
+            aria-label={t.filterByProject}
             value={filters.projectId}
             onChange={(event) => updateParam("projectId", event.target.value)}
             className={selectClass}
           >
-            <option value="">All projects</option>
+            <option value="">{t.allProjects}</option>
             {projects.map((project) => (
               <option key={project.id} value={project.id}>
                 {project.name}
@@ -279,12 +289,12 @@ export function ErrorsExplorer({
           </select>
 
           <select
-            aria-label="Filter by severity"
+            aria-label={t.filterBySeverity}
             value={filters.level}
             onChange={(event) => updateParam("level", event.target.value)}
             className={selectClass}
           >
-            <option value="">All severities</option>
+            <option value="">{t.allSeverities}</option>
             {LEVELS.map((level) => (
               <option key={level} value={level}>
                 {level}
@@ -293,57 +303,57 @@ export function ErrorsExplorer({
           </select>
 
           <select
-            aria-label="Filter by environment"
+            aria-label={t.filterByEnvironment}
             value={filters.environment}
             onChange={(event) => updateParam("environment", event.target.value)}
             className={selectClass}
           >
-            <option value="">All environments</option>
+            <option value="">{t.allEnvironments}</option>
             {API_KEY_ENVIRONMENTS.map((environment) => (
               <option key={environment} value={environment}>
-                {API_KEY_ENVIRONMENT_LABELS[environment]}
+                {common.environments[environment]}
               </option>
             ))}
           </select>
 
           <select
-            aria-label="Filter by activity"
+            aria-label={t.filterByActivity}
             value={filters.activity}
             onChange={(event) => updateParam("activity", event.target.value)}
             className={selectClass}
           >
-            <option value="">Active & quiet</option>
-            <option value="unresolved">Unresolved (seen in 7d)</option>
-            <option value="resolved">Resolved / quiet (7d+)</option>
+            <option value="">{t.activityAll}</option>
+            <option value="unresolved">{t.activityUnresolved}</option>
+            <option value="resolved">{t.activityResolved}</option>
           </select>
 
           <input
             type="search"
             value={releaseValue}
             onChange={(event) => setReleaseValue(event.target.value)}
-            placeholder="Release"
-            aria-label="Filter by release"
+            placeholder={t.release}
+            aria-label={t.filterByRelease}
             className="h-9 w-32 rounded-xl border border-zt-border bg-zt-surface px-3 text-sm text-zt-text placeholder:text-zt-muted focus:outline-none focus:ring-2 focus:ring-zt-primary/40"
           />
 
           <label className="flex items-center gap-1.5 text-xs text-zt-muted">
-            From
+            {t.from}
             <input
               type="date"
               value={filters.from}
               onChange={(event) => updateParam("from", event.target.value)}
-              aria-label="From date"
+              aria-label={t.from}
               className={selectClass}
             />
           </label>
 
           <label className="flex items-center gap-1.5 text-xs text-zt-muted">
-            To
+            {t.to}
             <input
               type="date"
               value={filters.to}
               onChange={(event) => updateParam("to", event.target.value)}
-              aria-label="To date"
+              aria-label={t.to}
               className={selectClass}
             />
           </label>
@@ -351,18 +361,16 @@ export function ErrorsExplorer({
       </div>
 
       <p className="text-xs text-zt-muted">
-        {total} error group{total === 1 ? "" : "s"}
-        {hasActiveFilters ? " matching filters" : ""}
+        {fill(total === 1 ? t.countSingular : t.countPlural, { count: total })}
+        {hasActiveFilters ? t.matchingFilters : ""}
       </p>
 
       {errors.length === 0 ? (
         <EmptyState
           icon={Bug}
-          title={hasActiveFilters ? "No matching errors" : "No errors captured"}
+          title={hasActiveFilters ? t.noMatching : t.noErrors}
           description={
-            hasActiveFilters
-              ? "Try adjusting search or filters."
-              : "Install the SDK and send a test error — grouped issues will appear here."
+            hasActiveFilters ? t.emptySearchDesc : t.emptyDesc
           }
           action={
             hasActiveFilters ? (
@@ -371,14 +379,14 @@ export function ErrorsExplorer({
                 onClick={clearFilters}
                 className="inline-flex items-center gap-2 rounded-xl bg-zt-primary px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-zt-primary/90"
               >
-                Clear filters
+                {t.clearFilters}
               </button>
             ) : (
               <Link
                 href={DASHBOARD_ROUTES.projects}
                 className="inline-flex items-center gap-2 rounded-xl bg-zt-primary px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-zt-primary/90"
               >
-                Go to Projects
+                {t.goToProjects}
               </Link>
             )
           }

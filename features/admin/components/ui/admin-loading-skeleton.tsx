@@ -1,14 +1,16 @@
+"use client";
+
 import { AdminContainer } from "@/features/admin/components/admin-container";
+import { useDictionary } from "@/components/i18n/locale-provider";
 
 /** Shared loading skeleton used by every admin route `loading.tsx`. */
-export function AdminLoadingSkeleton({
-  label = "Loading admin module",
-}: {
-  label?: string;
-}) {
+export function AdminLoadingSkeleton({ label }: { label?: string }) {
+  const { dict } = useDictionary();
+  const resolvedLabel = label ?? dict.admin.loading.module;
+
   return (
     <AdminContainer>
-      <div className="space-y-5" aria-busy="true" aria-label={label}>
+      <div className="space-y-5" aria-busy="true" aria-label={resolvedLabel}>
         <div className="space-y-2">
           <div className="admin-skeleton h-3 w-28 !rounded-md" />
           <div className="admin-skeleton h-8 w-64 !rounded-lg" />

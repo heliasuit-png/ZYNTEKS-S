@@ -1,10 +1,11 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Download, Search, Siren } from "lucide-react";
 
+import { useDictionary } from "@/components/i18n/locale-provider";
 import { EmptyState } from "@/components/dashboard/empty-state";
 import { Pagination } from "@/components/dashboard/pagination";
 import { FadeIn } from "@/components/dashboard/motion";
@@ -14,12 +15,9 @@ import { Badge } from "@/components/dashboard/badge";
 import { CopyButton } from "@/components/dashboard/copy-button";
 import {
   API_KEY_ENVIRONMENTS,
-  API_KEY_ENVIRONMENT_LABELS,
   DASHBOARD_ROUTES,
   INCIDENT_SEVERITIES,
-  INCIDENT_SEVERITY_LABELS,
   INCIDENT_STATUSES,
-  INCIDENT_STATUS_LABELS,
 } from "@/lib/constants";
 import { formatDateTime, formatDuration, formatRelativeTime } from "@/utils/format";
 import {
@@ -27,6 +25,11 @@ import {
   INCIDENT_STATUS_TONE,
 } from "@/features/incidents/lib/status";
 import type { Incident } from "@/types/dashboard";
+import type {
+  ApiKeyEnvironment,
+  IncidentSeverity,
+  IncidentStatus,
+} from "@/types/database";
 
 const selectClass =
   "h-9 rounded-xl border border-zt-border bg-zt-surface px-3 text-sm text-zt-text focus:outline-none focus:ring-2 focus:ring-zt-primary/40";
@@ -57,6 +60,13 @@ interface IncidentsExplorerProps {
   filters: IncidentsFilters;
 }
 
+function fill(template: string, vars: Record<string, string | number>) {
+  return Object.entries(vars).reduce(
+    (s, [k, v]) => s.replaceAll(`{${k}}`, String(v)),
+    template,
+  );
+}
+
 export function IncidentsExplorer({
   incidents,
   projects,
@@ -66,6 +76,9 @@ export function IncidentsExplorer({
   search,
   filters,
 }: IncidentsExplorerProps) {
+  const { dict, locale } = useDictionary();
+  const t = dict.dash.incidents;
+  const common = dict.dashboardCommon;
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -153,107 +166,117 @@ export function IncidentsExplorer({
     2,
   );
 
-  const columns: Column<Incident>[] = [
-    {
-      key: "title",
-      header: "Incident",
-      render: (incident) => (
-        <div className="min-w-0 max-w-sm">
-          <Link
-            href={`${DASHBOARD_ROUTES.incidents}/${incident.id}`}
-            className="font-medium text-zt-text transition-colors hover:text-zt-primary"
+  const columns: Column<Incident>[] = useMemo(
+    () => [
+      {
+        key: "title",
+        header: t.colIncident,
+        render: (incident) => (
+          <div className="min-w-0 max-w-sm">
+            <Link
+              href={`${DASHBOARD_ROUTES.incidents}/${incident.id}`}
+              className="font-medium text-zt-text transition-colors hover:text-zt-primary"
+            >
+              {incident.title}
+            </Link>
+            <p className="mt-0.5 truncate font-mono text-[11px] text-zt-muted">
+              {incident.id.slice(0, 8)}…
+            </p>
+          </div>
+        ),
+      },
+      {
+        key: "status",
+        header: t.colStatus,
+        render: (incident) => (
+          <Badge tone={INCIDENT_STATUS_TONE[incident.status]}>
+            {t.statuses[incident.status as IncidentStatus]}
+          </Badge>
+        ),
+      },
+      {
+        key: "severity",
+        header: t.colSeverity,
+        render: (incident) => (
+          <Badge tone={INCIDENT_SEVERITY_TONE[incident.severity]}>
+            {t.severities[incident.severity as IncidentSeverity]}
+          </Badge>
+        ),
+      },
+      {
+        key: "project",
+        header: t.colProject,
+        render: (incident) => (
+          <span className="text-zt-muted">{incident.projectName}</span>
+        ),
+      },
+      {
+        key: "environment",
+        header: t.colEnv,
+        render: (incident) => (
+          <span className="capitalize text-zt-muted">
+            {incident.environment
+              ? (common.environments[
+                  incident.environment as ApiKeyEnvironment
+                ] ?? incident.environment)
+              : "—"}
+          </span>
+        ),
+      },
+      {
+        key: "duration",
+        header: t.colDuration,
+        align: "right",
+        render: (incident) => (
+          <span className="tabular-nums text-zt-muted">
+            {formatDuration(incident.durationSeconds)}
+          </span>
+        ),
+      },
+      {
+        key: "started",
+        header: t.colStarted,
+        align: "right",
+        render: (incident) => (
+          <span
+            className="text-zt-muted"
+            title={formatDateTime(incident.startedAt)}
           >
-            {incident.title}
-          </Link>
-          <p className="mt-0.5 truncate font-mono text-[11px] text-zt-muted">
-            {incident.id.slice(0, 8)}…
-          </p>
-        </div>
-      ),
-    },
-    {
-      key: "status",
-      header: "Status",
-      render: (incident) => (
-        <Badge tone={INCIDENT_STATUS_TONE[incident.status]}>
-          {INCIDENT_STATUS_LABELS[incident.status]}
-        </Badge>
-      ),
-    },
-    {
-      key: "severity",
-      header: "Severity",
-      render: (incident) => (
-        <Badge tone={INCIDENT_SEVERITY_TONE[incident.severity]}>
-          {INCIDENT_SEVERITY_LABELS[incident.severity]}
-        </Badge>
-      ),
-    },
-    {
-      key: "project",
-      header: "Project",
-      render: (incident) => (
-        <span className="text-zt-muted">{incident.projectName}</span>
-      ),
-    },
-    {
-      key: "environment",
-      header: "Env",
-      render: (incident) => (
-        <span className="capitalize text-zt-muted">
-          {incident.environment ?? "—"}
-        </span>
-      ),
-    },
-    {
-      key: "duration",
-      header: "Duration",
-      align: "right",
-      render: (incident) => (
-        <span className="tabular-nums text-zt-muted">
-          {formatDuration(incident.durationSeconds)}
-        </span>
-      ),
-    },
-    {
-      key: "started",
-      header: "Started",
-      align: "right",
-      render: (incident) => (
-        <span className="text-zt-muted" title={formatDateTime(incident.startedAt)}>
-          {formatRelativeTime(incident.startedAt)}
-        </span>
-      ),
-    },
-    {
-      key: "resolved",
-      header: "Resolved",
-      align: "right",
-      render: (incident) => (
-        <span className="text-zt-muted">
-          {incident.resolvedAt
-            ? formatRelativeTime(incident.resolvedAt)
-            : "—"}
-        </span>
-      ),
-    },
-    {
-      key: "assignee",
-      header: "Assignee",
-      render: (incident) => (
-        <span className="text-zt-muted">{incident.assignee}</span>
-      ),
-    },
-    {
-      key: "ai",
-      header: "AI recommendation",
-      render: (incident) => (
-        <span className="line-clamp-2 max-w-[14rem] text-xs text-zt-muted">
-          {incident.aiRecommendation ?? "—"}
-        </span>
-      ),
-    },
-  ];
+            {formatRelativeTime(incident.startedAt, undefined, locale)}
+          </span>
+        ),
+      },
+      {
+        key: "resolved",
+        header: t.colResolved,
+        align: "right",
+        render: (incident) => (
+          <span className="text-zt-muted">
+            {incident.resolvedAt
+              ? formatRelativeTime(incident.resolvedAt, undefined, locale)
+              : "—"}
+          </span>
+        ),
+      },
+      {
+        key: "assignee",
+        header: t.colAssignee,
+        render: (incident) => (
+          <span className="text-zt-muted">{incident.assignee}</span>
+        ),
+      },
+      {
+        key: "ai",
+        header: t.colAiRecommendation,
+        render: (incident) => (
+          <span className="line-clamp-2 max-w-[14rem] text-xs text-zt-muted">
+            {incident.aiRecommendation ?? "—"}
+          </span>
+        ),
+      },
+    ],
+    [t, common.environments],
+  );
 
   return (
     <div className="space-y-5">
@@ -268,20 +291,20 @@ export function IncidentsExplorer({
               type="search"
               value={searchValue}
               onChange={(e) => setSearchValue(e.target.value)}
-              placeholder="Search title, description, or incident ID…"
-              aria-label="Search incidents"
+              placeholder={t.searchPlaceholder}
+              aria-label={t.searchAria}
               className="h-9 w-full rounded-xl border border-zt-border bg-zt-surface pl-9 pr-3 text-sm text-zt-text placeholder:text-zt-muted focus:outline-none focus:ring-2 focus:ring-zt-primary/40"
             />
           </div>
           <div className="flex flex-wrap items-center gap-2">
-            <CopyButton value={copyPayload} label="Copy JSON" />
+            <CopyButton value={copyPayload} label={t.copyJson} />
             <button
               type="button"
               onClick={downloadCsv}
               className="inline-flex items-center gap-1.5 rounded-lg border border-zt-border bg-zt-surface-2 px-2.5 py-1.5 text-xs font-medium text-zt-muted transition-colors hover:text-zt-text"
             >
               <Download className="size-3.5" aria-hidden />
-              Export CSV
+              {t.exportCsv}
             </button>
             {hasActiveFilters ? (
               <button
@@ -289,7 +312,7 @@ export function IncidentsExplorer({
                 onClick={clearFilters}
                 className="text-xs font-medium text-zt-primary hover:underline"
               >
-                Clear filters
+                {t.clearFilters}
               </button>
             ) : null}
           </div>
@@ -297,12 +320,12 @@ export function IncidentsExplorer({
 
         <div className="flex flex-wrap items-center gap-2">
           <select
-            aria-label="Filter by project"
+            aria-label={t.filterByProject}
             value={filters.projectId}
             onChange={(e) => updateParam("projectId", e.target.value)}
             className={selectClass}
           >
-            <option value="">All projects</option>
+            <option value="">{t.allProjects}</option>
             {projects.map((p) => (
               <option key={p.id} value={p.id}>
                 {p.name}
@@ -310,81 +333,81 @@ export function IncidentsExplorer({
             ))}
           </select>
           <select
-            aria-label="Filter by status"
+            aria-label={t.filterByStatus}
             value={filters.status}
             onChange={(e) => updateParam("status", e.target.value)}
             className={selectClass}
           >
-            <option value="">All statuses</option>
+            <option value="">{t.allStatuses}</option>
             {INCIDENT_STATUSES.map((status) => (
               <option key={status} value={status}>
-                {INCIDENT_STATUS_LABELS[status]}
+                {t.statuses[status]}
               </option>
             ))}
           </select>
           <select
-            aria-label="Filter by severity"
+            aria-label={t.filterBySeverity}
             value={filters.severity}
             onChange={(e) => updateParam("severity", e.target.value)}
             className={selectClass}
           >
-            <option value="">All severities</option>
+            <option value="">{t.allSeverities}</option>
             {INCIDENT_SEVERITIES.map((severity) => (
               <option key={severity} value={severity}>
-                {INCIDENT_SEVERITY_LABELS[severity]}
+                {t.severities[severity]}
               </option>
             ))}
           </select>
           <select
-            aria-label="Filter by environment"
+            aria-label={t.filterByEnvironment}
             value={filters.environment}
             onChange={(e) => updateParam("environment", e.target.value)}
             className={selectClass}
           >
-            <option value="">All environments</option>
+            <option value="">{t.allEnvironments}</option>
             {API_KEY_ENVIRONMENTS.map((env) => (
               <option key={env} value={env}>
-                {API_KEY_ENVIRONMENT_LABELS[env]}
+                {common.environments[env]}
               </option>
             ))}
           </select>
           <select
-            aria-label="Sort by"
+            aria-label={t.sortBy}
             value={filters.sort}
             onChange={(e) => updateParam("sort", e.target.value)}
             className={selectClass}
           >
-            <option value="started_at">Sort: Started</option>
-            <option value="severity">Sort: Severity</option>
-            <option value="status">Sort: Status</option>
-            <option value="resolved_at">Sort: Resolved</option>
+            <option value="started_at">{t.sortStarted}</option>
+            <option value="severity">{t.sortSeverity}</option>
+            <option value="status">{t.sortStatus}</option>
+            <option value="resolved_at">{t.sortResolved}</option>
           </select>
           <select
-            aria-label="Sort direction"
+            aria-label={t.sortDirection}
             value={filters.sortDir}
             onChange={(e) => updateParam("sortDir", e.target.value)}
             className={selectClass}
           >
-            <option value="desc">Newest first</option>
-            <option value="asc">Oldest first</option>
+            <option value="desc">{t.newestFirst}</option>
+            <option value="asc">{t.oldestFirst}</option>
           </select>
           <label className="flex items-center gap-1.5 text-xs text-zt-muted">
-            From
+            {t.from}
             <input
               type="date"
               value={filters.from}
               onChange={(e) => updateParam("from", e.target.value)}
-              aria-label="From date"
+              aria-label={t.from}
               className={selectClass}
             />
           </label>
           <label className="flex items-center gap-1.5 text-xs text-zt-muted">
-            To
+            {t.to}
             <input
               type="date"
               value={filters.to}
               onChange={(e) => updateParam("to", e.target.value)}
-              aria-label="To date"
+              aria-label={t.to}
               className={selectClass}
             />
           </label>
@@ -392,18 +415,16 @@ export function IncidentsExplorer({
       </div>
 
       <p className="text-xs text-zt-muted">
-        {total} incident{total === 1 ? "" : "s"}
-        {hasActiveFilters ? " matching filters" : ""}
+        {fill(total === 1 ? t.countSingular : t.countPlural, { count: total })}
+        {hasActiveFilters ? t.matchingFilters : ""}
       </p>
 
       {incidents.length === 0 ? (
         <EmptyState
           icon={Siren}
-          title={hasActiveFilters ? "No matching incidents" : "No incidents"}
+          title={hasActiveFilters ? t.noMatching : t.noIncidents}
           description={
-            hasActiveFilters
-              ? "Try adjusting search or filters."
-              : "There are no incidents to report. All clear."
+            hasActiveFilters ? t.emptySearchDesc : t.emptyDesc
           }
           action={
             hasActiveFilters ? (
@@ -412,7 +433,7 @@ export function IncidentsExplorer({
                 onClick={clearFilters}
                 className="inline-flex items-center gap-2 rounded-xl bg-zt-primary px-4 py-2 text-sm font-medium text-white"
               >
-                Clear filters
+                {t.clearFilters}
               </button>
             ) : undefined
           }

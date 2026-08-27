@@ -1,5 +1,8 @@
+"use client";
+
 import Link from "next/link";
 
+import { useDictionary } from "@/components/i18n/locale-provider";
 import { ADMIN_ROUTES } from "@/lib/constants";
 
 export interface AdminBreadcrumbItem {
@@ -12,13 +15,15 @@ interface AdminBreadcrumbsProps {
 }
 
 export function AdminBreadcrumbs({ items }: AdminBreadcrumbsProps) {
+  const { dict } = useDictionary();
+  const shell = dict.admin.shell;
   const trail: AdminBreadcrumbItem[] = [
-    { label: "Admin", href: ADMIN_ROUTES.dashboard },
+    { label: shell.admin, href: ADMIN_ROUTES.dashboard },
     ...items,
   ];
 
   return (
-    <nav aria-label="Breadcrumb" className="text-sm text-[var(--admin-muted)]">
+    <nav aria-label={shell.breadcrumb} className="text-sm text-[var(--admin-muted)]">
       <ol className="flex flex-wrap items-center gap-1.5">
         {trail.map((item, index) => {
           const isLast = index === trail.length - 1;

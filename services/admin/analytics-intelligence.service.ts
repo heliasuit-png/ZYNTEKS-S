@@ -490,8 +490,6 @@ export async function getAnalyticsIntelligence(
     newSessions,
     returningSessions,
     averageSessionDurationMs: null as number | null,
-    sessionDurationNote:
-      "Session dwell duration is not stored. Values would be invented from long-lived session rows.",
   };
 
   // Workspace analytics + health
@@ -884,8 +882,6 @@ export async function getAnalyticsIntelligence(
         label: c.country,
         value: c.sessions,
       })),
-      cityNote:
-        "City-level analytics are not stored. Map traffic uses session countries; error/heartbeat geo columns do not exist.",
     },
     filterOptions: {
       workspaces: (workspacesRes.data ?? []).map((w) => ({

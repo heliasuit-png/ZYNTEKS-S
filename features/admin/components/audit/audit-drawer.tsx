@@ -3,6 +3,7 @@
 import { useEffect, useState, useTransition, type ReactNode } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 
+import { useDictionary } from "@/components/i18n/locale-provider";
 import type { AuditEventDetail } from "@/services/admin/audit-center.types";
 import { loadAuditEventDetailAction } from "@/features/admin/audit-actions";
 import {
@@ -40,6 +41,9 @@ export function AuditDrawer({
   eventId: string | null;
   onClose: () => void;
 }) {
+  const { dict, locale } = useDictionary();
+  const t = dict.admin.audit.drawer;
+  const common = dict.admin.common;
   const [detail, setDetail] = useState<AuditEventDetail | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
@@ -57,14 +61,14 @@ export function AuditDrawer({
         if (!cancelled) setDetail(data);
       } catch (err) {
         if (!cancelled) {
-          setError(err instanceof Error ? err.message : "Failed to load event");
+          setError(err instanceof Error ? err.message : t.failed);
         }
       }
     });
     return () => {
       cancelled = true;
     };
-  }, [eventId]);
+  }, [eventId, t.failed]);
 
   return (
     <AnimatePresence>
@@ -72,7 +76,7 @@ export function AuditDrawer({
         <>
           <motion.button
             type="button"
-            aria-label="Close audit detail"
+            aria-label={t.closeAria}
             className="fixed inset-0 z-40 bg-black/50 backdrop-blur-[2px]"
             {...ADMIN_DRAWER.overlay}
             onClick={onClose}
@@ -83,14 +87,14 @@ export function AuditDrawer({
           >
             <header className="flex items-start justify-between gap-3 border-b border-[var(--admin-border)] px-5 py-4">
               <div>
-                <p className="admin-eyebrow">Audit detail</p>
+                <p className="admin-eyebrow">{t.eyebrow}</p>
                 <h2 className="mt-1 text-lg font-semibold text-[var(--admin-text)]">
-                  {detail?.actionLabel ?? "Loading…"}
+                  {detail?.actionLabel ?? t.loading}
                 </h2>
                 {detail ? (
                   <p className="mt-1 text-xs text-[var(--admin-muted)]">
                     {formatWhen(detail.timestamp)} ·{" "}
-                    {formatRelative(detail.timestamp)}
+                    {formatRelative(detail.timestamp, locale)}
                   </p>
                 ) : null}
               </div>
@@ -99,13 +103,15 @@ export function AuditDrawer({
                 onClick={onClose}
                 className="admin-btn-ghost"
               >
-                Close
+                {common.close}
               </button>
             </header>
 
             <div className="flex-1 space-y-4 overflow-y-auto px-5 py-4">
               {pending && !detail ? (
-                <p className="text-sm text-[var(--admin-muted)]">Loading event…</p>
+                <p className="text-sm text-[var(--admin-muted)]">
+                  {t.loadingEvent}
+                </p>
               ) : null}
               {error ? (
                 <p className="rounded-xl border border-rose-500/30 bg-rose-500/10 px-3 py-2 text-sm text-rose-200">
@@ -115,27 +121,35 @@ export function AuditDrawer({
               {detail ? (
                 <>
                   <div className="grid gap-2 sm:grid-cols-2">
-                    <Field label="Actor">
+                    <Field label={t.fields.actor}>
                       {detail.actorEmail || detail.actorName || "—"}
                     </Field>
-                    <Field label="Role">{detail.actorRole ?? "—"}</Field>
-                    <Field label="Category">{detail.category}</Field>
-                    <Field label="Severity">{detail.severity}</Field>
-                    <Field label="Target type">{detail.targetType}</Field>
-                    <Field label="Target">{detail.targetName ?? "—"}</Field>
-                    <Field label="Workspace">{detail.workspaceName ?? "—"}</Field>
-                    <Field label="Project">{detail.projectName ?? "—"}</Field>
-                    <Field label="IP">{detail.ipAddress ?? "—"}</Field>
-                    <Field label="Result">{detail.result}</Field>
+                    <Field label={t.fields.role}>
+                      {detail.actorRole ?? "—"}
+                    </Field>
+                    <Field label={t.fields.category}>{detail.category}</Field>
+                    <Field label={t.fields.severity}>{detail.severity}</Field>
+                    <Field label={t.fields.targetType}>{detail.targetType}</Field>
+                    <Field label={t.fields.target}>
+                      {detail.targetName ?? "—"}
+                    </Field>
+                    <Field label={t.fields.workspace}>
+                      {detail.workspaceName ?? "—"}
+                    </Field>
+                    <Field label={t.fields.project}>
+                      {detail.projectName ?? "—"}
+                    </Field>
+                    <Field label={t.fields.ip}>{detail.ipAddress ?? "—"}</Field>
+                    <Field label={t.fields.result}>{detail.result}</Field>
                   </div>
 
-                  <Field label="Summary">{detail.summary}</Field>
+                  <Field label={t.fields.summary}>{detail.summary}</Field>
 
                   <div>
-                    <p className="admin-eyebrow mb-2">Related entities</p>
+                    <p className="admin-eyebrow mb-2">{t.relatedEntities}</p>
                     {detail.relatedEntities.length === 0 ? (
                       <p className="text-xs text-[var(--admin-muted)]">
-                        No related entity references stored.
+                        {t.noRelated}
                       </p>
                     ) : (
                       <ul className="space-y-1.5">
@@ -156,11 +170,17 @@ export function AuditDrawer({
                   </div>
 
                   <JsonBlock
-                    label="Previous state"
+                    label={t.fields.previousState}
                     value={detail.previousState ?? null}
                   />
-                  <JsonBlock label="New state" value={detail.newState ?? null} />
-                  <JsonBlock label="JSON payload" value={detail.metadata} />
+                  <JsonBlock
+                    label={t.fields.newState}
+                    value={detail.newState ?? null}
+                  />
+                  <JsonBlock
+                    label={t.fields.jsonPayload}
+                    value={detail.metadata}
+                  />
                 </>
               ) : null}
             </div>

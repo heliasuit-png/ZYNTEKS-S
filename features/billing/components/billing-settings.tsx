@@ -1,5 +1,8 @@
+"use client";
+
 import { PlugZap } from "lucide-react";
 
+import { useDictionary } from "@/components/i18n/locale-provider";
 import { Badge } from "@/components/dashboard/badge";
 import {
   Panel,
@@ -23,18 +26,19 @@ export function BillingSettings({
   providerDisplayName: string;
   providerConfigured: boolean;
 }) {
+  const { dict } = useDictionary();
+  const t = dict.dash.billingUi;
+
   return (
     <FadeIn delay={0.06}>
       <Panel>
         <PanelHeader className="flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <PanelTitle>Billing settings</PanelTitle>
-            <PanelDescription>
-              Payment provider connection status for this installation.
-            </PanelDescription>
+            <PanelTitle>{t.billingSettings}</PanelTitle>
+            <PanelDescription>{t.billingSettingsDesc}</PanelDescription>
           </div>
           <Badge tone={providerConfigured ? "success" : "warning"}>
-            {providerConfigured ? "Configured" : "Not connected"}
+            {providerConfigured ? t.configured : t.notConnected}
           </Badge>
         </PanelHeader>
         <PanelContent className="space-y-4">
@@ -45,23 +49,10 @@ export function BillingSettings({
             <div className="space-y-1 text-sm">
               <p className="font-medium text-zt-text">{providerDisplayName}</p>
               <p className="text-zt-muted">
-                Provider id: <code className="text-zt-text">{providerId}</code>
-              </p>
-              <p className="text-zt-muted">
-                To enable Upgrade, Purchase, Manage Subscription and Change Plan,
-                implement <code className="text-zt-text">PaymentProvider</code>{" "}
-                under <code className="text-zt-text">services/billing/providers/</code>{" "}
-                and register it in{" "}
-                <code className="text-zt-text">services/billing/factory.ts</code>.
-                Read secrets from environment variables only — never commit API keys.
+                {t.providerId.replace("{id}", providerId)}
               </p>
             </div>
           </div>
-          <ul className="list-disc space-y-1 pl-5 text-xs text-zt-muted">
-            <li>No Stripe / Lemon Squeezy / Paddle SDK is bundled.</li>
-            <li>No payment webhooks are registered in this source.</li>
-            <li>Plan limits remain enforced locally via PLAN_LIMITS.</li>
-          </ul>
         </PanelContent>
       </Panel>
     </FadeIn>

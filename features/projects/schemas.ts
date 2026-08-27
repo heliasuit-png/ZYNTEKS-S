@@ -12,33 +12,33 @@ const statusValues = [...PROJECT_STATUSES] as [
   ...ProjectStatus[],
 ];
 
-const optionalText = (max: number) =>
+const optionalText = (max: number, code: string) =>
   z
     .string()
     .trim()
-    .max(max, `Must be ${max} characters or fewer.`)
+    .max(max, code)
     .optional()
     .transform((value) => (value && value.length > 0 ? value : null));
 
 const optionalUrl = z
-  .union([z.literal(""), z.string().trim().url("Enter a valid URL.")])
+  .union([z.literal(""), z.string().trim().url("invalid_url")])
   .optional()
   .transform((value) => (value && value.length > 0 ? value : null));
 
 const nameField = z
   .string()
   .trim()
-  .min(1, "Name is required.")
-  .max(80, "Name must be 80 characters or fewer.");
+  .min(1, "name_required")
+  .max(80, "name_max_80");
 
 export const createProjectSchema = z.object({
   name: nameField,
   slug: z
     .string()
     .trim()
-    .max(80, "Slug must be 80 characters or fewer.")
+    .max(80, "slug_max_80")
     .optional(),
-  description: optionalText(500),
+  description: optionalText(500, "description_max_500"),
   framework: z.enum(frameworkValues),
   productionUrl: optionalUrl,
   stagingUrl: optionalUrl,
@@ -46,7 +46,7 @@ export const createProjectSchema = z.object({
 
 export const updateProjectSchema = z.object({
   name: nameField,
-  description: optionalText(500),
+  description: optionalText(500, "description_max_500"),
   framework: z.enum(frameworkValues),
   status: z.enum(statusValues),
   productionUrl: optionalUrl,

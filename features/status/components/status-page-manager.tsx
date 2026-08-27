@@ -4,6 +4,7 @@ import { useActionState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { ExternalLink, Trash2 } from "lucide-react";
 
+import { useDictionary } from "@/components/i18n/locale-provider";
 import { Badge } from "@/components/dashboard/badge";
 import { CopyButton } from "@/components/dashboard/copy-button";
 import {
@@ -78,6 +79,9 @@ function CreateStatusPageForm({
 }: {
   availableProjects: { id: string; name: string }[];
 }) {
+  const { dict } = useDictionary();
+  const t = dict.dash.statusPages;
+  const common = dict.dashboardCommon;
   const router = useRouter();
   const [state, formAction, isPending] = useActionState(
     createStatusPageAction,
@@ -97,19 +101,19 @@ function CreateStatusPageForm({
   return (
     <Panel>
       <PanelHeader>
-        <PanelTitle>Create a status page</PanelTitle>
+        <PanelTitle>{t.create}</PanelTitle>
       </PanelHeader>
       <PanelContent>
         {availableProjects.length === 0 ? (
           <p className="text-sm text-zt-muted">
-            Every project already has a status page.
+            {t.allProjectsHavePages}
           </p>
         ) : (
           <form ref={formRef} action={formAction} className="space-y-3">
             <div className="grid gap-3 sm:grid-cols-2">
               <div className="space-y-1">
                 <label className="text-xs font-medium text-zt-muted">
-                  Project
+                  {t.project}
                 </label>
                 <select name="projectId" required className={inputClass}>
                   {availableProjects.map((project) => (
@@ -121,19 +125,23 @@ function CreateStatusPageForm({
               </div>
               <div className="space-y-1">
                 <label className="text-xs font-medium text-zt-muted">
-                  Name (optional)
+                  {t.nameOptional}
                 </label>
-                <input name="name" className={inputClass} placeholder="Status" />
+                <input
+                  name="name"
+                  className={inputClass}
+                  placeholder={t.namePlaceholder}
+                />
               </div>
             </div>
             <div className="space-y-1">
               <label className="text-xs font-medium text-zt-muted">
-                Description (optional)
+                {t.descriptionOptional}
               </label>
               <input
                 name="description"
                 className={inputClass}
-                placeholder="Public description shown on the status page"
+                placeholder={t.descriptionPlaceholder}
               />
             </div>
             <label className="flex items-center gap-2 text-sm text-zt-text">
@@ -143,11 +151,11 @@ function CreateStatusPageForm({
                 defaultChecked
                 className="size-4 accent-zt-primary"
               />
-              Publicly accessible
+              {t.publiclyAccessible}
             </label>
             <div className="flex items-center gap-3">
               <button type="submit" disabled={isPending} className={primaryButton}>
-                {isPending ? "Creating…" : "Create status page"}
+                {isPending ? t.creating : t.createSubmit}
               </button>
               {state.status === "error" && state.message ? (
                 <span className="text-xs text-zt-danger">{state.message}</span>
@@ -173,6 +181,9 @@ function StatusPageCard({
   maintenance: StatusPageMaintenance[];
   publicBaseUrl: string;
 }) {
+  const { dict } = useDictionary();
+  const t = dict.dash.statusPages;
+  const common = dict.dashboardCommon;
   const router = useRouter();
   const [state, formAction, isPending] = useActionState(
     updateStatusPageAction,
@@ -203,11 +214,11 @@ function StatusPageCard({
               {publicUrl}
               <ExternalLink className="size-3" aria-hidden />
             </a>
-            <CopyButton value={publicUrl} label="Copy link" />
+            <CopyButton value={publicUrl} label={t.copyLink} />
           </div>
         </div>
         <Badge tone={page.is_public ? "success" : "default"}>
-          {page.is_public ? "Public" : "Private"}
+          {page.is_public ? t.isPublic : t.isPrivate}
         </Badge>
       </PanelHeader>
       <PanelContent className="space-y-4">
@@ -215,7 +226,7 @@ function StatusPageCard({
           <input type="hidden" name="id" value={page.id} />
           <div className="grid gap-3 sm:grid-cols-2">
             <div className="space-y-1">
-              <label className="text-xs font-medium text-zt-muted">Name</label>
+              <label className="text-xs font-medium text-zt-muted">{t.name}</label>
               <input
                 name="name"
                 defaultValue={page.name}
@@ -225,7 +236,7 @@ function StatusPageCard({
             </div>
             <div className="space-y-1">
               <label className="text-xs font-medium text-zt-muted">
-                Public URL slug
+                {t.publicSlug}
               </label>
               <input
                 name="slug"
@@ -237,7 +248,7 @@ function StatusPageCard({
           </div>
           <div className="space-y-1">
             <label className="text-xs font-medium text-zt-muted">
-              Description
+              {t.description}
             </label>
             <input
               name="description"
@@ -248,7 +259,7 @@ function StatusPageCard({
           <div className="grid gap-3 sm:grid-cols-2">
             <div className="space-y-1">
               <label className="text-xs font-medium text-zt-muted">
-                Logo URL
+                {t.logoUrl}
               </label>
               <input
                 name="logoUrl"
@@ -260,7 +271,7 @@ function StatusPageCard({
             </div>
             <div className="space-y-1">
               <label className="text-xs font-medium text-zt-muted">
-                Primary color
+                {t.primaryColor}
               </label>
               <input
                 name="brandColor"
@@ -271,7 +282,7 @@ function StatusPageCard({
             </div>
             <div className="space-y-1">
               <label className="text-xs font-medium text-zt-muted">
-                Timezone
+                {t.timezone}
               </label>
               <input
                 name="timezone"
@@ -281,7 +292,7 @@ function StatusPageCard({
             </div>
             <div className="space-y-1">
               <label className="text-xs font-medium text-zt-muted">
-                Contact email
+                {t.contactEmail}
               </label>
               <input
                 name="contactEmail"
@@ -292,12 +303,12 @@ function StatusPageCard({
             </div>
           </div>
           <div className="space-y-1">
-            <label className="text-xs font-medium text-zt-muted">Footer</label>
+            <label className="text-xs font-medium text-zt-muted">{t.footer}</label>
             <input
               name="footerText"
               defaultValue={page.footer_text ?? ""}
               className={inputClass}
-              placeholder="Custom footer text"
+              placeholder={t.footerPlaceholder}
             />
           </div>
           <label className="flex items-center gap-2 text-sm text-zt-text">
@@ -307,11 +318,11 @@ function StatusPageCard({
               defaultChecked={page.is_public}
               className="size-4 accent-zt-primary"
             />
-            Publicly accessible
+            {t.publiclyAccessible}
           </label>
           <div className="flex items-center gap-3">
             <button type="submit" disabled={isPending} className={primaryButton}>
-              {isPending ? "Saving…" : "Save changes"}
+              {isPending ? common.saving : t.saveChanges}
             </button>
             {state.status === "success" ? (
               <span className="text-xs text-zt-success">{state.message}</span>
@@ -323,9 +334,9 @@ function StatusPageCard({
         </form>
 
         <div className="space-y-2 border-t border-zt-border pt-4">
-          <p className="text-xs font-medium text-zt-muted">Components</p>
+          <p className="text-xs font-medium text-zt-muted">{t.components}</p>
           {components.length === 0 ? (
-            <p className="text-xs text-zt-muted">No components yet.</p>
+            <p className="text-xs text-zt-muted">{t.noComponents}.</p>
           ) : (
             <ul className="space-y-1.5">
               {components.map((component) => (
@@ -348,7 +359,7 @@ function StatusPageCard({
                     <input type="hidden" name="slug" value={page.slug} />
                     <button
                       type="submit"
-                      aria-label="Delete component"
+                      aria-label={t.deleteComponent}
                       className="rounded-lg p-1.5 text-zt-muted transition-colors hover:text-zt-danger"
                     >
                       <Trash2 className="size-4" aria-hidden />
@@ -367,24 +378,24 @@ function StatusPageCard({
             <input
               name="name"
               required
-              placeholder="Component name"
+              placeholder={t.componentName}
               className={`${inputClass} max-w-48`}
             />
             <input
               name="description"
-              placeholder="Description (optional)"
+              placeholder={t.descriptionOptional}
               className={`${inputClass} max-w-64`}
             />
             <button type="submit" className={ghostButton}>
-              Add
+              {t.addComponent}
             </button>
           </form>
         </div>
 
         <div className="space-y-2 border-t border-zt-border pt-4">
-          <p className="text-xs font-medium text-zt-muted">Maintenance</p>
+          <p className="text-xs font-medium text-zt-muted">{t.maintenance}</p>
           {maintenance.length === 0 ? (
-            <p className="text-xs text-zt-muted">No maintenance windows.</p>
+            <p className="text-xs text-zt-muted">{t.noMaintenance}.</p>
           ) : (
             <ul className="space-y-2">
               {maintenance.map((item) => (
@@ -408,7 +419,7 @@ function StatusPageCard({
                           name="status"
                           defaultValue={item.status}
                           className="h-8 rounded-lg border border-zt-border bg-zt-surface px-2 text-xs"
-                          aria-label="Maintenance status"
+                          aria-label={t.maintenance}
                         >
                           {MAINTENANCE_STATUSES.map((status) => (
                             <option key={status} value={status}>
@@ -417,7 +428,7 @@ function StatusPageCard({
                           ))}
                         </select>
                         <button type="submit" className={ghostButton}>
-                          Update
+                          {t.update}
                         </button>
                       </form>
                       <form action={deleteMaintenanceAction}>
@@ -425,7 +436,7 @@ function StatusPageCard({
                         <input type="hidden" name="slug" value={page.slug} />
                         <button
                           type="submit"
-                          aria-label="Delete maintenance"
+                          aria-label={t.deleteMaintenance}
                           className="rounded-lg p-1.5 text-zt-muted transition-colors hover:text-zt-danger"
                         >
                           <Trash2 className="size-4" aria-hidden />
@@ -443,7 +454,7 @@ function StatusPageCard({
             <input
               name="title"
               required
-              placeholder="Maintenance title"
+              placeholder={t.maintenanceTitlePlaceholder}
               className={inputClass}
             />
             <select name="status" defaultValue="scheduled" className={inputClass}>
@@ -458,22 +469,22 @@ function StatusPageCard({
               type="datetime-local"
               required
               className={inputClass}
-              aria-label="Scheduled start"
+              aria-label={t.scheduledStart}
             />
             <input
               name="scheduledEnd"
               type="datetime-local"
               required
               className={inputClass}
-              aria-label="Scheduled end"
+              aria-label={t.scheduledEnd}
             />
             <input
               name="description"
-              placeholder="Description (optional)"
+              placeholder={t.descriptionOptional}
               className={`${inputClass} sm:col-span-2`}
             />
             <button type="submit" className={`${ghostButton} sm:col-span-2`}>
-              Schedule maintenance
+              {t.scheduleMaintenance}
             </button>
           </form>
         </div>
@@ -487,7 +498,7 @@ function StatusPageCard({
               className="inline-flex items-center gap-1.5 rounded-lg border border-zt-danger/40 px-3 py-2 text-sm text-zt-danger transition-colors hover:bg-zt-danger/10"
             >
               <Trash2 className="size-4" aria-hidden />
-              Delete status page
+              {t.deletePage}
             </button>
           </form>
         </div>

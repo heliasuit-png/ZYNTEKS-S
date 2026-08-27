@@ -8,7 +8,7 @@ import {
 const optionalWebhook = z
   .string()
   .trim()
-  .url("Enter a valid webhook URL.")
+  .url("invalid_webhook_url")
   .or(z.literal(""))
   .optional();
 

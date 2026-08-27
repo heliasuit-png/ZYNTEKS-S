@@ -3,12 +3,12 @@
 import { useActionState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 
+import { useDictionary } from "@/components/i18n/locale-provider";
 import { Modal } from "@/components/dashboard/modal";
 import {
   PROJECT_FRAMEWORKS,
   PROJECT_FRAMEWORK_LABELS,
   PROJECT_STATUSES,
-  PROJECT_STATUS_LABELS,
 } from "@/lib/constants";
 import {
   createProjectAction,
@@ -37,6 +37,9 @@ export function ProjectFormModal({
   project,
   onSuccess,
 }: ProjectFormModalProps) {
+  const { dict } = useDictionary();
+  const t = dict.dash.projects;
+  const common = dict.dashboardCommon;
   const router = useRouter();
   const action = mode === "create" ? createProjectAction : updateProjectAction;
   const [state, formAction, isPending] = useActionState(
@@ -49,10 +52,12 @@ export function ProjectFormModal({
     if (state.status === "success" && handledRef.current !== state) {
       handledRef.current = state;
       router.refresh();
-      onSuccess?.(state.message ?? "Project saved.");
+      onSuccess?.(
+        mode === "create" ? t.toasts.created : t.toasts.updated,
+      );
       onClose();
     }
-  }, [state, router, onClose, onSuccess]);
+  }, [state, router, onClose, onSuccess, mode, t.toasts.created, t.toasts.updated]);
 
   const fieldErrors = state.fieldErrors ?? {};
 
@@ -60,11 +65,9 @@ export function ProjectFormModal({
     <Modal
       open={open}
       onClose={onClose}
-      title={mode === "create" ? "Create project" : "Edit project"}
+      title={mode === "create" ? t.form.createTitle : t.form.editTitle}
       description={
-        mode === "create"
-          ? "Set up a new project in your workspace."
-          : "Update your project details."
+        mode === "create" ? t.form.createDesc : t.form.editDesc
       }
       className="max-w-xl"
       footer={
@@ -74,7 +77,7 @@ export function ProjectFormModal({
             onClick={onClose}
             className="rounded-lg border border-zt-border px-3 py-1.5 text-sm text-zt-muted transition-colors hover:text-zt-text"
           >
-            Cancel
+            {common.cancel}
           </button>
           <button
             type="submit"
@@ -83,10 +86,10 @@ export function ProjectFormModal({
             className="rounded-lg bg-zt-primary px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-zt-primary/90 disabled:opacity-60"
           >
             {isPending
-              ? "Saving…"
+              ? t.form.saving
               : mode === "create"
-                ? "Create project"
-                : "Save changes"}
+                ? t.form.createSubmit
+                : t.form.saveChanges}
           </button>
         </>
       }
@@ -98,14 +101,14 @@ export function ProjectFormModal({
 
         <div className="space-y-1.5">
           <label htmlFor="project-name" className={fieldLabel}>
-            Name
+            {t.form.name}
           </label>
           <input
             id="project-name"
             name="name"
             required
             defaultValue={project?.name ?? ""}
-            placeholder="Production API"
+            placeholder={t.form.namePlaceholder}
             className={fieldInput}
           />
           {fieldErrors.name?.[0] ? (
@@ -116,12 +119,13 @@ export function ProjectFormModal({
         {mode === "create" ? (
           <div className="space-y-1.5">
             <label htmlFor="project-slug" className={fieldLabel}>
-              Slug <span className="text-zt-muted">(optional)</span>
+              {t.form.slug}{" "}
+              <span className="text-zt-muted">{t.form.optional}</span>
             </label>
             <input
               id="project-slug"
               name="slug"
-              placeholder="auto-generated from name"
+              placeholder={t.form.slugPlaceholder}
               className={fieldInput}
             />
             {fieldErrors.slug?.[0] ? (
@@ -130,7 +134,7 @@ export function ProjectFormModal({
           </div>
         ) : (
           <div className="space-y-1.5">
-            <span className={fieldLabel}>Slug</span>
+            <span className={fieldLabel}>{t.form.slug}</span>
             <p className="rounded-lg border border-zt-border bg-zt-surface-2 px-3 py-2 text-sm text-zt-muted">
               {project?.slug}
             </p>
@@ -139,14 +143,14 @@ export function ProjectFormModal({
 
         <div className="space-y-1.5">
           <label htmlFor="project-description" className={fieldLabel}>
-            Description
+            {t.form.description}
           </label>
           <textarea
             id="project-description"
             name="description"
             rows={3}
             defaultValue={project?.description ?? ""}
-            placeholder="What is this project about?"
+            placeholder={t.form.descriptionPlaceholder}
             className="w-full rounded-lg border border-zt-border bg-zt-surface-2 px-3 py-2 text-sm text-zt-text placeholder:text-zt-muted focus:outline-none focus:ring-2 focus:ring-zt-primary/40"
           />
           {fieldErrors.description?.[0] ? (
@@ -157,7 +161,7 @@ export function ProjectFormModal({
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div className="space-y-1.5">
             <label htmlFor="project-framework" className={fieldLabel}>
-              Framework
+              {t.form.framework}
             </label>
             <select
               id="project-framework"
@@ -176,7 +180,7 @@ export function ProjectFormModal({
           {mode === "edit" ? (
             <div className="space-y-1.5">
               <label htmlFor="project-status" className={fieldLabel}>
-                Status
+                {t.form.status}
               </label>
               <select
                 id="project-status"
@@ -186,7 +190,7 @@ export function ProjectFormModal({
               >
                 {PROJECT_STATUSES.map((status) => (
                   <option key={status} value={status}>
-                    {PROJECT_STATUS_LABELS[status]}
+                    {t.statuses[status]}
                   </option>
                 ))}
               </select>
@@ -197,14 +201,14 @@ export function ProjectFormModal({
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div className="space-y-1.5">
             <label htmlFor="project-production-url" className={fieldLabel}>
-              Production URL
+              {t.form.productionUrl}
             </label>
             <input
               id="project-production-url"
               name="productionUrl"
               type="url"
               defaultValue={project?.production_url ?? ""}
-              placeholder="https://app.example.com"
+              placeholder={t.form.productionUrlPlaceholder}
               className={fieldInput}
             />
             {fieldErrors.productionUrl?.[0] ? (
@@ -213,14 +217,14 @@ export function ProjectFormModal({
           </div>
           <div className="space-y-1.5">
             <label htmlFor="project-staging-url" className={fieldLabel}>
-              Staging URL
+              {t.form.stagingUrl}
             </label>
             <input
               id="project-staging-url"
               name="stagingUrl"
               type="url"
               defaultValue={project?.staging_url ?? ""}
-              placeholder="https://staging.example.com"
+              placeholder={t.form.stagingUrlPlaceholder}
               className={fieldInput}
             />
             {fieldErrors.stagingUrl?.[0] ? (

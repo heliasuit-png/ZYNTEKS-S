@@ -8,7 +8,6 @@ import {
   DASHBOARD_ROUTES,
   ERROR_CODE,
   HTTP_STATUS,
-  WORKSPACE_ROLE_LABELS,
 } from "@/lib/constants";
 import { env } from "@/lib/env";
 import {
@@ -19,6 +18,7 @@ import {
   ValidationError,
 } from "@/lib/errors";
 import { logger } from "@/lib/logger";
+import { getDictionary } from "@/lib/i18n/get-dictionary";
 import { writeAuditLog } from "@/services/workspace/audit.service";
 import {
   ASSIGNABLE_ROLES,
@@ -68,11 +68,16 @@ async function deliverInvitationEmail(
     .maybeSingle();
 
   const acceptUrl = `${env.NEXT_PUBLIC_APP_URL.replace(/\/$/, "")}${DASHBOARD_ROUTES.invitations}`;
+  const { dict } = await getDictionary();
+  const roleLabels = dict.dash.members.roles;
+  const roleLabel =
+    roleLabels[invitation.role as keyof typeof roleLabels] ?? invitation.role;
   const content = renderInviteEmail({
     workspaceName: workspace.name,
-    roleLabel: WORKSPACE_ROLE_LABELS[invitation.role] ?? invitation.role,
+    roleLabel,
     inviterEmail: inviter?.email ?? null,
     acceptUrl,
+    copy: dict.emails.invite,
   });
 
   const result = await sendEmail({

@@ -1,135 +1,45 @@
-export const LANDING_COPY = {
-  brand: "ZYNTEKSIS",
-  headline: "Observe. Analyze. Ship with confidence.",
-  subheadline:
-    "Production monitoring, AI analysis, and status pages in one platform — built for teams that ship software every day.",
-  primaryCta: "Start free",
-  secondaryCta: "See how it works",
-} as const;
+/**
+ * Structural landing data (icons, SDK snippets, install commands).
+ * User-facing copy lives in lib/i18n/dictionaries — use useDictionary() / getDictionary().
+ */
+import type { Dictionary } from "@/lib/i18n/dictionaries";
 
-export const FEATURES = [
-  {
-    id: "monitoring",
-    title: "Monitoring",
-    description:
-      "Capture errors, performance signals, and release health across every project environment.",
-    icon: "Activity",
-  },
-  {
-    id: "ai",
-    title: "AI Analysis",
-    description:
-      "Ask the assistant about incidents, stack traces, and trends without leaving your workspace.",
-    icon: "Sparkles",
-  },
-  {
-    id: "projects",
-    title: "Projects",
-    description:
-      "Organize services by project, environment, and ownership with workspace-level control.",
-    icon: "Folders",
-  },
-  {
-    id: "api-keys",
-    title: "API Keys",
-    description:
-      "Issue scoped SDK keys, rotate secrets, and revoke access instantly from one place.",
-    icon: "KeyRound",
-  },
-  {
-    id: "health",
-    title: "Health Monitoring",
-    description:
-      "Track uptime, latency, and endpoint checks with clear timelines for every service.",
-    icon: "HeartPulse",
-  },
-  {
-    id: "notifications",
-    title: "Notifications",
-    description:
-      "Route alerts to email, dashboard, Slack, and Discord with per-category preferences.",
-    icon: "Bell",
-  },
-  {
-    id: "status",
-    title: "Status Pages",
-    description:
-      "Publish branded public status pages so customers always know what is happening.",
-    icon: "Globe2",
-  },
+export const FEATURE_DEFS = [
+  { id: "monitoring", icon: "Activity" },
+  { id: "ai", icon: "Sparkles" },
+  { id: "projects", icon: "Folders" },
+  { id: "api-keys", icon: "KeyRound" },
+  { id: "health", icon: "HeartPulse" },
+  { id: "notifications", icon: "Bell" },
+  { id: "status", icon: "Globe2" },
 ] as const;
 
-export const HOW_IT_WORKS = [
-  {
-    step: 1,
-    title: "Create Project",
-    description:
-      "Spin up a project for each service, set the environment, and invite your team.",
-  },
-  {
-    step: 2,
-    title: "Generate API Key",
-    description:
-      "Create a scoped key for production or staging — copy once, rotate anytime.",
-  },
-  {
-    step: 3,
-    title: "Install SDK",
-    description:
-      "Drop the SDK into your app and start streaming errors, heartbeats, and performance data.",
-  },
-] as const;
+export type FeatureId = (typeof FEATURE_DEFS)[number]["id"];
 
-export const FAQ_ITEMS = [
-  {
-    q: "What is ZYNTEKSIS?",
-    a: "ZYNTEKSIS is a production-ready SaaS platform for error monitoring, health checks, AI-assisted analysis, notifications, and public status pages — delivered as complete source code.",
-  },
-  {
-    q: "Do I need a payment provider to use billing UI?",
-    a: "No. Plan limits and the billing interface ship ready. Checkout, portals, and invoices activate when you connect a PaymentProvider implementation — no vendor is bundled.",
-  },
-  {
-    q: "Which frameworks does the SDK support?",
-    a: "Path-install the local @zynteksis/sdk package (build sdk/ first). The browser SDK works in modern JavaScript/TypeScript apps, including React and Next.js client components. Server-side code uses the same HTTP ingest endpoints.",
-  },
-  {
-    q: "Can I self-host?",
-    a: "Yes. The repository is designed to run against Supabase and your own environment variables, so you control hosting, data, and integrations.",
-  },
-  {
-    q: "Is there an AI assistant?",
-    a: "Yes. Workspace members can chat with an AI assistant that uses project context for incidents, errors, and operational questions, with plan-based usage limits.",
-  },
-  {
-    q: "How do status pages work?",
-    a: "Create a public status page, attach components and incidents, and share a branded URL with customers. Uptime windows and incident history are included.",
-  },
-] as const;
+export function getFeatures(dict: Dictionary) {
+  return FEATURE_DEFS.map((feature) => ({
+    id: feature.id,
+    icon: feature.icon,
+    title: dict.landing.features.items[feature.id].title,
+    description: dict.landing.features.items[feature.id].description,
+  }));
+}
 
-export const TESTIMONIALS = [
-  {
-    quote:
-      "One workspace for errors, health, incidents, and public status — without stitching five tools together.",
-    name: "Operations",
-    role: "Built for on-call teams",
-    company: "ZYNTEKSIS",
-  },
-  {
-    quote:
-      "Scoped API keys, SDK ingest, and AI analysis on the same project context keep debugging grounded in real telemetry.",
-    name: "Engineering",
-    role: "Built for product teams",
-    company: "ZYNTEKSIS",
-  },
-  {
-    quote:
-      "Ship the complete source, connect your own payment provider when ready, and keep ownership of data and infrastructure.",
-    name: "Platform owners",
-    role: "Built for source buyers",
-    company: "ZYNTEKSIS",
-  },
-] as const;
+export function getHowItWorks(dict: Dictionary) {
+  return dict.landing.howItWorks.steps.map((step, index) => ({
+    step: index + 1,
+    title: step.title,
+    description: step.description,
+  }));
+}
+
+export function getFaqItems(dict: Dictionary) {
+  return dict.landing.faq.items;
+}
+
+export function getTestimonials(dict: Dictionary) {
+  return dict.landing.testimonials.items;
+}
 
 export const SDK_FRAMEWORKS = [
   {

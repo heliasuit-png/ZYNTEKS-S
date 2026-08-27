@@ -1,5 +1,6 @@
-import type { Metadata } from "next";
 import { redirect } from "next/navigation";
+import { dashboardPageMetadata } from "@/lib/i18n/dashboard-metadata";
+import { getDictionary } from "@/lib/i18n/get-dictionary";
 
 import { PageHeader } from "@/components/dashboard/page-header";
 import {
@@ -15,7 +16,7 @@ import { createSupabaseServerClient } from "@/supabase/server";
 import { IncidentsExplorer } from "@/features/incidents/components/incidents-explorer";
 import type { IncidentSeverity, IncidentStatus } from "@/types/database";
 
-export const metadata: Metadata = { title: "Incidents" };
+export const generateMetadata = () => dashboardPageMetadata("incidents");
 
 const PAGE_SIZE = 20;
 const SORTS = ["started_at", "severity", "status", "resolved_at"] as const;
@@ -38,6 +39,8 @@ interface IncidentsPageProps {
 export default async function IncidentsPage({
   searchParams,
 }: IncidentsPageProps) {
+  const { dict } = await getDictionary();
+  const pageCopy = dict.dashboard.pageTitles.incidents;
   const params = await searchParams;
 
   const supabase = await createSupabaseServerClient();
@@ -88,9 +91,7 @@ export default async function IncidentsPage({
 
   return (
     <div className="space-y-6">
-      <PageHeader
-        title="Incidents"
-        description="Investigate outages, track recovery, and manage incident response."
+      <PageHeader title={pageCopy.title} description={pageCopy.description}
       />
       <IncidentsExplorer
         incidents={result.items}

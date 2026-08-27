@@ -2,38 +2,26 @@
 
 import { Activity, Gauge, Siren } from "lucide-react";
 
+import { useDictionary } from "@/components/i18n/locale-provider";
 import { LandingSection } from "@/features/landing/components/section";
 import { Reveal } from "@/features/landing/components/reveal";
 
-const ITEMS = [
-  {
-    icon: Activity,
-    title: "Error monitoring",
-    text: "Group, fingerprint, and explore stack traces with environment and release context.",
-  },
-  {
-    icon: Gauge,
-    title: "Health & uptime",
-    text: "Endpoint checks, latency windows, and clear timelines for every critical path.",
-  },
-  {
-    icon: Siren,
-    title: "Incident management",
-    text: "Track severity, status, and updates so on-call stays aligned with customers.",
-  },
-] as const;
+const ITEM_ICONS = [Activity, Gauge, Siren] as const;
 
 export function LandingMonitoring() {
+  const { dict } = useDictionary();
+  const copy = dict.landing.monitoring;
+
   return (
     <LandingSection
       id="monitoring"
-      eyebrow="Monitoring"
-      title="See failures before your users do"
-      description="Errors, health, and incidents share one narrative — so debugging starts with signal, not noise."
+      eyebrow={copy.eyebrow}
+      title={copy.title}
+      description={copy.desc}
     >
       <div className="grid gap-4 md:grid-cols-3">
-        {ITEMS.map((item, index) => {
-          const Icon = item.icon;
+        {copy.items.map((item, index) => {
+          const Icon = ITEM_ICONS[index] ?? Activity;
           return (
             <Reveal key={item.title} delay={index * 0.06}>
               <article className="h-full rounded-2xl border border-zt-border bg-gradient-to-b from-white/[0.04] to-transparent p-6">

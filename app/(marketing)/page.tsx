@@ -2,13 +2,17 @@ import dynamic from "next/dynamic";
 import type { Metadata } from "next";
 
 import { env } from "@/lib/env";
+import { getDictionary } from "@/lib/i18n/get-dictionary";
 import { LandingHero } from "@/features/landing/components/landing-hero";
 import {
   buildLandingJsonLd,
   buildLandingMetadata,
 } from "@/features/landing/lib/seo";
 
-export const metadata: Metadata = buildLandingMetadata(env.NEXT_PUBLIC_APP_URL);
+export async function generateMetadata(): Promise<Metadata> {
+  const { locale } = await getDictionary();
+  return buildLandingMetadata(env.NEXT_PUBLIC_APP_URL, locale);
+}
 
 const LandingFeatures = dynamic(
   () =>
@@ -72,8 +76,9 @@ const LandingTestimonials = dynamic(
   { ssr: true },
 );
 
-export default function HomePage() {
-  const jsonLd = buildLandingJsonLd(env.NEXT_PUBLIC_APP_URL);
+export default async function HomePage() {
+  const { locale } = await getDictionary();
+  const jsonLd = buildLandingJsonLd(env.NEXT_PUBLIC_APP_URL, locale);
 
   return (
     <>

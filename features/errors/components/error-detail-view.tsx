@@ -10,6 +10,7 @@ import {
   Siren,
 } from "lucide-react";
 
+import { useDictionary } from "@/components/i18n/locale-provider";
 import {
   Panel,
   PanelContent,
@@ -32,13 +33,24 @@ import {
 } from "@/features/errors/lib/client-context";
 import { ERROR_LEVEL_TONE } from "@/features/errors/lib/level-tone";
 import type { ErrorDetailBundle } from "@/features/errors/types";
+import type { IncidentSeverity, IncidentStatus } from "@/types/database";
 
 interface ErrorDetailViewProps {
   bundle: ErrorDetailBundle;
   shareUrl: string;
 }
 
+function fill(template: string, vars: Record<string, string | number>) {
+  return Object.entries(vars).reduce(
+    (s, [k, v]) => s.replaceAll(`{${k}}`, String(v)),
+    template,
+  );
+}
+
 export function ErrorDetailView({ bundle, shareUrl }: ErrorDetailViewProps) {
+  const { dict, locale } = useDictionary();
+  const t = dict.dash.errors;
+  const incidentDict = dict.dash.incidents;
   const { error, relatedErrors, relatedIncidents, timeline, apiKeyHints } =
     bundle;
 
@@ -107,6 +119,11 @@ export function ErrorDetailView({ bundle, shareUrl }: ErrorDetailViewProps) {
     URL.revokeObjectURL(url);
   }
 
+  const occurrenceLabel = fill(
+    error.occurrences === 1 ? t.occurrenceSingular : t.occurrencePlural,
+    { count: error.occurrences },
+  );
+
   return (
     <div className="space-y-6">
       <FadeIn>
@@ -115,10 +132,9 @@ export function ErrorDetailView({ bundle, shareUrl }: ErrorDetailViewProps) {
           <Badge tone="default">{error.environment}</Badge>
           {error.type ? <Badge tone="default">{error.type}</Badge> : null}
           <span className="text-xs text-zt-muted">
-            {error.occurrences} occurrence
-            {error.occurrences === 1 ? "" : "s"} · first{" "}
-            {formatRelativeTime(error.firstSeenAt)} · last{" "}
-            {formatRelativeTime(error.lastSeenAt)}
+            {occurrenceLabel} · {t.metaFirst}{" "}
+            {formatRelativeTime(error.firstSeenAt, undefined, locale)} · {t.metaLast}{" "}
+            {formatRelativeTime(error.lastSeenAt, undefined, locale)}
           </span>
         </div>
       </FadeIn>
@@ -130,14 +146,14 @@ export function ErrorDetailView({ bundle, shareUrl }: ErrorDetailViewProps) {
             className="inline-flex items-center gap-1.5 rounded-xl bg-zt-primary px-3 py-2 text-xs font-medium text-white transition-colors hover:bg-zt-primary/90"
           >
             <Bot className="size-3.5" aria-hidden />
-            Analyze with AI
+            {t.analyzeWithAi}
           </Link>
           <a
             href="#timeline"
             className="inline-flex items-center gap-1.5 rounded-xl border border-zt-border bg-zt-surface-2 px-3 py-2 text-xs font-medium text-zt-muted transition-colors hover:text-zt-text"
           >
             <Clock3 className="size-3.5" aria-hidden />
-            View Timeline
+            {t.viewTimeline}
           </a>
           {primaryIncident ? (
             <Link
@@ -145,7 +161,7 @@ export function ErrorDetailView({ bundle, shareUrl }: ErrorDetailViewProps) {
               className="inline-flex items-center gap-1.5 rounded-xl border border-zt-border bg-zt-surface-2 px-3 py-2 text-xs font-medium text-zt-muted transition-colors hover:text-zt-text"
             >
               <Siren className="size-3.5" aria-hidden />
-              Open Incident
+              {t.openIncident}
             </Link>
           ) : (
             <Link
@@ -153,61 +169,60 @@ export function ErrorDetailView({ bundle, shareUrl }: ErrorDetailViewProps) {
               className="inline-flex items-center gap-1.5 rounded-xl border border-zt-border bg-zt-surface-2 px-3 py-2 text-xs font-medium text-zt-muted transition-colors hover:text-zt-text"
             >
               <Siren className="size-3.5" aria-hidden />
-              Open Incident
+              {t.openIncident}
             </Link>
           )}
-          <CopyButton value={shareUrl} label="Share Error" />
+          <CopyButton value={shareUrl} label={t.share} />
           <button
             type="button"
             onClick={downloadJson}
             className="inline-flex items-center gap-1.5 rounded-xl border border-zt-border bg-zt-surface-2 px-3 py-2 text-xs font-medium text-zt-muted transition-colors hover:text-zt-text"
           >
             <Download className="size-3.5" aria-hidden />
-            Download JSON
+            {t.downloadJson}
           </button>
-          <CopyButton value={exportJson} label="Copy JSON" />
+          <CopyButton value={exportJson} label={t.copyJson} />
         </div>
       </FadeIn>
 
       <FadeIn delay={0.05}>
         <Panel>
           <PanelHeader>
-            <PanelTitle>Details</PanelTitle>
+            <PanelTitle>{t.details}</PanelTitle>
           </PanelHeader>
           <PanelContent>
             <dl className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              <Field label="Message" value={error.message} wide />
-              <Field label="Occurrences" value={String(error.occurrences)} />
+              <Field label={t.message} value={error.message} wide />
+              <Field label={t.occurrences} value={String(error.occurrences)} />
               <Field
-                label="First Seen"
+                label={t.firstSeen}
                 value={formatDateTime(error.firstSeenAt)}
               />
               <Field
-                label="Last Seen"
+                label={t.lastSeen}
                 value={formatDateTime(error.lastSeenAt)}
               />
-              <Field label="Environment" value={error.environment} />
-              <Field label="Release" value={error.release ?? "—"} />
-              <Field label="Framework" value={error.framework ?? "—"} />
-              <Field label="Browser" value={browser ?? "—"} />
-              <Field label="Operating System" value={os ?? "—"} />
-              <Field label="Device" value={device ?? "—"} />
-              <Field label="Screen Resolution" value={screen ?? "—"} />
-              <Field label="Language" value={error.language ?? "—"} />
-              <Field label="Timezone" value={error.timezone ?? "—"} />
-              <Field label="SDK Version" value={error.sdkVersion ?? "Not reported"} />
-              <Field label="Project" value={error.projectName} />
+              <Field label={t.environment} value={error.environment} />
+              <Field label={t.release} value={error.release ?? "—"} />
+              <Field label={t.framework} value={error.framework ?? "—"} />
+              <Field label={t.browser} value={browser ?? "—"} />
+              <Field label={t.operatingSystem} value={os ?? "—"} />
+              <Field label={t.device} value={device ?? "—"} />
+              <Field label={t.screenResolution} value={screen ?? "—"} />
+              <Field label={t.language} value={error.language ?? "—"} />
+              <Field label={t.timezone} value={error.timezone ?? "—"} />
               <Field
-                label="URL"
-                value={error.url ?? "—"}
-                mono
+                label={t.sdkVersion}
+                value={error.sdkVersion ?? t.notReported}
               />
-              <Field label="Fingerprint" value={error.fingerprint} mono />
+              <Field label={t.project} value={error.projectName} />
+              <Field label={t.url} value={error.url ?? "—"} mono />
+              <Field label={t.fingerprint} value={error.fingerprint} mono />
               <div className="sm:col-span-2 lg:col-span-3">
-                <dt className="text-xs text-zt-muted">API Key</dt>
+                <dt className="text-xs text-zt-muted">{t.apiKey}</dt>
                 <dd className="mt-1 text-sm text-zt-text">
                   {apiKeyHints.length === 0 ? (
-                    "Authenticated via project SDK key (no active keys listed)."
+                    t.apiKeyEmpty
                   ) : (
                     <ul className="space-y-1">
                       {apiKeyHints.map((hint) => (
@@ -220,7 +235,7 @@ export function ErrorDetailView({ bundle, shareUrl }: ErrorDetailViewProps) {
                 </dd>
               </div>
               <div>
-                <dt className="text-xs text-zt-muted">Related Incident</dt>
+                <dt className="text-xs text-zt-muted">{t.relatedIncident}</dt>
                 <dd className="mt-1 text-sm text-zt-text">
                   {primaryIncident ? (
                     <Link
@@ -231,7 +246,7 @@ export function ErrorDetailView({ bundle, shareUrl }: ErrorDetailViewProps) {
                       <ExternalLink className="size-3" aria-hidden />
                     </Link>
                   ) : (
-                    "None in the surrounding time window"
+                    t.relatedIncidentNone
                   )}
                 </dd>
               </div>
@@ -243,7 +258,7 @@ export function ErrorDetailView({ bundle, shareUrl }: ErrorDetailViewProps) {
       <FadeIn delay={0.07}>
         <Panel>
           <PanelHeader>
-            <PanelTitle>Stack Trace</PanelTitle>
+            <PanelTitle>{t.stackTrace}</PanelTitle>
           </PanelHeader>
           <PanelContent>
             <StackTracePanel stack={error.stack} />
@@ -255,7 +270,7 @@ export function ErrorDetailView({ bundle, shareUrl }: ErrorDetailViewProps) {
         <FadeIn delay={0.09}>
           <Panel className="h-full" id="timeline">
             <PanelHeader>
-              <PanelTitle>Timeline</PanelTitle>
+              <PanelTitle>{t.timeline}</PanelTitle>
             </PanelHeader>
             <PanelContent>
               <ErrorTimeline events={timeline} />
@@ -266,14 +281,14 @@ export function ErrorDetailView({ bundle, shareUrl }: ErrorDetailViewProps) {
         <FadeIn delay={0.11}>
           <Panel className="h-full">
             <PanelHeader>
-              <PanelTitle>Related Incidents</PanelTitle>
+              <PanelTitle>{t.relatedIncidents}</PanelTitle>
             </PanelHeader>
             <PanelContent>
               {relatedIncidents.length === 0 ? (
                 <EmptyState
                   icon={Siren}
-                  title="No related incidents"
-                  description="Incidents opened near this error’s last occurrence will show here."
+                  title={t.noRelatedIncidents}
+                  description={t.noRelatedIncidentsDesc}
                 />
               ) : (
                 <ul className="space-y-3">
@@ -287,8 +302,14 @@ export function ErrorDetailView({ bundle, shareUrl }: ErrorDetailViewProps) {
                           {incident.title}
                         </p>
                         <p className="mt-0.5 text-xs text-zt-muted">
-                          {incident.severity} · {incident.status} ·{" "}
-                          {formatRelativeTime(incident.startedAt)}
+                          {incidentDict.severities[
+                            incident.severity as IncidentSeverity
+                          ] ?? incident.severity}{" "}
+                          ·{" "}
+                          {incidentDict.statuses[
+                            incident.status as IncidentStatus
+                          ] ?? incident.status}{" "}
+                          · {formatRelativeTime(incident.startedAt, undefined, locale)}
                         </p>
                       </Link>
                     </li>
@@ -303,14 +324,14 @@ export function ErrorDetailView({ bundle, shareUrl }: ErrorDetailViewProps) {
       <FadeIn delay={0.13}>
         <Panel>
           <PanelHeader>
-            <PanelTitle>Related Errors</PanelTitle>
+            <PanelTitle>{t.relatedErrors}</PanelTitle>
           </PanelHeader>
           <PanelContent>
             {relatedErrors.length === 0 ? (
               <EmptyState
                 icon={Link2}
-                title="No related errors"
-                description="Other groups with the same fingerprint or type will appear here."
+                title={t.noRelatedErrors}
+                description={t.noRelatedErrorsDesc}
               />
             ) : (
               <ul className="divide-y divide-zt-border">
@@ -327,7 +348,7 @@ export function ErrorDetailView({ bundle, shareUrl }: ErrorDetailViewProps) {
                         <p className="mt-0.5 font-mono text-[11px] text-zt-muted">
                           {related.fingerprint.slice(0, 20)}… ·{" "}
                           {related.occurrences}× ·{" "}
-                          {formatRelativeTime(related.lastSeenAt)}
+                          {formatRelativeTime(related.lastSeenAt, undefined, locale)}
                         </p>
                       </div>
                       <Badge tone={ERROR_LEVEL_TONE[related.level]}>
@@ -345,19 +366,16 @@ export function ErrorDetailView({ bundle, shareUrl }: ErrorDetailViewProps) {
       <FadeIn delay={0.15}>
         <Panel>
           <PanelHeader>
-            <PanelTitle>AI Analysis</PanelTitle>
+            <PanelTitle>{t.aiAnalysis}</PanelTitle>
           </PanelHeader>
           <PanelContent className="space-y-3">
-            <p className="text-sm text-zt-muted">
-              Open the assistant with this error’s context preloaded — root
-              cause, recommendations, confidence, and related signals.
-            </p>
+            <p className="text-sm text-zt-muted">{t.aiAnalysisDesc}</p>
             <Link
               href={analyzeHref}
               className="inline-flex items-center gap-2 rounded-xl bg-zt-primary px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-zt-primary/90"
             >
               <Bot className="size-4" aria-hidden />
-              Analyze Error
+              {t.analyzeError}
             </Link>
           </PanelContent>
         </Panel>

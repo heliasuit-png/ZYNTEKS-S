@@ -1,6 +1,7 @@
-import type { Metadata } from "next";
 import dynamic from "next/dynamic";
 import { redirect } from "next/navigation";
+import { dashboardPageMetadata } from "@/lib/i18n/dashboard-metadata";
+import { getDictionary } from "@/lib/i18n/get-dictionary";
 
 import { PageHeader } from "@/components/dashboard/page-header";
 import { DASHBOARD_ROUTES } from "@/lib/constants";
@@ -23,7 +24,7 @@ const SecurityView = dynamic(
   { ssr: true },
 );
 
-export const metadata: Metadata = { title: "Security Center" };
+export const generateMetadata = () => dashboardPageMetadata("security");
 
 function readRequire2fa(policies: Json): boolean {
   if (!policies || typeof policies !== "object" || Array.isArray(policies)) {
@@ -33,6 +34,8 @@ function readRequire2fa(policies: Json): boolean {
 }
 
 export default async function SecurityPage() {
+  const { dict } = await getDictionary();
+  const pageCopy = dict.dashboard.pageTitles.security;
   const supabase = await createSupabaseServerClient();
   const user = await getAuthenticatedUser(supabase);
   if (!user) redirect(DASHBOARD_ROUTES.dashboard);
@@ -52,9 +55,7 @@ export default async function SecurityPage() {
 
   return (
     <div className="space-y-6">
-      <PageHeader
-        title="Security Center"
-        description="Sessions, devices, API keys and authentication posture for your account."
+      <PageHeader title={pageCopy.title} description={pageCopy.description}
       />
       <SecurityView
         sessions={sessions}

@@ -3,10 +3,11 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
+import { useDictionary } from "@/components/i18n/locale-provider";
 import { ADMIN_ROUTES } from "@/lib/constants";
 import { hasAdminPermission } from "@/services/admin/permissions";
 import type { AdminPlatformRole } from "@/services/admin/types";
-import { ADMIN_NAV_ITEMS } from "@/features/admin/nav";
+import { resolveAdminNav } from "@/features/admin/nav";
 
 interface AdminSidebarProps {
   role: AdminPlatformRole;
@@ -20,6 +21,9 @@ export function AdminSidebar({
   onNavigate,
 }: AdminSidebarProps) {
   const pathname = usePathname();
+  const { dict } = useDictionary();
+  const shell = dict.admin.shell;
+  const items = resolveAdminNav(dict.admin.nav);
 
   return (
     <aside
@@ -29,7 +33,7 @@ export function AdminSidebar({
         "lg:translate-x-0 lg:z-30",
         open ? "translate-x-0" : "-translate-x-full lg:translate-x-0",
       ].join(" ")}
-      aria-label="Admin navigation"
+      aria-label={shell.adminNav}
     >
       <div className="flex h-[var(--admin-topbar-height)] items-center gap-3 border-b border-[var(--admin-border)] px-5">
         <div
@@ -43,13 +47,13 @@ export function AdminSidebar({
             ZYNTEKSIS
           </p>
           <p className="truncate text-[11px] uppercase tracking-[0.14em] text-[var(--admin-muted)]">
-            Admin Center
+            {shell.adminCenter}
           </p>
         </div>
       </div>
 
       <nav className="flex-1 space-y-1 overflow-y-auto px-3 py-4">
-        {ADMIN_NAV_ITEMS.map((item) => {
+        {items.map((item) => {
           const allowed = hasAdminPermission(role, item.permission);
           const active =
             item.enabled &&
@@ -63,8 +67,8 @@ export function AdminSidebar({
                 className="flex cursor-not-allowed items-center justify-between rounded-lg px-3 py-2 text-sm text-[var(--admin-muted)] opacity-45"
                 title={
                   !allowed
-                    ? "Insufficient permissions"
-                    : "Available in a later phase"
+                    ? shell.insufficientPermissions
+                    : shell.availableLater
                 }
                 aria-disabled="true"
               >
@@ -98,7 +102,7 @@ export function AdminSidebar({
           onClick={onNavigate}
           className="admin-accent-ring rounded transition-colors hover:text-[var(--admin-text)]"
         >
-          Control Center
+          {shell.controlCenter}
         </Link>
       </div>
     </aside>

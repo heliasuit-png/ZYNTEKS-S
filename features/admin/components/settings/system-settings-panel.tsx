@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 
+import { useDictionary } from "@/components/i18n/locale-provider";
 import type {
   SecuritySettingsMeta,
   SystemSettingsMeta,
@@ -19,6 +20,8 @@ export function SystemSettingsPanel({
   platformName: string;
   canWrite: boolean;
 }) {
+  const { dict } = useDictionary();
+  const t = dict.admin.settings;
   const [message, setMessage] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
 
@@ -41,18 +44,18 @@ export function SystemSettingsPanel({
     return (
       <div className="space-y-3 text-sm text-[var(--admin-muted)]">
         <p>
-          Maintenance:{" "}
+          {t.maintenance}:{" "}
           <span className="text-[var(--admin-text)]">
-            {system.maintenanceEnabled ? "On" : "Off"}
+            {system.maintenanceEnabled ? t.on : t.off}
           </span>
         </p>
         <p>
-          Registration:{" "}
+          {t.registration}:{" "}
           <span className="text-[var(--admin-text)]">
-            {system.registrationEnabled ? "Enabled" : "Disabled"}
+            {system.registrationEnabled ? t.enabled : t.disabled}
           </span>
         </p>
-        <p className="text-xs">Read-only for your admin role.</p>
+        <p className="text-xs">{t.readOnly}</p>
       </div>
     );
   }
@@ -67,7 +70,7 @@ export function SystemSettingsPanel({
 
       <div className="grid gap-4 lg:grid-cols-2">
         <label className="block text-xs text-[var(--admin-muted)]">
-          Platform name
+          {t.platformName}
           <input
             name="platformName"
             defaultValue={platformName}
@@ -76,7 +79,7 @@ export function SystemSettingsPanel({
           />
         </label>
         <label className="block text-xs text-[var(--admin-muted)]">
-          Password minimum length
+          {t.passwordMinLength}
           <input
             name="passwordMinLength"
             type="number"
@@ -88,7 +91,7 @@ export function SystemSettingsPanel({
           />
         </label>
         <label className="block text-xs text-[var(--admin-muted)]">
-          Session timeout (hours)
+          {t.sessionTimeoutHours}
           <input
             name="sessionTimeoutHours"
             type="number"
@@ -100,7 +103,7 @@ export function SystemSettingsPanel({
           />
         </label>
         <label className="block text-xs text-[var(--admin-muted)] lg:col-span-2">
-          Maintenance message
+          {t.maintenanceMessage}
           <textarea
             name="maintenanceMessage"
             defaultValue={system.maintenanceMessage ?? ""}
@@ -118,7 +121,7 @@ export function SystemSettingsPanel({
             defaultChecked={system.maintenanceEnabled}
             className="size-4 rounded border-[var(--admin-border)] bg-transparent"
           />
-          Maintenance mode
+          {t.maintenanceMode}
         </label>
         <label className="inline-flex items-center gap-2">
           <input
@@ -127,7 +130,7 @@ export function SystemSettingsPanel({
             defaultChecked={system.registrationEnabled}
             className="size-4 rounded border-[var(--admin-border)] bg-transparent"
           />
-          Registration enabled
+          {t.registrationEnabled}
         </label>
         <label className="inline-flex items-center gap-2">
           <input
@@ -136,7 +139,7 @@ export function SystemSettingsPanel({
             defaultChecked={security.mfaRequired}
             className="size-4 rounded border-[var(--admin-border)] bg-transparent"
           />
-          MFA required (policy)
+          {t.mfaRequired}
         </label>
       </div>
 
@@ -145,7 +148,7 @@ export function SystemSettingsPanel({
         disabled={pending}
         className="rounded-lg bg-[var(--admin-accent)] px-3 py-2 text-sm font-medium text-white transition hover:opacity-90 disabled:opacity-50"
       >
-        Save system settings
+        {t.saveSystemSettings}
       </button>
     </form>
   );

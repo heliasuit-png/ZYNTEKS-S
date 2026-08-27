@@ -681,12 +681,7 @@ export async function getAdminUserDetail(
       failedApiKeyAuth24h: failures.data?.length ?? 0,
       failedLogins24h,
       activeSessions,
-      blockedNote:
-        "Application rate limits throttle auth attempts; persistent blocks are not stored.",
-      suspiciousNote:
-        suspiciousCount > 0
-          ? `${suspiciousCount} suspicious login event(s) recorded for this user.`
-          : "No suspicious login events recorded for this user.",
+      suspiciousLoginCount: suspiciousCount,
       newestFailures: [
         ...(loginEvents.data ?? [])
           .filter((row) => row.result === "failure")

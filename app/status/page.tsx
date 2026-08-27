@@ -6,32 +6,41 @@ import { Badge } from "@/components/dashboard/badge";
 import type { BadgeProps } from "@/components/dashboard/badge";
 import {
   APP_NAME,
-  COMPONENT_STATUS_LABELS,
   STATUS_PAGE_BASE_PATH,
   type ComponentStatusValue,
 } from "@/lib/constants";
 import { env } from "@/lib/env";
+import { fillTemplate } from "@/lib/i18n/fill-template";
+import { getDictionary } from "@/lib/i18n/get-dictionary";
 import { listPublicStatusDirectory } from "@/services/status";
 import { createSupabaseAdminClient } from "@/supabase/admin";
 
 export const dynamic = "force-dynamic";
 
-export const metadata: Metadata = {
-  title: "Status",
-  description: `Public status pages powered by ${APP_NAME}.`,
-  openGraph: {
-    title: `Status · ${APP_NAME}`,
-    description: `Public status pages powered by ${APP_NAME}.`,
-    url: `${env.NEXT_PUBLIC_APP_URL}${STATUS_PAGE_BASE_PATH}`,
-    siteName: APP_NAME,
-    type: "website",
-  },
-  twitter: {
-    card: "summary",
-    title: `Status · ${APP_NAME}`,
-    description: `Public status pages powered by ${APP_NAME}.`,
-  },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const { dict } = await getDictionary();
+  const title = dict.system.status;
+  const description = fillTemplate(
+    dict.dash.statusPages.directoryMetaDescription,
+    { app: APP_NAME },
+  );
+  return {
+    title,
+    description,
+    openGraph: {
+      title: `${title} · ${APP_NAME}`,
+      description,
+      url: `${env.NEXT_PUBLIC_APP_URL}${STATUS_PAGE_BASE_PATH}`,
+      siteName: APP_NAME,
+      type: "website",
+    },
+    twitter: {
+      card: "summary",
+      title: `${title} · ${APP_NAME}`,
+      description,
+    },
+  };
+}
 
 const tone: Record<ComponentStatusValue, BadgeProps["tone"]> = {
   operational: "success",
@@ -42,6 +51,8 @@ const tone: Record<ComponentStatusValue, BadgeProps["tone"]> = {
 };
 
 export default async function StatusDirectoryPage() {
+  const { dict } = await getDictionary();
+  const t = dict.dash.statusPages;
   const admin = createSupabaseAdminClient();
   const pages = await listPublicStatusDirectory(admin);
 
@@ -52,18 +63,16 @@ export default async function StatusDirectoryPage() {
           <p className="text-xs font-medium uppercase tracking-wide text-zt-muted">
             {APP_NAME}
           </p>
-          <h1 className="text-3xl font-semibold tracking-tight">Status</h1>
-          <p className="mt-2 text-sm text-zt-muted">
-            Public status pages for monitored projects.
-          </p>
+          <h1 className="text-3xl font-semibold tracking-tight">
+            {dict.system.status}
+          </h1>
+          <p className="mt-2 text-sm text-zt-muted">{t.directoryDescription}</p>
         </header>
 
         {pages.length === 0 ? (
           <div className="rounded-2xl border border-zt-border bg-zt-surface px-5 py-10 text-center">
             <Activity className="mx-auto size-8 text-zt-muted" aria-hidden />
-            <p className="mt-3 text-sm text-zt-muted">
-              No public status pages are available yet.
-            </p>
+            <p className="mt-3 text-sm text-zt-muted">{t.directoryEmpty}</p>
           </div>
         ) : (
           <ul className="space-y-3">
@@ -87,10 +96,12 @@ export default async function StatusDirectoryPage() {
                     </div>
                     <div className="flex flex-col items-end gap-1">
                       <Badge tone={tone[page.currentStatus]}>
-                        {COMPONENT_STATUS_LABELS[page.currentStatus]}
+                        {t.componentStatuses[page.currentStatus]}
                       </Badge>
                       <span className="text-xs tabular-nums text-zt-muted">
-                        {page.currentUptime.toFixed(2)}% uptime
+                        {fillTemplate(t.uptimePercentLabel, {
+                          percent: page.currentUptime.toFixed(2),
+                        })}
                       </span>
                     </div>
                   </div>

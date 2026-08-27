@@ -2,15 +2,19 @@ import Link from "next/link";
 import type { Metadata } from "next";
 
 import { ADMIN_ROUTES, ROUTES } from "@/lib/constants";
+import { getDictionary } from "@/lib/i18n/get-dictionary";
 import { getPlatformRuntimeSettings } from "@/services/platform/runtime-settings.service";
-
-export const metadata: Metadata = {
-  title: "Maintenance",
-};
 
 export const dynamic = "force-dynamic";
 
+export async function generateMetadata(): Promise<Metadata> {
+  const { dict } = await getDictionary();
+  return { title: dict.system.maintenanceTitle };
+}
+
 export default async function MaintenancePage() {
+  const { dict } = await getDictionary();
+  const { system } = dict;
   const settings = await getPlatformRuntimeSettings();
 
   if (!settings.maintenanceEnabled) {
@@ -18,16 +22,16 @@ export default async function MaintenancePage() {
       <main className="flex min-h-screen items-center justify-center bg-zinc-950 px-6 text-zinc-100">
         <div className="max-w-md text-center">
           <h1 className="text-2xl font-semibold tracking-tight">
-            Platform is online
+            {system.maintenanceInactive}
           </h1>
           <p className="mt-2 text-sm text-zinc-400">
-            Maintenance mode is not active.
+            {system.maintenanceActive}
           </p>
           <Link
             href={ROUTES.dashboard}
             className="mt-6 inline-block text-sm text-violet-300 hover:underline"
           >
-            Continue to dashboard
+            {system.continueDashboard}
           </Link>
         </div>
       </main>
@@ -41,19 +45,18 @@ export default async function MaintenancePage() {
           {settings.platformName}
         </p>
         <h1 className="mt-2 text-3xl font-semibold tracking-tight">
-          Scheduled maintenance
+          {system.scheduledMaintenance}
         </h1>
         <p className="mt-3 text-sm text-zinc-400">
-          {settings.maintenanceMessage?.trim() ||
-            "The product dashboard is temporarily unavailable while we perform platform maintenance."}
+          {settings.maintenanceMessage?.trim() || system.maintenanceDesc}
         </p>
         <p className="mt-8 text-xs text-zinc-500">
-          Platform operators can continue via{" "}
+          {system.operatorsContinue}{" "}
           <Link
             href={ADMIN_ROUTES.login}
             className="text-violet-300 hover:underline"
           >
-            Admin Control Center
+            {system.adminControlCenter}
           </Link>
           .
         </p>

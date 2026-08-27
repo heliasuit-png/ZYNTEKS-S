@@ -4,26 +4,30 @@ import { useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { ChevronDown } from "lucide-react";
 
-import { FAQ_ITEMS } from "@/features/landing/data/content";
+import { useDictionary } from "@/components/i18n/locale-provider";
+import { getFaqItems } from "@/features/landing/data/content";
 import { LandingSection } from "@/features/landing/components/section";
 import { Reveal } from "@/features/landing/components/reveal";
 import { cn } from "@/lib/utils";
 
 export function LandingFaq() {
+  const { dict } = useDictionary();
+  const copy = dict.landing.faq;
+  const items = getFaqItems(dict);
   const [openId, setOpenId] = useState<number | null>(0);
   const reduce = useReducedMotion();
 
   return (
     <LandingSection
       id="faq"
-      eyebrow="FAQ"
-      title="Answers before you ask sales"
-      description="Straight answers about the platform, billing architecture, SDK, and self-hosting."
+      eyebrow={copy.eyebrow}
+      title={copy.title}
+      description={copy.desc}
       narrow
     >
       <Reveal>
         <div className="space-y-3">
-          {FAQ_ITEMS.map((item, index) => {
+          {items.map((item, index) => {
             const open = openId === index;
             return (
               <div

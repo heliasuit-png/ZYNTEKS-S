@@ -5,6 +5,7 @@ import { headers } from "next/headers";
 
 import { ADMIN_ROUTES } from "@/lib/constants";
 import { isAppError } from "@/lib/errors";
+import { getDictionary } from "@/lib/i18n/get-dictionary";
 import { revokeSessionAsAdmin } from "@/services/admin/security-actions.service";
 import { requireAdminSession } from "@/features/admin/load-admin-session";
 
@@ -28,12 +29,14 @@ async function ctx() {
 export async function revokeSessionAction(
   sessionId: string,
 ): Promise<SecurityActionResult> {
+  const { dict } = await getDictionary();
+  const admin = dict.actionMessages.admin;
   try {
     await revokeSessionAsAdmin(await ctx(), sessionId);
     revalidatePath(ADMIN_ROUTES.security);
-    return { ok: true, message: "Session revoked." };
+    return { ok: true, message: admin.sessionRevoked };
   } catch (error) {
     if (isAppError(error)) return { ok: false, message: error.message };
-    return { ok: false, message: "Failed to revoke session." };
+    return { ok: false, message: admin.sessionRevokeFailed };
   }
 }

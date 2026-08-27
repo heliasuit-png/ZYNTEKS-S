@@ -20,7 +20,7 @@ import {
 import type { LucideIcon } from "lucide-react";
 
 import { DASHBOARD_ROUTES } from "@/lib/constants";
-import type { Dictionary } from "@/lib/i18n/dictionaries";
+import { dictionaries, type Dictionary } from "@/lib/i18n/dictionaries";
 
 export type DashboardNavKey = keyof Dictionary["dashboardNav"];
 
@@ -66,23 +66,10 @@ export function resolveNavItems(
   }));
 }
 
-/** English fallback for client modules that mount before labels are injected. */
-export const navItems: NavItem[] = resolveNavItems({
-  dashboard: "Dashboard",
-  projects: "Projects",
-  apiKeys: "API Keys",
-  errors: "Error Monitoring",
-  incidents: "Incidents",
-  health: "Health Monitor",
-  insights: "Intelligence",
-  ai: "AI Assistant",
-  notifications: "Notifications",
-  statusPages: "Status Pages",
-  members: "Members",
-  audit: "Audit Log",
-  security: "Security Center",
-  organization: "Organization",
-  billing: "Billing",
-  settings: "Settings",
-  profile: "Profile",
-});
+/**
+ * English fallback for client modules that mount before labels are injected.
+ * Runtime navigation should use `resolveNavItems(dict.dashboardNav)`.
+ */
+export const navItems: NavItem[] = resolveNavItems(
+  dictionaries.en.dashboardNav,
+);

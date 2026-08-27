@@ -4,6 +4,7 @@ import { useActionState } from "react";
 import type { ReactNode } from "react";
 import Link from "next/link";
 
+import { useDictionary } from "@/components/i18n/locale-provider";
 import { Button } from "@/components/dashboard/button";
 import {
   Panel,
@@ -46,6 +47,10 @@ export function OrganizationForm({
   workspaceUrl: string;
   workspaceCount: number;
 }) {
+  const { dict } = useDictionary();
+  const t = dict.dash.organization;
+  const common = dict.dashboardCommon;
+
   const [state, action, pending] = useActionState<ActionState, FormData>(
     updateOrganizationAction,
     { ok: false },
@@ -64,11 +69,8 @@ export function OrganizationForm({
         <Panel>
           <PanelHeader>
             <div>
-              <PanelTitle>Organization settings</PanelTitle>
-              <PanelDescription>
-                Workspace name, logo, brand color, timezone, URL and security
-                policies.
-              </PanelDescription>
+              <PanelTitle>{t.title}</PanelTitle>
+              <PanelDescription>{t.desc}</PanelDescription>
             </div>
           </PanelHeader>
           <PanelContent>
@@ -76,7 +78,7 @@ export function OrganizationForm({
               <input type="hidden" name="workspaceId" value={workspace.id} />
 
               <div className="grid gap-4 md:grid-cols-2">
-                <Field label="Workspace name">
+                <Field label={t.workspaceName}>
                   <input
                     name="name"
                     defaultValue={workspace.name}
@@ -85,18 +87,18 @@ export function OrganizationForm({
                     className={inputClass}
                   />
                 </Field>
-                <Field label="Workspace URL slug">
+                <Field label={t.workspaceSlug}>
                   <input
                     name="slug"
                     defaultValue={workspace.slug}
                     required
                     disabled={!canManage}
                     pattern="[a-z0-9]+(?:-[a-z0-9]+)*"
-                    title="Lowercase letters, numbers and hyphens"
+                    title={t.slugPatternTitle}
                     className={inputClass}
                   />
                 </Field>
-                <Field label="Logo URL">
+                <Field label={t.logoUrl}>
                   <input
                     name="logoUrl"
                     defaultValue={workspace.logo_url ?? ""}
@@ -105,7 +107,7 @@ export function OrganizationForm({
                     className={inputClass}
                   />
                 </Field>
-                <Field label="Logo upload">
+                <Field label={t.logoUpload}>
                   <input
                     type="file"
                     name="logoFile"
@@ -114,7 +116,7 @@ export function OrganizationForm({
                     className="block w-full text-xs text-zt-muted file:mr-3 file:rounded-lg file:border-0 file:bg-zt-primary/15 file:px-3 file:py-1.5 file:text-xs file:font-medium file:text-zt-primary"
                   />
                 </Field>
-                <Field label="Brand color">
+                <Field label={t.brandColor}>
                   <input
                     name="brandColor"
                     type="color"
@@ -123,7 +125,7 @@ export function OrganizationForm({
                     className="h-10 w-full cursor-pointer rounded-xl border border-zt-border bg-transparent px-2"
                   />
                 </Field>
-                <Field label="Timezone">
+                <Field label={t.timezone}>
                   <input
                     name="timezone"
                     defaultValue={workspace.timezone}
@@ -131,7 +133,7 @@ export function OrganizationForm({
                     className={inputClass}
                   />
                 </Field>
-                <Field label="Session timeout (hours)">
+                <Field label={t.sessionTimeout}>
                   <input
                     name="sessionTimeout"
                     type="number"
@@ -143,13 +145,13 @@ export function OrganizationForm({
                 </Field>
                 <div className="space-y-1.5 md:col-span-2">
                   <span className="text-xs font-medium text-zt-muted">
-                    Workspace URL
+                    {t.workspaceUrl}
                   </span>
                   <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
                     <code className="min-w-0 flex-1 truncate rounded-xl border border-zt-border bg-white/[0.02] px-3 py-2 text-sm text-zt-text">
                       {workspaceUrl}
                     </code>
-                    <CopyButton value={workspaceUrl} label="Copy URL" />
+                    <CopyButton value={workspaceUrl} label={t.copyUrl} />
                   </div>
                 </div>
               </div>
@@ -171,7 +173,7 @@ export function OrganizationForm({
                     defaultChecked={notifications.email !== false}
                     disabled={!canManage}
                   />
-                  Email notification defaults
+                  {t.notifyEmail}
                 </label>
                 <label className="flex items-center gap-2 text-sm text-zt-text">
                   <input
@@ -180,7 +182,7 @@ export function OrganizationForm({
                     defaultChecked={notifications.dashboard !== false}
                     disabled={!canManage}
                   />
-                  Dashboard notification defaults
+                  {t.notifyDashboard}
                 </label>
                 <label className="flex items-center gap-2 text-sm text-zt-text md:col-span-2">
                   <input
@@ -189,18 +191,16 @@ export function OrganizationForm({
                     defaultChecked={Boolean(security.require_2fa)}
                     disabled={!canManage}
                   />
-                  Require two-factor authentication (security policy)
+                  {t.require2fa}
                 </label>
               </div>
 
               {canManage ? (
                 <Button type="submit" disabled={pending}>
-                  {pending ? "Saving…" : "Save organization settings"}
+                  {pending ? common.saving : t.save}
                 </Button>
               ) : (
-                <p className="text-xs text-zt-muted">
-                  You need administrator access to edit organization settings.
-                </p>
+                <p className="text-xs text-zt-muted">{t.needAdmin}</p>
               )}
 
               {state.error ? (
@@ -217,18 +217,15 @@ export function OrganizationForm({
       <FadeIn delay={0.04}>
         <Panel>
           <PanelHeader>
-            <PanelTitle>Transfer ownership</PanelTitle>
-            <PanelDescription>
-              Ownership transfer is available from the Team members page. Only the
-              current owner can transfer the workspace.
-            </PanelDescription>
+            <PanelTitle>{t.transferOwnership}</PanelTitle>
+            <PanelDescription>{t.transferOwnershipDesc}</PanelDescription>
           </PanelHeader>
           <PanelContent>
             <Link
               href={DASHBOARD_ROUTES.members}
               className="inline-flex rounded-lg border border-zt-border px-3 py-2 text-sm text-zt-muted transition-colors hover:text-zt-text"
             >
-              Open team members
+              {t.openMembers}
             </Link>
           </PanelContent>
         </Panel>
@@ -238,19 +235,16 @@ export function OrganizationForm({
         <FadeIn delay={0.08}>
           <Panel className="border-zt-danger/30">
             <PanelHeader>
-              <PanelTitle>Delete workspace</PanelTitle>
+              <PanelTitle>{t.deleteWorkspace}</PanelTitle>
               <PanelDescription>
-                Permanently delete this workspace and its projects. Type the
-                workspace name to confirm.
-                {workspaceCount <= 1
-                  ? " You must create another workspace before deleting your only one."
-                  : null}
+                {t.deleteWorkspaceDesc} {t.deleteWorkspaceHint}
+                {workspaceCount <= 1 ? ` ${t.onlyWorkspaceWarning}` : null}
               </PanelDescription>
             </PanelHeader>
             <PanelContent>
               <form action={deleteAction} className="space-y-3">
                 <input type="hidden" name="workspaceId" value={workspace.id} />
-                <Field label="Confirm workspace name">
+                <Field label={t.confirmName}>
                   <input
                     name="confirmationName"
                     required
@@ -264,7 +258,7 @@ export function OrganizationForm({
                   variant="danger"
                   disabled={deletePending || workspaceCount <= 1}
                 >
-                  {deletePending ? "Deleting…" : "Delete workspace"}
+                  {deletePending ? t.deleting : t.deleteWorkspaceConfirm}
                 </Button>
                 {deleteState.error ? (
                   <p className="text-xs text-zt-danger">{deleteState.error}</p>

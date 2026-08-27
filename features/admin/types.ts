@@ -1,4 +1,5 @@
 import type { AdminPermission, AdminUser } from "@/services/admin";
+import type { AdminDictionary } from "@/lib/i18n/dictionaries/admin-types";
 
 export type AdminFormStatus = "idle" | "error" | "success";
 
@@ -16,12 +17,18 @@ export interface AdminShellUser {
   permissions: AdminPermission[];
 }
 
-export interface AdminNavItem {
+export type AdminNavKey = keyof AdminDictionary["nav"];
+
+export interface AdminNavItemDef {
   id: string;
-  label: string;
+  key: AdminNavKey;
   href: string;
   /** Permission required to eventually use this module (Phase 1: nav visibility). */
   permission: AdminPermission;
   /** Phase 1: only dashboard is navigable. */
   enabled: boolean;
+}
+
+export interface AdminNavItem extends AdminNavItemDef {
+  label: string;
 }

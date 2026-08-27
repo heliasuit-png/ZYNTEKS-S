@@ -9,12 +9,12 @@ const statusValues = [...INCIDENT_STATUSES] as [
 ];
 
 export const addIncidentUpdateSchema = z.object({
-  incidentId: z.string().uuid("Invalid incident id."),
+  incidentId: z.string().uuid("invalid_incident_id"),
   message: z
     .string()
     .trim()
-    .min(1, "A message is required.")
-    .max(2000, "Message must be 2000 characters or fewer."),
+    .min(1, "message_required")
+    .max(2000, "message_max_2000"),
   status: z.enum(statusValues).optional(),
 });
 

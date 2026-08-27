@@ -2,6 +2,7 @@
 
 import type { ReactNode } from "react";
 
+import { LocaleProvider } from "@/components/i18n/locale-provider";
 import { DashboardProvider } from "@/features/dashboard/context/dashboard-context";
 import { AuroraBackground } from "@/components/dashboard/shell/aurora-background";
 import { CommandPaletteProvider } from "@/components/dashboard/command-palette/command-palette-context";
@@ -24,6 +25,7 @@ interface DashboardShellProps {
   unreadCount: number;
   notifications: NotificationItem[];
   locale: Locale;
+  dict: Dictionary;
   localeLabels: { english: string; turkish: string; language: string };
   navLabels: Dictionary["dashboardNav"];
   children: ReactNode;
@@ -35,36 +37,39 @@ export function DashboardShell({
   unreadCount,
   notifications,
   locale,
+  dict,
   localeLabels,
   navLabels,
   children,
 }: DashboardShellProps) {
   return (
-    <DashboardProvider navLabels={navLabels}>
-      <CommandPaletteProvider>
-        <AuroraBackground />
-        <div className="min-h-screen text-zt-text">
-          <div className="flex">
-            <Sidebar user={user} workspace={workspace} />
-            <MobileNav user={user} workspace={workspace} />
-            <div className="flex min-h-screen w-full min-w-0 flex-col">
-              <Topbar
-                user={user}
-                unreadCount={unreadCount}
-                notifications={notifications}
-                workspace={workspace}
-                locale={locale}
-                localeLabels={localeLabels}
-              />
-              <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-6 lg:px-8">
-                {children}
-              </main>
+    <LocaleProvider locale={locale} dict={dict}>
+      <DashboardProvider navLabels={navLabels}>
+        <CommandPaletteProvider>
+          <AuroraBackground />
+          <div className="min-h-screen text-zt-text">
+            <div className="flex">
+              <Sidebar user={user} workspace={workspace} />
+              <MobileNav user={user} workspace={workspace} />
+              <div className="flex min-h-screen w-full min-w-0 flex-col">
+                <Topbar
+                  user={user}
+                  unreadCount={unreadCount}
+                  notifications={notifications}
+                  workspace={workspace}
+                  locale={locale}
+                  localeLabels={localeLabels}
+                />
+                <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-6 lg:px-8">
+                  {children}
+                </main>
+              </div>
             </div>
           </div>
-        </div>
-        <CommandPalette workspaceId={workspace.active.id} />
-        <GlobalShortcuts />
-      </CommandPaletteProvider>
-    </DashboardProvider>
+          <CommandPalette workspaceId={workspace.active.id} />
+          <GlobalShortcuts />
+        </CommandPaletteProvider>
+      </DashboardProvider>
+    </LocaleProvider>
   );
 }

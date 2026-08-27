@@ -6,10 +6,14 @@ import type { AdminPlatformRole } from "@/types/database";
 import { AdminContainer } from "@/features/admin";
 import { SecurityCenter } from "@/features/admin/components/security/security-center";
 import { requireAdminSession } from "@/features/admin/load-admin-session";
+import { getDictionary } from "@/lib/i18n/get-dictionary";
 
-export const metadata: Metadata = {
-  title: "Enterprise Security Center · ZYNTEKSIS Admin",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const { dict } = await getDictionary();
+  return {
+    title: `${dict.admin.security.pageTitle}${dict.admin.common.metaTitleSuffix}`,
+  };
+}
 
 export const dynamic = "force-dynamic";
 

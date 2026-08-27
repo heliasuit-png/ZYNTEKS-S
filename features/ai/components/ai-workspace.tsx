@@ -4,12 +4,17 @@ import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import Link from "next/link";
 import { Menu, Plus, Search, Send, Sparkles, Square, X } from "lucide-react";
 
+import { useDictionary } from "@/components/i18n/locale-provider";
 import { API_ROUTES, DASHBOARD_ROUTES } from "@/lib/constants";
+import type { DashDictionary } from "@/lib/i18n/dictionaries/dash-types";
 import { cn } from "@/lib/utils";
 import { ChatMessage } from "@/features/ai/components/chat-message";
 import { ConversationItem } from "@/features/ai/components/conversation-item";
 import { setConversationProjectAction } from "@/features/ai/actions";
-import { SUGGESTED_ANALYSES } from "@/features/ai/prompts";
+import {
+  SUGGESTED_ANALYSES,
+  promptLabelForIntent,
+} from "@/features/ai/prompts";
 import type {
   ChatMessageView,
   ConversationListItem,
@@ -57,7 +62,11 @@ function tempId(): string {
   return `temp-${Math.random().toString(36).slice(2)}`;
 }
 
-function friendlyAiError(status: number | null, message: string): string {
+function friendlyAiError(
+  status: number | null,
+  message: string,
+  errors: DashDictionary["ai"]["errors"],
+): string {
   const lower = message.toLowerCase();
   if (
     lower.includes("failed to fetch") ||
@@ -65,27 +74,25 @@ function friendlyAiError(status: number | null, message: string): string {
     lower.includes("network request failed") ||
     lower.includes("load failed")
   ) {
-    return "Network problem. Check your connection and try again.";
+    return errors.network;
   }
   if (status === 401) {
-    return "Your session expired. Sign in again to continue.";
+    return errors.sessionExpired;
   }
   if (status === 403 || lower.includes("monthly limit")) {
-    return message.includes("monthly")
-      ? message
-      : "You do not have permission to use the assistant right now.";
+    return message.includes("monthly") ? message : errors.forbidden;
   }
   if (status === 429 || lower.includes("too many")) {
-    return "Too many requests. Wait a moment and try again.";
+    return errors.rateLimited;
   }
   if (status !== null && status >= 500) {
-    return "The assistant is temporarily unavailable. Please try again.";
+    return errors.unavailable;
   }
   // Never surface raw stack-like text
   if (message.length > 280 || /at\s+\S+\s+\(/.test(message)) {
-    return "The assistant request failed. Please try again.";
+    return errors.requestFailed;
   }
-  return message || "The assistant request failed.";
+  return message || errors.requestFailedShort;
 }
 
 function updateAssistant(
@@ -133,6 +140,9 @@ export function AiWorkspace({
   selectedProjectId,
   initialPrompt,
 }: AiWorkspaceProps) {
+  const { dict } = useDictionary();
+  const t = dict.dash.ai;
+  const shell = dict.dash.shell;
   const [messages, setMessages] = useState<ChatMessageView[]>(initialMessages);
   const [input, setInput] = useState("");
   const [streaming, setStreaming] = useState(false);
@@ -407,7 +417,7 @@ export function AiWorkspace({
           | null;
         throw Object.assign(
           new Error(
-            data?.error?.message ?? "The assistant request failed.",
+            data?.error?.message ?? t.errors.requestFailed,
           ),
           { status: response.status },
         );
@@ -443,7 +453,7 @@ export function AiWorkspace({
             createdId = event.conversationId;
             streamConversationRef.current = event.conversationId;
             setConversationId(event.conversationId);
-            const titleSeed = (messageText ?? "New chat").trim().slice(0, 72);
+            const titleSeed = (messageText ?? t.newChat).trim().slice(0, 72);
             setConversationItems((prev) => {
               if (prev.some((c) => c.id === event.conversationId)) {
                 return prev;
@@ -451,7 +461,7 @@ export function AiWorkspace({
               return [
                 {
                   id: event.conversationId,
-                  title: titleSeed || "New chat",
+                  title: titleSeed || t.newChat,
                   pinned: false,
                   projectId: projectId,
                   messageCount: 2,
@@ -558,9 +568,9 @@ export function AiWorkspace({
           typeof (caught as { status?: number }).status === "number"
             ? (caught as { status: number }).status
             : null;
-        const raw = err.message || "The assistant request failed.";
+        const raw = err.message || t.errors.requestFailed;
         aiDebug("error", { assistantId, message: raw, status });
-        setError(friendlyAiError(status, raw));
+        setError(friendlyAiError(status, raw, t.errors));
         setMessages((prev) =>
           prev.filter(
             (m) =>
@@ -602,7 +612,7 @@ export function AiWorkspace({
           className="flex h-10 items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-zt-primary to-zt-purple text-sm font-medium text-white shadow-lg shadow-zt-primary/25 transition-transform hover:-translate-y-0.5"
         >
           <Plus className="size-4" aria-hidden />
-          New chat
+          {t.newChat}
         </Link>
         <div className="relative">
           <Search
@@ -612,8 +622,8 @@ export function AiWorkspace({
           <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search conversations"
-            aria-label="Search conversations"
+            placeholder={t.searchConversations}
+            aria-label={t.searchConversations}
             className="h-9 w-full rounded-lg border border-zt-border bg-zt-surface-2 pl-8 pr-3 text-sm text-zt-text placeholder:text-zt-muted focus:outline-none focus:ring-2 focus:ring-zt-primary/40"
           />
         </div>
@@ -623,15 +633,15 @@ export function AiWorkspace({
         {filtered.length === 0 ? (
           <p className="px-2 py-6 text-center text-sm text-zt-muted">
             {searching
-              ? `No conversations match “${search.trim()}”.`
-              : "No conversations yet. Send a message to start — history appears here."}
+              ? t.noMatchingConversations.replace("{query}", search.trim())
+              : `${t.noConversations}. ${t.noConversationsDesc}`}
           </p>
         ) : null}
 
         {pinned.length > 0 ? (
           <div className="space-y-0.5">
             <p className="px-2 text-xs font-medium uppercase tracking-wide text-zt-muted">
-              Pinned
+              {t.pinned}
             </p>
             {pinned.map((c) => (
               <div key={c.id} onClick={() => setHistoryOpen(false)}>
@@ -648,7 +658,7 @@ export function AiWorkspace({
           <div className="space-y-0.5">
             {pinned.length > 0 ? (
               <p className="px-2 text-xs font-medium uppercase tracking-wide text-zt-muted">
-                Recent
+                {t.recent}
               </p>
             ) : null}
             {rest.map((c) => (
@@ -664,21 +674,26 @@ export function AiWorkspace({
       </div>
 
       <div className="border-t border-zt-border p-3 text-xs text-zt-muted">
-        <p className="font-medium text-zt-text/80">AI credits this month</p>
+        <p className="font-medium text-zt-text/80">{t.creditsThisMonth}</p>
         <p className="mt-1">
           {usage.limit === null
-            ? `${usage.used} messages · Unlimited on your plan`
-            : `${usage.used} / ${usage.limit} messages used`}
+            ? t.messagesUnlimited.replace("{used}", String(usage.used))
+            : t.messagesUsed
+                .replace("{used}", String(usage.used))
+                .replace("{limit}", String(usage.limit))}
         </p>
         {usage.limit !== null && usage.remaining !== null ? (
           <p className="mt-0.5">
             {usage.remaining <= 0
-              ? "Quota reached — upgrade to continue."
-              : `${usage.remaining} remaining`}
+              ? t.quotaUpgradeHint
+              : t.remaining.replace("{count}", String(usage.remaining))}
           </p>
         ) : null}
         <p className="mt-1">
-          ~{usage.tokensThisMonth.toLocaleString()} tokens used
+          {t.tokensUsed.replace(
+            "{count}",
+            usage.tokensThisMonth.toLocaleString(),
+          )}
         </p>
       </div>
     </>
@@ -696,17 +711,17 @@ export function AiWorkspace({
         <div className="fixed inset-0 z-50 md:hidden">
           <button
             type="button"
-            aria-label="Close history"
+            aria-label={t.closeHistory}
             className="absolute inset-0 bg-black/60 backdrop-blur-sm"
             onClick={() => setHistoryOpen(false)}
           />
           <aside className="absolute inset-y-0 left-0 flex w-[min(20rem,88vw)] flex-col border-r border-zt-border bg-zt-surface shadow-2xl">
             <div className="flex items-center justify-between border-b border-zt-border px-3 py-3">
-              <p className="text-sm font-medium text-zt-text">Conversations</p>
+              <p className="text-sm font-medium text-zt-text">{t.conversations}</p>
               <button
                 type="button"
                 onClick={() => setHistoryOpen(false)}
-                aria-label="Close"
+                aria-label={shell.close}
                 className="rounded-lg p-1 text-zt-muted hover:text-zt-text"
               >
                 <X className="size-5" aria-hidden />
@@ -724,25 +739,25 @@ export function AiWorkspace({
             <button
               type="button"
               onClick={() => setHistoryOpen(true)}
-              aria-label="Open conversation history"
+              aria-label={t.openHistory}
               className="flex size-8 items-center justify-center rounded-lg border border-zt-border text-zt-muted hover:text-zt-text md:hidden"
             >
               <Menu className="size-4" aria-hidden />
             </button>
             <Sparkles className="size-4 text-zt-primary" aria-hidden />
             <span className="text-sm font-medium text-zt-text">
-              Code Health Assistant
+              {t.assistantTitle}
             </span>
           </div>
           {projects.length > 0 ? (
             <select
               value={projectId ?? ""}
               onChange={(e) => selectProject(e.target.value || null)}
-              aria-label="Attach a project for context"
+              aria-label={t.attachProject}
               disabled={projectPending}
               className="h-8 max-w-[12rem] rounded-lg border border-zt-border bg-zt-surface-2 px-2 text-xs text-zt-text focus:outline-none focus:ring-2 focus:ring-zt-primary/40 disabled:opacity-60"
             >
-              <option value="">No project</option>
+              <option value="">{t.noProject}</option>
               {projects.map((p) => (
                 <option key={p.id} value={p.id}>
                   {p.name}
@@ -751,7 +766,7 @@ export function AiWorkspace({
             </select>
           ) : (
             <span className="rounded-full border border-zt-border px-2.5 py-1 text-xs text-zt-muted">
-              No project
+              {t.noProject}
             </span>
           )}
         </header>
@@ -772,12 +787,10 @@ export function AiWorkspace({
               <Sparkles className="size-7" aria-hidden />
             </span>
             <h3 className="text-base font-medium text-zt-text">
-              How can I help with your code health?
+              {t.emptyTitle}
             </h3>
             <p className="mt-1 max-w-sm text-sm text-zt-muted">
-              Ask about errors, incidents, performance, security, or
-              architecture. Attach a project for tailored, evidence-based
-              answers with confidence and related signals.
+              {t.emptyDesc}
             </p>
             <div className="mt-6 flex max-w-2xl flex-wrap items-center justify-center gap-2">
               {SUGGESTED_ANALYSES.map((s) => (
@@ -787,7 +800,7 @@ export function AiWorkspace({
                   onClick={() => useSuggestion(s.prompt)}
                   className="zt-glass rounded-full border border-zt-border px-3 py-1.5 text-xs text-zt-muted transition-colors hover:border-zt-border-strong hover:text-zt-text"
                 >
-                  {s.label}
+                  {promptLabelForIntent(s.intent, t.prompts, s.label)}
                 </button>
               ))}
             </div>
@@ -827,20 +840,20 @@ export function AiWorkspace({
                 }}
                 className="shrink-0 rounded-md border border-zt-border px-2 py-0.5 text-xs text-zt-text hover:bg-zt-surface-2"
               >
-                {canRegenerate || input.trim() ? "Retry" : "Dismiss"}
+                {canRegenerate || input.trim() ? t.retry : t.dismiss}
               </button>
             </div>
           ) : null}
           {blocked ? (
             <p className="mb-2 text-xs text-zt-warning" role="status">
-              You have reached your monthly AI message limit.{" "}
+              {t.quotaReachedDesc}{" "}
               <Link
                 href={DASHBOARD_ROUTES.billing}
                 className="font-medium underline underline-offset-2 hover:text-zt-text"
               >
-                Review your plan
+                {t.reviewPlan}
               </Link>{" "}
-              to continue.
+              {t.toContinue}
             </p>
           ) : null}
           <form onSubmit={handleSubmit} className="flex items-end gap-2">
@@ -855,8 +868,8 @@ export function AiWorkspace({
                 }
               }}
               rows={1}
-              placeholder="Ask the assistant anything…"
-              aria-label="Message the assistant"
+              placeholder={t.askPlaceholder}
+              aria-label={t.messageAria}
               disabled={blocked}
               className="max-h-40 min-h-[2.5rem] flex-1 resize-none rounded-xl border border-zt-border bg-zt-surface-2 px-3 py-2 text-sm text-zt-text placeholder:text-zt-muted focus:outline-none focus:ring-2 focus:ring-zt-primary/40 disabled:opacity-50"
             />
@@ -867,7 +880,7 @@ export function AiWorkspace({
                 className="flex h-10 items-center gap-2 rounded-xl border border-zt-border bg-zt-surface-2 px-4 text-sm font-medium text-zt-text transition-colors hover:bg-zt-surface"
               >
                 <Square className="size-4" aria-hidden />
-                Stop
+                {t.stop}
               </button>
             ) : (
               <button
@@ -876,7 +889,7 @@ export function AiWorkspace({
                 className="flex h-10 items-center gap-2 rounded-xl bg-gradient-to-r from-zt-primary to-zt-purple px-4 text-sm font-medium text-white shadow-lg shadow-zt-primary/25 transition-transform hover:-translate-y-0.5 disabled:translate-y-0 disabled:opacity-50"
               >
                 <Send className="size-4" aria-hidden />
-                Send
+                {t.send}
               </button>
             )}
           </form>

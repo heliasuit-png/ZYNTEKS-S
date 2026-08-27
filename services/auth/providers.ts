@@ -17,12 +17,12 @@ const OAUTH_PROVIDERS: Omit<OAuthProviderConfig, "enabled">[] = [
   {
     key: "google",
     supabaseProvider: "google",
-    label: "Continue with Google",
+    label: "google",
   },
   {
     key: "github",
     supabaseProvider: "github",
-    label: "Continue with GitHub",
+    label: "github",
   },
 ];
 

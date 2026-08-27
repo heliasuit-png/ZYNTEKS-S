@@ -17,20 +17,34 @@ import { cn } from "@/lib/utils";
 import { Panel, PanelContent } from "@/components/dashboard/panel";
 import { Button } from "@/components/dashboard/button";
 import { CountUp } from "@/components/dashboard/motion";
+import { useDictionary } from "@/components/i18n/locale-provider";
 import { DASHBOARD_ROUTES } from "@/lib/constants";
+import { fillTemplate } from "@/lib/i18n/fill-template";
 import type { DashboardStats } from "@/types/dashboard";
+import type { DashDictionary } from "@/lib/i18n/dictionaries/dash-types";
 
-function recommendation(stats: DashboardStats): string {
+function recommendation(
+  stats: DashboardStats,
+  t: DashDictionary["home"]["aiInsights"],
+): string {
   if (stats.errorsToday > 0) {
-    return `Investigate ${stats.errorsToday} new error${stats.errorsToday === 1 ? "" : "s"} captured today before they reach more users.`;
+    return fillTemplate(
+      stats.errorsToday === 1 ? t.recommendErrors : t.recommendErrorsPlural,
+      { count: stats.errorsToday },
+    );
   }
   if (stats.openIncidents > 0) {
-    return `Prioritise resolving ${stats.openIncidents} open incident${stats.openIncidents === 1 ? "" : "s"} to restore full availability.`;
+    return fillTemplate(
+      stats.openIncidents === 1
+        ? t.recommendIncidents
+        : t.recommendIncidentsPlural,
+      { count: stats.openIncidents },
+    );
   }
   if (stats.healthScore < 90) {
-    return `Health is at ${stats.healthScore}%. Review recent performance metrics to close the gap.`;
+    return fillTemplate(t.recommendHealth, { score: stats.healthScore });
   }
-  return "No action needed right now — your workspace is running smoothly.";
+  return t.recommendAllClear;
 }
 
 interface Insight {
@@ -41,31 +55,45 @@ interface Insight {
 }
 
 export function AiInsightsPanel({ stats }: { stats: DashboardStats }) {
+  const { dict } = useDictionary();
+  const t = dict.dash.home.aiInsights;
+
   const bottlenecks: string[] = [];
   if (stats.errorsToday > 0) {
-    bottlenecks.push(`Elevated error volume (${stats.errorsToday} today)`);
+    bottlenecks.push(
+      fillTemplate(t.bottleneckErrors, { count: stats.errorsToday }),
+    );
   }
   if (stats.openIncidents > 0) {
-    bottlenecks.push(`${stats.openIncidents} active incident${stats.openIncidents === 1 ? "" : "s"}`);
+    bottlenecks.push(
+      fillTemplate(
+        stats.openIncidents === 1
+          ? t.bottleneckIncidents
+          : t.bottleneckIncidentsPlural,
+        { count: stats.openIncidents },
+      ),
+    );
   }
   if (stats.healthScore < 90) {
-    bottlenecks.push(`Health score below target (${stats.healthScore}%)`);
+    bottlenecks.push(
+      fillTemplate(t.bottleneckHealth, { score: stats.healthScore }),
+    );
   }
   if (bottlenecks.length === 0) {
-    bottlenecks.push("No bottlenecks detected across monitored services");
+    bottlenecks.push(t.noBottlenecks);
   }
 
   const insights: Insight[] = [
     {
       icon: Zap,
-      label: "Performance",
-      text: "Cache hot API routes and watch p95 latency on your busiest endpoints.",
+      label: t.tipPerformance,
+      text: t.tipPerformanceText,
       className: "text-zt-accent",
     },
     {
       icon: Lock,
-      label: "Security",
-      text: "Scope API keys per environment and rotate them on a regular schedule.",
+      label: t.tipSecurity,
+      text: t.tipSecurityText,
       className: "text-zt-secondary",
     },
   ];
@@ -99,12 +127,8 @@ export function AiInsightsPanel({ stats }: { stats: DashboardStats }) {
               <Sparkles className="size-5" aria-hidden />
             </motion.span>
             <div>
-              <h3 className="text-base font-semibold text-zt-text">
-                AI Health Assistant
-              </h3>
-              <p className="text-xs text-zt-muted">
-                Insights derived from your live telemetry
-              </p>
+              <h3 className="text-base font-semibold text-zt-text">{t.title}</h3>
+              <p className="text-xs text-zt-muted">{t.subtitle}</p>
             </div>
           </div>
           <div className="flex flex-col items-end">
@@ -117,27 +141,25 @@ export function AiInsightsPanel({ stats }: { stats: DashboardStats }) {
               <CountUp value={stats.healthScore} suffix="%" />
             </span>
             <span className="text-[11px] uppercase tracking-wider text-zt-muted">
-              Health score
+              {t.healthScore}
             </span>
           </div>
         </div>
 
-        {/* Latest recommendation */}
         <div className="rounded-xl border border-zt-primary/30 bg-gradient-to-r from-zt-primary/15 to-zt-secondary/10 p-4 shadow-[0_0_30px_-12px_var(--color-zt-primary)]">
           <span className="flex items-center gap-1.5 text-xs font-medium text-zt-primary">
             <Lightbulb className="size-3.5" aria-hidden />
-            Latest recommendation
+            {t.latestRecommendation}
           </span>
           <p className="mt-1.5 text-sm text-zt-text/90">
-            {recommendation(stats)}
+            {recommendation(stats, t)}
           </p>
         </div>
 
-        {/* Potential bottlenecks */}
         <div>
           <span className="flex items-center gap-1.5 text-xs font-medium text-zt-muted">
             <Gauge className="size-3.5" aria-hidden />
-            Potential bottlenecks
+            {t.potentialBottlenecks}
           </span>
           <ul className="mt-2 space-y-1.5">
             {bottlenecks.map((item) => (
@@ -155,7 +177,6 @@ export function AiInsightsPanel({ stats }: { stats: DashboardStats }) {
           </ul>
         </div>
 
-        {/* Advice grid */}
         <div className="grid gap-3 sm:grid-cols-2">
           {insights.map((insight) => {
             const Icon = insight.icon;
@@ -182,7 +203,7 @@ export function AiInsightsPanel({ stats }: { stats: DashboardStats }) {
         <Button asChild size="lg" className="w-full">
           <Link href={DASHBOARD_ROUTES.aiAssistant}>
             <Sparkles aria-hidden />
-            Analyze Project
+            {t.analyzeProject}
             <ArrowRight aria-hidden />
           </Link>
         </Button>

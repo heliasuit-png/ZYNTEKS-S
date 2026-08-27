@@ -3,6 +3,11 @@
 import { useEffect } from "react";
 import { AlertTriangle } from "lucide-react";
 
+import { useDictionaryOptional } from "@/components/i18n/locale-provider";
+import { dictionaries } from "@/lib/i18n/dictionaries";
+
+const fallbackSystem = dictionaries.en.system;
+
 export default function DashboardError({
   error,
   reset,
@@ -10,6 +15,9 @@ export default function DashboardError({
   error: Error & { digest?: string };
   reset: () => void;
 }) {
+  const ctx = useDictionaryOptional();
+  const system = ctx?.dict.system ?? fallbackSystem;
+
   useEffect(() => {
     console.error(error);
   }, [error]);
@@ -21,10 +29,10 @@ export default function DashboardError({
       </span>
       <div className="space-y-1">
         <h2 className="text-lg font-semibold text-zt-text">
-          Something went wrong
+          {system.somethingWrong}
         </h2>
         <p className="max-w-sm text-sm text-zt-muted">
-          We couldn&apos;t load this section. Please try again.
+          {system.sectionLoadFailed}
         </p>
       </div>
       <button
@@ -32,7 +40,7 @@ export default function DashboardError({
         onClick={reset}
         className="rounded-lg bg-zt-primary px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-zt-primary/90"
       >
-        Try again
+        {system.tryAgain}
       </button>
     </div>
   );

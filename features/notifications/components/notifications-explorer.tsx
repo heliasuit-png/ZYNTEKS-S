@@ -11,6 +11,7 @@ import {
   Trash2,
 } from "lucide-react";
 
+import { useDictionary } from "@/components/i18n/locale-provider";
 import { EmptyState } from "@/components/dashboard/empty-state";
 import { Pagination } from "@/components/dashboard/pagination";
 import { FadeIn } from "@/components/dashboard/motion";
@@ -18,9 +19,7 @@ import { Badge } from "@/components/dashboard/badge";
 import type { BadgeProps } from "@/components/dashboard/badge";
 import {
   NOTIFICATION_CATEGORIES,
-  NOTIFICATION_CATEGORY_LABELS,
   NOTIFICATION_LEVELS,
-  NOTIFICATION_TYPE_LABELS,
   NOTIFICATION_TYPES,
 } from "@/lib/constants";
 import { formatDateTime, formatRelativeTime } from "@/utils/format";
@@ -84,6 +83,9 @@ export function NotificationsExplorer({
   search,
   filters,
 }: NotificationsExplorerProps) {
+  const { dict, locale } = useDictionary();
+  const t = dict.dash.notifications;
+  const common = dict.dashboardCommon;
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -138,10 +140,10 @@ export function NotificationsExplorer({
     <div className="space-y-4">
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         {[
-          { label: "Unread", value: counts.unread },
-          { label: "Read", value: counts.read },
-          { label: "Archived", value: counts.archived },
-          { label: "Total", value: counts.total },
+          { label: t.statUnread, value: counts.unread },
+          { label: t.statRead, value: counts.read },
+          { label: t.statArchived, value: counts.archived },
+          { label: t.statTotal, value: counts.total },
         ].map((stat) => (
           <FadeIn key={stat.label}>
             <div className="rounded-2xl border border-zt-border bg-zt-surface px-4 py-3">
@@ -163,13 +165,13 @@ export function NotificationsExplorer({
             aria-hidden
           />
           <label className="sr-only" htmlFor="notification-search">
-            Search notifications
+            {t.searchAria}
           </label>
           <input
             id="notification-search"
             value={searchValue}
             onChange={(event) => setSearchValue(event.target.value)}
-            placeholder="Search title, message, project, or type…"
+            placeholder={t.searchPlaceholder}
             className="h-9 w-full rounded-xl border border-zt-border bg-zt-surface pl-9 pr-3 text-sm text-zt-text placeholder:text-zt-muted focus:outline-none focus:ring-2 focus:ring-zt-primary/40"
           />
         </div>
@@ -179,7 +181,7 @@ export function NotificationsExplorer({
               type="submit"
               className="h-9 rounded-xl border border-zt-border px-3 text-sm text-zt-muted transition-colors hover:text-zt-text"
             >
-              Mark all as read
+              {t.markAllRead}
             </button>
           </form>
         ) : null}
@@ -187,71 +189,71 @@ export function NotificationsExplorer({
 
       <div className="flex flex-wrap gap-2">
         <select
-          aria-label="Filter by read state"
+          aria-label={t.readStatus}
           className={selectClass}
           value={filters.read}
           onChange={(event) => updateParam("read", event.target.value)}
         >
-          <option value="">Read status: All</option>
-          <option value="unread">Unread</option>
-          <option value="read">Read</option>
+          <option value="">{t.statusAll}</option>
+          <option value="unread">{t.statusUnread}</option>
+          <option value="read">{t.statusRead}</option>
         </select>
         <select
-          aria-label="Filter by archive state"
+          aria-label={t.archived}
           className={selectClass}
           value={filters.archived}
           onChange={(event) => updateParam("archived", event.target.value)}
         >
-          <option value="">Inbox</option>
-          <option value="archived">Archived</option>
-          <option value="all">All</option>
+          <option value="">{t.inbox}</option>
+          <option value="archived">{t.archived}</option>
+          <option value="all">{t.all}</option>
         </select>
         <select
-          aria-label="Filter by category"
+          aria-label={t.typeAll}
           className={selectClass}
           value={filters.category}
           onChange={(event) => updateParam("category", event.target.value)}
         >
-          <option value="">Type: All</option>
+          <option value="">{t.typeAll}</option>
           {NOTIFICATION_CATEGORIES.map((category) => (
             <option key={category} value={category}>
-              {NOTIFICATION_CATEGORY_LABELS[category]}
+              {t.categories[category]}
             </option>
           ))}
         </select>
         <select
-          aria-label="Filter by event type"
+          aria-label={t.eventAll}
           className={selectClass}
           value={filters.type}
           onChange={(event) => updateParam("type", event.target.value)}
         >
-          <option value="">Event: All</option>
+          <option value="">{t.eventAll}</option>
           {NOTIFICATION_TYPES.map((type) => (
             <option key={type} value={type}>
-              {NOTIFICATION_TYPE_LABELS[type]}
+              {t.types[type]}
             </option>
           ))}
         </select>
         <select
-          aria-label="Filter by priority"
+          aria-label={t.priorityAll}
           className={selectClass}
           value={filters.level}
           onChange={(event) => updateParam("level", event.target.value)}
         >
-          <option value="">Priority: All</option>
+          <option value="">{t.priorityAll}</option>
           {NOTIFICATION_LEVELS.map((level) => (
             <option key={level} value={level}>
-              {level}
+              {t.levels[level]}
             </option>
           ))}
         </select>
         <select
-          aria-label="Filter by project"
+          aria-label={t.projectAll}
           className={selectClass}
           value={filters.projectId}
           onChange={(event) => updateParam("projectId", event.target.value)}
         >
-          <option value="">Project: All</option>
+          <option value="">{t.projectAll}</option>
           {projects.map((project) => (
             <option key={project.id} value={project.id}>
               {project.name}
@@ -259,7 +261,7 @@ export function NotificationsExplorer({
           ))}
         </select>
         <label className="sr-only" htmlFor="notif-from">
-          From date
+          {t.fromDate}
         </label>
         <input
           id="notif-from"
@@ -269,7 +271,7 @@ export function NotificationsExplorer({
           onChange={(event) => updateParam("from", event.target.value)}
         />
         <label className="sr-only" htmlFor="notif-to">
-          To date
+          {t.toDate}
         </label>
         <input
           id="notif-to"
@@ -284,7 +286,7 @@ export function NotificationsExplorer({
             onClick={clearFilters}
             className="h-9 rounded-xl border border-zt-border px-3 text-sm text-zt-muted transition-colors hover:text-zt-text"
           >
-            Clear
+            {common.clearFilters}
           </button>
         ) : null}
       </div>
@@ -293,11 +295,9 @@ export function NotificationsExplorer({
         {notifications.length === 0 ? (
           <EmptyState
             icon={Bell}
-            title={hasActiveFilters ? "No matching notifications" : "No notifications"}
+            title={hasActiveFilters ? t.noMatching : t.empty}
             description={
-              hasActiveFilters
-                ? "Try adjusting search or filters."
-                : "You're all caught up. New notifications will show up here."
+              hasActiveFilters ? t.emptyFilteredDesc : t.emptyDesc
             }
           />
         ) : (
@@ -313,20 +313,20 @@ export function NotificationsExplorer({
                     {!notification.read ? (
                       <span
                         className="size-2 shrink-0 rounded-full bg-zt-primary"
-                        aria-label="Unread"
+                        aria-label={t.statUnread}
                       />
                     ) : null}
                     <p className="text-sm font-medium text-zt-text">
                       {notification.title}
                     </p>
                     <Badge tone={levelTone[notification.level]}>
-                      {notification.level}
+                      {t.levels[notification.level]}
                     </Badge>
                     <Badge tone="default">
-                      {NOTIFICATION_CATEGORY_LABELS[notification.category]}
+                      {t.categories[notification.category]}
                     </Badge>
                     {notification.archived ? (
-                      <Badge tone="default">Archived</Badge>
+                      <Badge tone="default">{t.archived}</Badge>
                     ) : null}
                   </div>
                   <p className="text-sm text-zt-muted">{notification.body}</p>
@@ -334,9 +334,9 @@ export function NotificationsExplorer({
                     {notification.projectName
                       ? `${notification.projectName} · `
                       : ""}
-                    {NOTIFICATION_TYPE_LABELS[notification.type]} ·{" "}
+                    {t.types[notification.type]} ·{" "}
                     <time dateTime={notification.createdAt}>
-                      {formatRelativeTime(notification.createdAt)} (
+                      {formatRelativeTime(notification.createdAt, undefined, locale)} (
                       {formatDateTime(notification.createdAt)})
                     </time>
                   </p>
@@ -347,7 +347,7 @@ export function NotificationsExplorer({
                       <input type="hidden" name="id" value={notification.id} />
                       <button
                         type="submit"
-                        aria-label="Mark as read"
+                        aria-label={t.markAsRead}
                         className={iconButton}
                       >
                         <Check className="size-4" aria-hidden />
@@ -359,7 +359,7 @@ export function NotificationsExplorer({
                       <input type="hidden" name="id" value={notification.id} />
                       <button
                         type="submit"
-                        aria-label="Unarchive"
+                        aria-label={t.unarchive}
                         className={iconButton}
                       >
                         <ArchiveRestore className="size-4" aria-hidden />
@@ -370,7 +370,7 @@ export function NotificationsExplorer({
                       <input type="hidden" name="id" value={notification.id} />
                       <button
                         type="submit"
-                        aria-label="Archive"
+                        aria-label={t.archive}
                         className={iconButton}
                       >
                         <Archive className="size-4" aria-hidden />
@@ -381,7 +381,7 @@ export function NotificationsExplorer({
                     <input type="hidden" name="id" value={notification.id} />
                     <button
                       type="submit"
-                      aria-label="Delete"
+                      aria-label={t.delete}
                       className="rounded-lg p-1.5 text-zt-muted transition-colors hover:text-zt-danger focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zt-primary/40"
                     >
                       <Trash2 className="size-4" aria-hidden />

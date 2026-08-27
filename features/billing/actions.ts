@@ -2,6 +2,7 @@
 
 import { DASHBOARD_ROUTES } from "@/lib/constants";
 import { isAppError } from "@/lib/errors";
+import { getDictionary } from "@/lib/i18n/get-dictionary";
 import { getAuthenticatedUser } from "@/services/auth";
 import { getBillingService } from "@/services/billing";
 import type {
@@ -25,12 +26,13 @@ function toState(result: BillingActionResult): BillingActionState {
   };
 }
 
-function fail(error: unknown): BillingActionState {
+async function fail(error: unknown): Promise<BillingActionState> {
+  const { dict } = await getDictionary();
   return {
     status: "error",
     message: isAppError(error)
       ? error.message
-      : "Billing action failed. Please try again.",
+      : dict.actionMessages.billingFailed,
   };
 }
 
@@ -57,9 +59,10 @@ export async function purchasePlanAction(
   formData: FormData,
 ): Promise<BillingActionState> {
   try {
+    const { dict } = await getDictionary();
     const ctx = await requireContext();
     if (!ctx) {
-      return { status: "error", message: "You must be signed in." };
+      return { status: "error", message: dict.actionMessages.mustSignIn };
     }
     const plan = String(formData.get("plan") ?? "pro") as BillingPlanId;
     const interval = String(formData.get("interval") ?? "month") as BillingInterval;
@@ -82,9 +85,10 @@ export async function upgradePlanAction(
   formData: FormData,
 ): Promise<BillingActionState> {
   try {
+    const { dict } = await getDictionary();
     const ctx = await requireContext();
     if (!ctx) {
-      return { status: "error", message: "You must be signed in." };
+      return { status: "error", message: dict.actionMessages.mustSignIn };
     }
     const toPlan = String(formData.get("toPlan") ?? "pro") as BillingPlanId;
     const fromPlan = String(formData.get("fromPlan") ?? "free") as BillingPlanId;
@@ -109,9 +113,10 @@ export async function changePlanAction(
   formData: FormData,
 ): Promise<BillingActionState> {
   try {
+    const { dict } = await getDictionary();
     const ctx = await requireContext();
     if (!ctx) {
-      return { status: "error", message: "You must be signed in." };
+      return { status: "error", message: dict.actionMessages.mustSignIn };
     }
     const toPlan = String(formData.get("toPlan") ?? "pro") as BillingPlanId;
     const fromPlan = String(formData.get("fromPlan") ?? "free") as BillingPlanId;
@@ -136,9 +141,10 @@ export async function manageSubscriptionAction(
   _formData?: FormData,
 ): Promise<BillingActionState> {
   try {
+    const { dict } = await getDictionary();
     const ctx = await requireContext();
     if (!ctx) {
-      return { status: "error", message: "You must be signed in." };
+      return { status: "error", message: dict.actionMessages.mustSignIn };
     }
     const overview = await getBillingService().getOverview(
       ctx.supabase,

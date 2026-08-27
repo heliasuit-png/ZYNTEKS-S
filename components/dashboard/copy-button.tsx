@@ -4,6 +4,7 @@ import { useCallback, useState } from "react";
 import { Check, Copy } from "lucide-react";
 
 import { cn } from "@/lib/utils";
+import { useDictionary } from "@/components/i18n/locale-provider";
 
 interface CopyButtonProps {
   value: string;
@@ -12,7 +13,9 @@ interface CopyButtonProps {
 }
 
 /** Reusable copy-to-clipboard button with transient confirmation. */
-export function CopyButton({ value, label = "Copy", className }: CopyButtonProps) {
+export function CopyButton({ value, label, className }: CopyButtonProps) {
+  const { dict } = useDictionary();
+  const resolvedLabel = label ?? dict.dashboardCommon.copy;
   const [copied, setCopied] = useState(false);
 
   const onCopy = useCallback(async () => {
@@ -39,7 +42,7 @@ export function CopyButton({ value, label = "Copy", className }: CopyButtonProps
       ) : (
         <Copy className="size-3.5" aria-hidden />
       )}
-      {copied ? "Copied" : label}
+      {copied ? dict.dashboardCommon.copied : resolvedLabel}
     </button>
   );
 }

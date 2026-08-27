@@ -32,9 +32,9 @@ export type ProbeId =
 
 export interface StatusProbe {
   id: ProbeId;
-  label: string;
   tone: HealthTone;
-  detail: string;
+  detailKey: string;
+  detailParams?: Record<string, string | number>;
 }
 
 export interface LiveMetrics {
@@ -151,7 +151,6 @@ export interface CronJobRow {
   nextRun: string | null;
   durationMs: number | null;
   failures: number | null;
-  note: string;
 }
 
 export interface AlertItem {
@@ -169,7 +168,6 @@ export interface MonitoringMissionData {
   filters: MonitoringMissionFilters;
   globalStatus: {
     platformTone: HealthTone;
-    platformLabel: string;
     probes: StatusProbe[];
     responseTimeMs: number | null;
     uptimePercent30d: number;
@@ -179,8 +177,6 @@ export interface MonitoringMissionData {
   geography: {
     countries: MapCountryPoint[];
     topRegions: { label: string; sessions: number }[];
-    cityNote: string;
-    requestProxyNote: string;
   };
   health: {
     counts: HealthBucketCounts;

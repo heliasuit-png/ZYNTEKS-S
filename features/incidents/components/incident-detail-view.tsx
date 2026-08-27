@@ -1,8 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { Bot, Download, ExternalLink } from "lucide-react";
+import { Bot, Download, ExternalLink, Siren } from "lucide-react";
 
+import { useDictionary } from "@/components/i18n/locale-provider";
 import {
   Panel,
   PanelContent,
@@ -13,11 +14,7 @@ import { Badge } from "@/components/dashboard/badge";
 import { CopyButton } from "@/components/dashboard/copy-button";
 import { EmptyState } from "@/components/dashboard/empty-state";
 import { FadeIn } from "@/components/dashboard/motion";
-import {
-  DASHBOARD_ROUTES,
-  INCIDENT_SEVERITY_LABELS,
-  INCIDENT_STATUS_LABELS,
-} from "@/lib/constants";
+import { DASHBOARD_ROUTES } from "@/lib/constants";
 import { formatDateTime, formatDuration, formatRelativeTime } from "@/utils/format";
 import { cn } from "@/lib/utils";
 import { IncidentUpdateForm } from "@/features/incidents/components/incident-update-form";
@@ -26,7 +23,7 @@ import {
   INCIDENT_STATUS_TONE,
 } from "@/features/incidents/lib/status";
 import type { IncidentDetailBundle } from "@/features/incidents/types";
-import { Siren } from "lucide-react";
+import type { IncidentSeverity, IncidentStatus } from "@/types/database";
 
 const timelineTone: Record<
   IncidentDetailBundle["timeline"][number]["tone"],
@@ -48,6 +45,9 @@ export function IncidentDetailView({
   bundle,
   shareUrl,
 }: IncidentDetailViewProps) {
+  const { dict, locale } = useDictionary();
+  const t = dict.dash.incidents;
+  const common = dict.dashboardCommon;
   const { incident, rootCause, recovery, timeline } = bundle;
 
   const exportJson = JSON.stringify(
@@ -88,10 +88,10 @@ export function IncidentDetailView({
       <FadeIn>
         <div className="flex flex-wrap items-center gap-2">
           <Badge tone={INCIDENT_SEVERITY_TONE[incident.severity]}>
-            {INCIDENT_SEVERITY_LABELS[incident.severity]}
+            {t.severities[incident.severity as IncidentSeverity]}
           </Badge>
           <Badge tone={INCIDENT_STATUS_TONE[incident.status]}>
-            {INCIDENT_STATUS_LABELS[incident.status]}
+            {t.statuses[incident.status as IncidentStatus]}
           </Badge>
           <Badge tone="default">{incident.source}</Badge>
           {incident.environment ? (
@@ -107,17 +107,17 @@ export function IncidentDetailView({
             className="inline-flex items-center gap-1.5 rounded-xl bg-zt-primary px-3 py-2 text-xs font-medium text-white transition-colors hover:bg-zt-primary/90"
           >
             <Bot className="size-3.5" aria-hidden />
-            AI Analysis
+            {t.aiAnalysis}
           </Link>
-          <CopyButton value={shareUrl} label="Copy link" />
-          <CopyButton value={exportJson} label="Copy JSON" />
+          <CopyButton value={shareUrl} label={t.copyLink} />
+          <CopyButton value={exportJson} label={t.copyJson} />
           <button
             type="button"
             onClick={downloadJson}
             className="inline-flex items-center gap-1.5 rounded-xl border border-zt-border bg-zt-surface-2 px-3 py-2 text-xs font-medium text-zt-muted transition-colors hover:text-zt-text"
           >
             <Download className="size-3.5" aria-hidden />
-            Download JSON
+            {t.downloadJson}
           </button>
         </div>
       </FadeIn>
@@ -126,14 +126,14 @@ export function IncidentDetailView({
         <Panel>
           <PanelContent>
             <dl className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              <Field label="Project" value={incident.projectName} />
-              <Field label="Assignee" value={incident.assignee} />
+              <Field label={t.project} value={incident.projectName} />
+              <Field label={t.assignee} value={incident.assignee} />
               <Field
-                label="Started"
+                label={t.started}
                 value={formatDateTime(incident.startedAt)}
               />
               <Field
-                label="Resolved"
+                label={t.resolved}
                 value={
                   incident.resolvedAt
                     ? formatDateTime(incident.resolvedAt)
@@ -141,11 +141,11 @@ export function IncidentDetailView({
                 }
               />
               <Field
-                label={incident.resolvedAt ? "Downtime" : "Elapsed"}
+                label={incident.resolvedAt ? t.downtime : t.elapsed}
                 value={downtimeText}
               />
               <Field
-                label="Recovery time"
+                label={t.recoveryTime}
                 value={
                   recovery.recoverySeconds != null
                     ? formatDuration(recovery.recoverySeconds)
@@ -153,7 +153,7 @@ export function IncidentDetailView({
                 }
               />
               <Field
-                label="Avg recovery (project)"
+                label={t.avgRecovery}
                 value={
                   recovery.averageRecoverySeconds != null
                     ? formatDuration(recovery.averageRecoverySeconds)
@@ -161,11 +161,11 @@ export function IncidentDetailView({
                 }
               />
               <Field
-                label="Historical recoveries"
+                label={t.historicalRecoveries}
                 value={String(recovery.historicalCount)}
               />
               <Field
-                label="Last heartbeat"
+                label={t.lastHeartbeat}
                 value={
                   incident.lastHeartbeatAt
                     ? formatDateTime(incident.lastHeartbeatAt)
@@ -173,14 +173,17 @@ export function IncidentDetailView({
                 }
               />
               <Field
-                label="Detected"
+                label={t.detected}
                 value={formatDateTime(incident.detectedAt)}
               />
               <Field
-                label="Auto-resolved"
-                value={incident.autoResolved ? "Yes" : "No"}
+                label={t.autoResolved}
+                value={incident.autoResolved ? common.yes : common.no}
               />
-              <Field label="Environment" value={incident.environment ?? "—"} />
+              <Field
+                label={t.environment}
+                value={incident.environment ?? "—"}
+              />
             </dl>
           </PanelContent>
         </Panel>
@@ -190,28 +193,28 @@ export function IncidentDetailView({
         <FadeIn delay={0.07}>
           <Panel className="h-full">
             <PanelHeader>
-              <PanelTitle>Root cause</PanelTitle>
+              <PanelTitle>{t.rootCause}</PanelTitle>
             </PanelHeader>
             <PanelContent className="space-y-4">
               <div>
-                <p className="text-xs text-zt-muted">Possible cause</p>
+                <p className="text-xs text-zt-muted">{t.possibleCause}</p>
                 <p className="mt-1 text-sm text-zt-text">
                   {rootCause.possibleCause}
                 </p>
               </div>
               <div>
-                <p className="text-xs text-zt-muted">Confidence</p>
+                <p className="text-xs text-zt-muted">{t.confidence}</p>
                 <p className="mt-1 text-2xl font-semibold tabular-nums text-zt-text">
                   {rootCause.confidence}%
                 </p>
               </div>
-              <ListBlock title="Evidence" items={rootCause.evidence} />
+              <ListBlock title={t.evidence} items={rootCause.evidence} />
               <ListBlock
-                title="Related events"
+                title={t.relatedEvents}
                 items={rootCause.relatedEvents}
               />
               <ListBlock
-                title="Recommendations"
+                title={t.recommendations}
                 items={rootCause.recommendations}
               />
             </PanelContent>
@@ -221,7 +224,7 @@ export function IncidentDetailView({
         <FadeIn delay={0.09}>
           <Panel className="h-full" id="timeline">
             <PanelHeader>
-              <PanelTitle>Timeline</PanelTitle>
+              <PanelTitle>{t.timeline}</PanelTitle>
             </PanelHeader>
             <PanelContent className="space-y-4">
               {incident.status !== "resolved" ? (
@@ -231,11 +234,11 @@ export function IncidentDetailView({
                 />
               ) : (
                 <p className="rounded-lg border border-zt-success/30 bg-zt-success/10 px-3 py-2 text-xs text-zt-success">
-                  This incident is resolved. Status transitions are closed.
+                  {t.resolvedClosed}
                 </p>
               )}
               {timeline.length === 0 ? (
-                <p className="text-sm text-zt-muted">No timeline events yet.</p>
+                <p className="text-sm text-zt-muted">{t.noTimelineEvents}</p>
               ) : (
                 <ol className="relative max-h-[28rem] space-y-4 overflow-y-auto border-l border-zt-border pl-5">
                   {timeline.map((event) => (
@@ -272,8 +275,8 @@ export function IncidentDetailView({
 
       <div className="grid gap-6 lg:grid-cols-2">
         <RelationPanel
-          title="Related Errors"
-          empty="No related errors in the incident window."
+          title={t.relatedErrors}
+          empty={t.emptyRelatedErrors}
           delay={0.11}
           isEmpty={bundle.relatedErrors.length === 0}
         >
@@ -288,15 +291,15 @@ export function IncidentDetailView({
               </p>
               <p className="mt-0.5 text-xs text-zt-muted">
                 {err.level} · {err.occurrences}× ·{" "}
-                {formatRelativeTime(err.lastSeenAt)}
+                {formatRelativeTime(err.lastSeenAt, undefined, locale)}
               </p>
             </Link>
           ))}
         </RelationPanel>
 
         <RelationPanel
-          title="Related Heartbeats"
-          empty="No heartbeats recorded in the incident window."
+          title={t.relatedHeartbeats}
+          empty={t.emptyRelatedHeartbeats}
           delay={0.12}
           isEmpty={bundle.relatedHeartbeats.length === 0}
         >
@@ -318,8 +321,8 @@ export function IncidentDetailView({
         </RelationPanel>
 
         <RelationPanel
-          title="Related Notifications"
-          empty="No notifications tied to this incident window."
+          title={t.relatedNotifications}
+          empty={t.emptyRelatedNotifications}
           delay={0.13}
           isEmpty={bundle.relatedNotifications.length === 0}
         >
@@ -330,15 +333,15 @@ export function IncidentDetailView({
             >
               <p className="text-sm font-medium text-zt-text">{n.title}</p>
               <p className="mt-0.5 text-xs text-zt-muted">
-                {n.type} · {n.channel} · {formatRelativeTime(n.createdAt)}
+                {n.type} · {n.channel} · {formatRelativeTime(n.createdAt, undefined, locale)}
               </p>
             </div>
           ))}
         </RelationPanel>
 
         <RelationPanel
-          title="Performance"
-          empty="No performance samples in the incident window."
+          title={t.performance}
+          empty={t.emptyRelatedPerformance}
           delay={0.14}
           isEmpty={bundle.relatedPerformance.length === 0}
         >
@@ -348,7 +351,7 @@ export function IncidentDetailView({
               className="rounded-xl border border-zt-border px-3 py-2.5"
             >
               <p className="truncate text-sm font-medium text-zt-text">
-                {p.url ?? "Page sample"}
+                {p.url ?? t.pageSample}
               </p>
               <p className="mt-0.5 text-xs text-zt-muted">
                 {p.lcp != null ? `LCP ${Math.round(p.lcp)}ms` : "LCP —"}
@@ -362,8 +365,8 @@ export function IncidentDetailView({
         </RelationPanel>
 
         <RelationPanel
-          title="API Keys"
-          empty="No active API keys for this project."
+          title={t.apiKeys}
+          empty={t.emptyRelatedApiKeys}
           delay={0.15}
           isEmpty={bundle.relatedApiKeys.length === 0}
         >
@@ -376,7 +379,7 @@ export function IncidentDetailView({
               <p className="mt-0.5 font-mono text-xs text-zt-muted">
                 {k.prefix}… · {k.environment}
                 {k.lastUsedAt
-                  ? ` · last used ${formatRelativeTime(k.lastUsedAt)}`
+                  ? ` · ${t.lastUsed} ${formatRelativeTime(k.lastUsedAt, undefined, locale)}`
                   : ""}
               </p>
             </div>
@@ -386,13 +389,11 @@ export function IncidentDetailView({
         <FadeIn delay={0.16}>
           <Panel className="h-full">
             <PanelHeader>
-              <PanelTitle>AI Analysis</PanelTitle>
+              <PanelTitle>{t.aiAnalysis}</PanelTitle>
             </PanelHeader>
             <PanelContent className="space-y-2">
               {bundle.relatedAi.length === 0 ? (
-                <p className="text-sm text-zt-muted">
-                  No AI conversations on this project yet.
-                </p>
+                <p className="text-sm text-zt-muted">{t.noAiConversations}</p>
               ) : (
                 bundle.relatedAi.map((c) => (
                   <Link
@@ -405,7 +406,7 @@ export function IncidentDetailView({
                         {c.title}
                       </p>
                       <p className="mt-0.5 text-xs text-zt-muted">
-                        {formatRelativeTime(c.updatedAt)}
+                        {formatRelativeTime(c.updatedAt, undefined, locale)}
                       </p>
                     </div>
                     <ExternalLink
@@ -420,7 +421,7 @@ export function IncidentDetailView({
                 className="inline-flex items-center gap-2 text-sm font-medium text-zt-primary hover:underline"
               >
                 <Bot className="size-4" aria-hidden />
-                Analyze this incident
+                {t.analyzeThisIncident}
               </Link>
             </PanelContent>
           </Panel>
@@ -430,14 +431,14 @@ export function IncidentDetailView({
       <FadeIn delay={0.18}>
         <Panel>
           <PanelHeader>
-            <PanelTitle>History & comments</PanelTitle>
+            <PanelTitle>{t.historyComments}</PanelTitle>
           </PanelHeader>
           <PanelContent>
             {bundle.updates.length === 0 ? (
               <EmptyState
                 icon={Siren}
-                title="No updates yet"
-                description="Post a timeline update to record investigation notes."
+                title={t.noUpdatesYet}
+                description={t.noUpdatesYetDesc}
               />
             ) : (
               <ul className="space-y-3">
@@ -449,10 +450,10 @@ export function IncidentDetailView({
                     <div className="flex flex-wrap items-center gap-2">
                       {update.status ? (
                         <Badge tone={INCIDENT_STATUS_TONE[update.status]}>
-                          {INCIDENT_STATUS_LABELS[update.status]}
+                          {t.statuses[update.status as IncidentStatus]}
                         </Badge>
                       ) : (
-                        <Badge tone="default">Comment</Badge>
+                        <Badge tone="default">{t.comment}</Badge>
                       )}
                       <span className="text-xs text-zt-muted">
                         {formatDateTime(update.createdAt)}

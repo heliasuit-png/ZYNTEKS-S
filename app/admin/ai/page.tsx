@@ -5,10 +5,14 @@ import type { AiOpsFilters } from "@/services/admin/ai-operations.types";
 import { AdminContainer } from "@/features/admin";
 import { AiOperationsCenter } from "@/features/admin/components/ai/ai-operations-center";
 import { requireAdminSession } from "@/features/admin/load-admin-session";
+import { getDictionary } from "@/lib/i18n/get-dictionary";
 
-export const metadata: Metadata = {
-  title: "AI Operations Center · ZYNTEKSIS Admin",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const { dict } = await getDictionary();
+  return {
+    title: `${dict.admin.ai.pageTitle}${dict.admin.common.metaTitleSuffix}`,
+  };
+}
 
 export const dynamic = "force-dynamic";
 

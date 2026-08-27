@@ -1,3 +1,6 @@
+"use client";
+
+import { useDictionary } from "@/components/i18n/locale-provider";
 import type { WorkspacesOverviewStats } from "@/services/admin/workspaces.types";
 import { formatNumber } from "@/features/admin/components/executive/format";
 
@@ -13,38 +16,41 @@ function formatBytes(bytes: number): string {
   return `${value.toFixed(unit === 0 ? 0 : 1)} ${units[unit]}`;
 }
 
-const CARDS: {
-  key: keyof WorkspacesOverviewStats;
-  label: string;
-  format?: (value: number) => string;
-}[] = [
-  { key: "totalWorkspaces", label: "Total Workspaces" },
-  { key: "newToday", label: "New Today" },
-  { key: "activeWorkspaces", label: "Active Workspaces" },
-  { key: "enterprisePlans", label: "Enterprise Plans" },
-  { key: "averageMembers", label: "Average Members" },
-  { key: "averageProjects", label: "Average Projects" },
-  { key: "averageApiKeys", label: "Average API Keys" },
-  {
-    key: "aiUsageTokens30d",
-    label: "AI Usage (30d tokens)",
-    format: formatNumber,
-  },
-  {
-    key: "storageBytes",
-    label: "Storage Usage (logos)",
-    format: formatBytes,
-  },
-];
-
 export function WorkspacesOverview({
   stats,
 }: {
   stats: WorkspacesOverviewStats;
 }) {
+  const { dict } = useDictionary();
+  const t = dict.admin.workspaces.overview;
+
+  const cards: {
+    key: keyof WorkspacesOverviewStats;
+    label: string;
+    format?: (value: number) => string;
+  }[] = [
+    { key: "totalWorkspaces", label: t.totalWorkspaces },
+    { key: "newToday", label: t.newToday },
+    { key: "activeWorkspaces", label: t.activeWorkspaces },
+    { key: "enterprisePlans", label: t.enterprisePlans },
+    { key: "averageMembers", label: t.averageMembers },
+    { key: "averageProjects", label: t.averageProjects },
+    { key: "averageApiKeys", label: t.averageApiKeys },
+    {
+      key: "aiUsageTokens30d",
+      label: t.aiUsage30d,
+      format: formatNumber,
+    },
+    {
+      key: "storageBytes",
+      label: t.storageUsage,
+      format: formatBytes,
+    },
+  ];
+
   return (
     <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-9">
-      {CARDS.map((card) => (
+      {cards.map((card) => (
         <article key={card.key} className="admin-glass rounded-2xl px-3 py-3">
           <p className="text-[10px] font-medium uppercase tracking-[0.14em] text-[var(--admin-muted)]">
             {card.label}

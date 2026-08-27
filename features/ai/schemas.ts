@@ -13,7 +13,7 @@ export const chatRequestSchema = z
     (value) =>
       value.regenerate === true ||
       (typeof value.message === "string" && value.message.trim().length > 0),
-    { message: "A message is required.", path: ["message"] },
+    { message: "message_required", path: ["message"] },
   );
 
 export type ChatRequest = z.infer<typeof chatRequestSchema>;

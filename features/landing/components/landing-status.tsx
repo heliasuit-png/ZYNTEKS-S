@@ -2,38 +2,34 @@
 
 import { CheckCircle2, Clock3, Megaphone } from "lucide-react";
 
+import { useDictionary } from "@/components/i18n/locale-provider";
 import { LandingSection } from "@/features/landing/components/section";
 import { Reveal } from "@/features/landing/components/reveal";
 
+const ITEM_ICONS = [CheckCircle2, Megaphone, Clock3] as const;
+
 export function LandingStatus() {
+  const { dict } = useDictionary();
+  const copy = dict.landing.status;
+  const componentRows = [
+    { name: copy.components.api, degraded: false },
+    { name: copy.components.dashboard, degraded: false },
+    { name: copy.components.notifications, degraded: true },
+    { name: copy.components.statusPage, degraded: false },
+  ] as const;
+
   return (
     <LandingSection
       id="status-pages"
-      eyebrow="Status Pages"
-      title="Keep customers informed without a second product"
-      description="Publish branded public pages with component health, incident history, and uptime windows."
+      eyebrow={copy.eyebrow}
+      title={copy.title}
+      description={copy.desc}
     >
       <div className="grid items-stretch gap-6 lg:grid-cols-2">
         <Reveal>
           <ul className="space-y-4">
-            {[
-              {
-                icon: CheckCircle2,
-                title: "Component health",
-                text: "Show API, dashboard, and third-party systems in one glance.",
-              },
-              {
-                icon: Megaphone,
-                title: "Incident updates",
-                text: "Post investigating → resolved updates that match your internal timeline.",
-              },
-              {
-                icon: Clock3,
-                title: "Uptime windows",
-                text: "Share 24h, 7d, 30d, and 90d availability without exporting spreadsheets.",
-              },
-            ].map((item) => {
-              const Icon = item.icon;
+            {copy.items.map((item, index) => {
+              const Icon = ITEM_ICONS[index] ?? CheckCircle2;
               return (
                 <li
                   key={item.title}
@@ -54,26 +50,24 @@ export function LandingStatus() {
           <div className="rounded-2xl border border-zt-border bg-[#08101c] p-5">
             <div className="flex items-center justify-between">
               <p className="font-[family-name:var(--font-landing-display)] text-lg font-semibold text-zt-text">
-                status.yourproduct.com
+                {copy.demoHost}
               </p>
               <span className="rounded-full bg-zt-success/15 px-2.5 py-1 text-xs text-zt-success">
-                All systems operational
+                {copy.allOperational}
               </span>
             </div>
             <div className="mt-5 space-y-3">
-              {["API", "Dashboard", "Notifications", "Status page"].map(
-                (name, index) => (
-                  <div
-                    key={name}
-                    className="flex items-center justify-between rounded-xl border border-white/8 px-3 py-2.5 text-sm"
-                  >
-                    <span className="text-zt-text">{name}</span>
-                    <span className="text-zt-success">
-                      {index === 2 ? "Degraded" : "Operational"}
-                    </span>
-                  </div>
-                ),
-              )}
+              {componentRows.map((row) => (
+                <div
+                  key={row.name}
+                  className="flex items-center justify-between rounded-xl border border-white/8 px-3 py-2.5 text-sm"
+                >
+                  <span className="text-zt-text">{row.name}</span>
+                  <span className="text-zt-success">
+                    {row.degraded ? copy.degraded : copy.operational}
+                  </span>
+                </div>
+              ))}
             </div>
           </div>
         </Reveal>

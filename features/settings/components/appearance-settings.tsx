@@ -2,6 +2,7 @@
 
 import { useActionState, useEffect } from "react";
 
+import { useDictionary } from "@/components/i18n/locale-provider";
 import {
   Panel,
   PanelContent,
@@ -30,6 +31,10 @@ export function AppearanceSettings({
 }: {
   preferences: AppearancePreferences;
 }) {
+  const { dict } = useDictionary();
+  const t = dict.dash.settings.appearance;
+  const common = dict.dashboardCommon;
+
   const [state, action, pending] = useActionState(
     updateAppearanceAction,
     initialSettingsActionState,
@@ -43,11 +48,8 @@ export function AppearanceSettings({
     <FadeIn>
       <Panel>
         <PanelHeader>
-          <PanelTitle>Appearance</PanelTitle>
-          <PanelDescription>
-            Theme, accent color, motion, sidebar style and density. Saved to your
-            account and this device.
-          </PanelDescription>
+          <PanelTitle>{t.title}</PanelTitle>
+          <PanelDescription>{t.desc}</PanelDescription>
         </PanelHeader>
         <PanelContent>
           <form
@@ -73,19 +75,19 @@ export function AppearanceSettings({
           >
             <div className="grid gap-3 sm:grid-cols-2">
               <label className="space-y-1 text-xs text-zt-muted">
-                Theme
+                {t.theme}
                 <select
                   name="theme"
                   defaultValue={preferences.theme}
                   className={inputClass}
                 >
-                  <option value="dark">Dark</option>
-                  <option value="light">Light</option>
-                  <option value="system">System</option>
+                  <option value="dark">{t.themeDark}</option>
+                  <option value="light">{t.themeLight}</option>
+                  <option value="system">{t.themeSystem}</option>
                 </select>
               </label>
               <label className="space-y-1 text-xs text-zt-muted">
-                Accent color
+                {t.accentColor}
                 <select
                   name="accent"
                   defaultValue={preferences.accent}
@@ -93,32 +95,32 @@ export function AppearanceSettings({
                 >
                   {ACCENT_PRESETS.map((accent) => (
                     <option key={accent.id} value={accent.id}>
-                      {accent.label}
+                      {t.accents[accent.id]}
                     </option>
                   ))}
                 </select>
               </label>
               <label className="space-y-1 text-xs text-zt-muted">
-                Sidebar style
+                {t.sidebar}
                 <select
                   name="sidebarStyle"
                   defaultValue={preferences.sidebarStyle}
                   className={inputClass}
                 >
-                  <option value="expanded">Expanded</option>
-                  <option value="collapsed">Collapsed</option>
-                  <option value="icons">Icons</option>
+                  <option value="expanded">{t.sidebarExpanded}</option>
+                  <option value="collapsed">{t.sidebarCollapsed}</option>
+                  <option value="icons">{t.sidebarIcons}</option>
                 </select>
               </label>
               <label className="space-y-1 text-xs text-zt-muted">
-                Density
+                {t.density}
                 <select
                   name="density"
                   defaultValue={preferences.density}
                   className={inputClass}
                 >
-                  <option value="comfortable">Comfortable</option>
-                  <option value="compact">Compact</option>
+                  <option value="comfortable">{t.densityComfortable}</option>
+                  <option value="compact">{t.densityCompact}</option>
                 </select>
               </label>
             </div>
@@ -129,11 +131,11 @@ export function AppearanceSettings({
                 defaultChecked={preferences.reducedMotion}
                 className="size-4 accent-zt-primary"
               />
-              Reduced motion
+              {t.reducedMotion}
             </label>
             <div className="flex items-center gap-3">
               <button type="submit" disabled={pending} className={buttonClass}>
-                {pending ? "Saving…" : "Save appearance"}
+                {pending ? common.saving : t.saveAppearance}
               </button>
               {state.message ? (
                 <span

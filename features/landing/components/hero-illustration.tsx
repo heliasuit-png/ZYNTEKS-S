@@ -2,9 +2,25 @@
 
 import { motion, useReducedMotion } from "framer-motion";
 
+import { useDictionary } from "@/components/i18n/locale-provider";
+
 /** Premium product illustration — CSS/SVG composition, no external assets. */
 export function HeroIllustration() {
   const reduce = useReducedMotion();
+  const { dict } = useDictionary();
+  const labels = dict.landing.heroIllustration;
+  const navItems = [
+    labels.navDashboard,
+    labels.navErrors,
+    labels.navHealth,
+    labels.navAi,
+    labels.navStatus,
+  ] as const;
+  const stats = [
+    { label: labels.uptime, value: "99.98%" },
+    { label: labels.errors, value: "12" },
+    { label: labels.latency, value: "84ms" },
+  ] as const;
 
   return (
     <div className="relative mx-auto w-full max-w-5xl">
@@ -23,13 +39,13 @@ export function HeroIllustration() {
           <span className="size-2.5 rounded-full bg-[#febc2e]" />
           <span className="size-2.5 rounded-full bg-[#28c840]" />
           <span className="ml-3 text-xs text-zt-muted">
-            ZYNTEKSIS · Operations console
+            {labels.consoleLabel}
           </span>
         </div>
 
         <div className="grid gap-4 p-4 sm:grid-cols-[180px_1fr] sm:p-5">
           <aside className="hidden space-y-2 rounded-xl border border-white/8 bg-white/[0.03] p-3 sm:block">
-            {["Dashboard", "Errors", "Health", "AI", "Status"].map((item, i) => (
+            {navItems.map((item, i) => (
               <div
                 key={item}
                 className={`rounded-lg px-3 py-2 text-xs ${
@@ -45,11 +61,7 @@ export function HeroIllustration() {
 
           <div className="space-y-4">
             <div className="grid grid-cols-3 gap-3">
-              {[
-                { label: "Uptime", value: "99.98%" },
-                { label: "Errors", value: "12" },
-                { label: "Latency", value: "84ms" },
-              ].map((stat, index) => (
+              {stats.map((stat, index) => (
                 <motion.div
                   key={stat.label}
                   className="rounded-xl border border-white/8 bg-white/[0.03] p-3"
@@ -77,16 +89,16 @@ export function HeroIllustration() {
 
             <div className="rounded-xl border border-white/8 bg-gradient-to-br from-white/[0.04] to-transparent p-4">
               <div className="mb-3 flex items-center justify-between">
-                <p className="text-xs text-zt-muted">Incident timeline</p>
+                <p className="text-xs text-zt-muted">{labels.incidentTimeline}</p>
                 <span className="rounded-full bg-zt-success/15 px-2 py-0.5 text-[10px] text-zt-success">
-                  Stable
+                  {labels.stable}
                 </span>
               </div>
               <svg
                 viewBox="0 0 520 120"
                 className="h-24 w-full text-zt-primary"
                 role="img"
-                aria-label="Decorative monitoring chart"
+                aria-label={labels.chartAria}
               >
                 <defs>
                   <linearGradient id="heroFill" x1="0" y1="0" x2="0" y2="1">

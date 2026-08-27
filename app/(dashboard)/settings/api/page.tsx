@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 
 import { PageHeader } from "@/components/dashboard/page-header";
 import { ROUTES } from "@/lib/constants";
+import { getDictionary } from "@/lib/i18n/get-dictionary";
 import {
   getPlanLimits,
   getSubscriptionPlan,
@@ -12,9 +13,15 @@ import { getNotificationPreferences } from "@/services/notifications";
 import { createSupabaseServerClient } from "@/supabase/server";
 import { ApiSettingsPanel } from "@/features/settings/components/api-settings";
 
-export const metadata: Metadata = { title: "API Settings" };
+export async function generateMetadata(): Promise<Metadata> {
+  const { dict } = await getDictionary();
+  return { title: dict.dashboard.settingsSections.api.title };
+}
 
 export default async function ApiSettingsPage() {
+  const { dict } = await getDictionary();
+  const section = dict.dashboard.settingsSections.api;
+  const apiCopy = dict.dash.settings.api;
   const supabase = await createSupabaseServerClient();
   const user = await getAuthenticatedUser(supabase);
   if (!user) redirect(ROUTES.login);
@@ -34,16 +41,13 @@ export default async function ApiSettingsPage() {
   ]);
 
   const webhookParts = [
-    prefs?.slack_enabled ? "Slack enabled" : "Slack off",
-    prefs?.discord_enabled ? "Discord enabled" : "Discord off",
+    prefs?.slack_enabled ? apiCopy.slackEnabled : apiCopy.slackOff,
+    prefs?.discord_enabled ? apiCopy.discordEnabled : apiCopy.discordOff,
   ];
 
   return (
     <div className="space-y-6">
-      <PageHeader
-        title="API settings"
-        description="API keys, SDK keys, webhooks and plan rate limits."
-      />
+      <PageHeader title={section.title} description={section.description} />
       <ApiSettingsPanel
         activeKeyCount={activeKeys.count ?? 0}
         totalKeyCount={allKeys.count ?? 0}

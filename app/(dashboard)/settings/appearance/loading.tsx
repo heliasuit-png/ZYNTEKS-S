@@ -1,4 +1,8 @@
-export default function AppearanceSettingsLoading() {
+import { getDictionary } from "@/lib/i18n/get-dictionary";
+
+export default async function AppearanceSettingsLoading() {
+  const { dict } = await getDictionary();
+
   return (
     <div className="space-y-6" role="status" aria-live="polite">
       <div className="space-y-2">
@@ -6,7 +10,7 @@ export default function AppearanceSettingsLoading() {
         <div className="h-4 w-96 max-w-full animate-pulse rounded-lg bg-zt-surface-2" />
       </div>
       <div className="h-72 animate-pulse rounded-2xl border border-zt-border bg-zt-surface" />
-      <span className="sr-only">Loading appearance settings…</span>
+      <span className="sr-only">{dict.dashboardCommon.loadingStates.appearance}</span>
     </div>
   );
 }

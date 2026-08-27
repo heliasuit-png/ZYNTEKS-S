@@ -11,6 +11,8 @@ import {
   TrendingUp,
 } from "lucide-react";
 
+import { useDictionary } from "@/components/i18n/locale-provider";
+import { fillTemplate } from "@/lib/i18n/fill-template";
 import { Badge } from "@/components/dashboard/badge";
 import type { BadgeProps } from "@/components/dashboard/badge";
 import {
@@ -67,6 +69,9 @@ function scoreBarColor(value: number): string {
 }
 
 export function InsightsView({ projects, selectedId, data }: InsightsViewProps) {
+  const { dict, locale } = useDictionary();
+  const t = dict.dash.insights;
+  const health = dict.dash.health;
   const router = useRouter();
   const [tab, setTab] = useState<"executive" | "developer" | "weekly">(
     "executive",
@@ -74,11 +79,11 @@ export function InsightsView({ projects, selectedId, data }: InsightsViewProps) 
 
   const subScores = useMemo(
     () => [
-      { label: "Reliability", value: data.scores.reliability },
-      { label: "Availability", value: data.scores.availability },
-      { label: "Performance", value: data.scores.performance },
-      { label: "Security", value: data.scores.security },
-      { label: "Maintainability", value: data.scores.maintainability },
+      { label: health.reliability, value: data.scores.reliability },
+      { label: health.availability, value: data.scores.availability },
+      { label: health.performance, value: data.scores.performance },
+      { label: t.security, value: data.scores.security },
+      { label: t.maintainability, value: data.scores.maintainability },
     ],
     [data.scores],
   );
@@ -104,7 +109,7 @@ export function InsightsView({ projects, selectedId, data }: InsightsViewProps) 
           <div
             className="flex flex-wrap items-center gap-2"
             role="tablist"
-            aria-label="Projects"
+            aria-label={t.projectsAria}
           >
             {projects.map((p) => (
               <button
@@ -139,7 +144,7 @@ export function InsightsView({ projects, selectedId, data }: InsightsViewProps) 
               className="flex items-center gap-1.5 rounded-full border border-zt-border bg-white/[0.02] px-3 py-1.5 text-xs font-medium text-zt-muted transition-colors hover:text-zt-text"
             >
               <RefreshCw className="size-3.5" aria-hidden />
-              Refresh
+              {t.refresh}
             </button>
           </div>
         </div>
@@ -149,10 +154,9 @@ export function InsightsView({ projects, selectedId, data }: InsightsViewProps) 
         <Panel>
           <PanelHeader>
             <div>
-              <PanelTitle>Project Health Engine</PanelTitle>
+              <PanelTitle>{t.engineTitle}</PanelTitle>
               <p className="mt-1 text-xs text-zt-muted">
-                Computed {formatRelativeTime(data.generatedAt)} from recorded
-                telemetry.
+                {t.engineDesc} ({formatRelativeTime(data.generatedAt, undefined, locale)})
               </p>
             </div>
             <Badge tone={trendTone}>
@@ -171,10 +175,10 @@ export function InsightsView({ projects, selectedId, data }: InsightsViewProps) 
                 >
                   <CountUp value={data.scores.overall} />
                 </span>
-                <span className="text-xs text-zt-muted">Overall health</span>
+                <span className="text-xs text-zt-muted">{t.overallHealth}</span>
               </CircularProgress>
               <p className="text-xs text-zt-muted">
-                vs {data.trend.comparedTo}
+                {t.vsCompared.replace("{comparedTo}", data.trend.comparedTo)}
               </p>
             </div>
             <div className="grid w-full flex-1 gap-4 sm:grid-cols-2">
@@ -197,7 +201,9 @@ export function InsightsView({ projects, selectedId, data }: InsightsViewProps) 
                       aria-valuenow={s.value}
                       aria-valuemin={0}
                       aria-valuemax={100}
-                      aria-label={`${s.label} score`}
+                      aria-label={fillTemplate(t.scoreAria, {
+                        label: s.label,
+                      })}
                     />
                   </div>
                 </div>
@@ -211,12 +217,12 @@ export function InsightsView({ projects, selectedId, data }: InsightsViewProps) 
         <FadeIn delay={0.1}>
           <Panel className="h-full">
             <PanelHeader>
-              <PanelTitle>Project insights</PanelTitle>
+              <PanelTitle>{t.projectInsights}</PanelTitle>
               <Badge tone="default">{data.insights.length}</Badge>
             </PanelHeader>
             <PanelContent className="space-y-3">
               {data.insights.length === 0 ? (
-                <EmptyLine text="No insights yet — telemetry will populate this as it arrives." />
+                <EmptyLine text={t.noInsights} />
               ) : (
                 data.insights.map((insight) => (
                   <InsightRow key={insight.id} insight={insight} />
@@ -229,7 +235,7 @@ export function InsightsView({ projects, selectedId, data }: InsightsViewProps) 
         <FadeIn delay={0.15}>
           <Panel className="h-full">
             <PanelHeader>
-              <PanelTitle>AI recommendations</PanelTitle>
+              <PanelTitle>{t.aiRecommendations}</PanelTitle>
               <Badge tone="primary">
                 <Lightbulb className="size-3.5" aria-hidden />
                 {data.recommendations.length}
@@ -237,7 +243,7 @@ export function InsightsView({ projects, selectedId, data }: InsightsViewProps) 
             </PanelHeader>
             <PanelContent className="space-y-3">
               {data.recommendations.length === 0 ? (
-                <EmptyLine text="No action required right now. Recommendations appear when the engine detects issues." />
+                <EmptyLine text={t.noRecommendations} />
               ) : (
                 data.recommendations.map((rec) => (
                   <RecommendationRow key={rec.id} rec={rec} />
@@ -251,12 +257,12 @@ export function InsightsView({ projects, selectedId, data }: InsightsViewProps) 
       <FadeIn delay={0.2}>
         <Panel>
           <PanelHeader>
-            <PanelTitle>Smart correlation</PanelTitle>
+            <PanelTitle>{t.smartCorrelation}</PanelTitle>
             <Badge tone="default">{data.correlations.length}</Badge>
           </PanelHeader>
           <PanelContent className="space-y-4">
             {data.correlations.length === 0 ? (
-              <EmptyLine text="No correlated event chains detected. The engine links errors, deployments, heartbeats and incidents when they align in time." />
+              <EmptyLine text={t.noCorrelated} />
             ) : (
               data.correlations.map((c) => (
                 <CorrelationRow key={c.id} correlation={c} />
@@ -269,12 +275,12 @@ export function InsightsView({ projects, selectedId, data }: InsightsViewProps) 
       <FadeIn delay={0.25}>
         <Panel>
           <PanelHeader>
-            <PanelTitle>Smart timeline</PanelTitle>
-            <Badge tone="default">{data.timeline.length} events</Badge>
+            <PanelTitle>{t.smartTimeline}</PanelTitle>
+            <Badge tone="default">{t.eventsCount.replace("{count}", String(data.timeline.length))}</Badge>
           </PanelHeader>
           <PanelContent>
             {data.timeline.length === 0 ? (
-              <EmptyLine text="No events recorded yet." />
+              <EmptyLine text={t.noEvents} />
             ) : (
               <ol className="relative space-y-1 pl-2">
                 {data.timeline.map((event) => (
@@ -289,11 +295,11 @@ export function InsightsView({ projects, selectedId, data }: InsightsViewProps) 
       <FadeIn delay={0.3}>
         <Panel>
           <PanelHeader className="flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <PanelTitle>Summaries &amp; reports</PanelTitle>
+            <PanelTitle>{t.summariesTitle}</PanelTitle>
             <div
               className="flex items-center gap-1 rounded-full border border-zt-border bg-white/[0.02] p-1"
               role="tablist"
-              aria-label="Summary type"
+              aria-label={t.summaryTypeAria}
             >
               {(["executive", "developer", "weekly"] as const).map((key) => (
                 <button
@@ -309,7 +315,11 @@ export function InsightsView({ projects, selectedId, data }: InsightsViewProps) 
                       : "text-zt-muted hover:text-zt-text",
                   )}
                 >
-                  {key === "weekly" ? "Weekly report" : key}
+                  {key === "weekly"
+                    ? t.weeklyReport
+                    : key === "executive"
+                      ? t.executiveSummary
+                      : t.developerSummary}
                 </button>
               ))}
             </div>
@@ -318,7 +328,7 @@ export function InsightsView({ projects, selectedId, data }: InsightsViewProps) 
             {tab === "executive" ? (
               <div className="space-y-3">
                 <p className="text-xs font-medium uppercase tracking-wide text-zt-muted">
-                  Executive summary — for managers
+                  {t.executiveSummary}
                 </p>
                 <p className="text-sm leading-relaxed text-zt-text">
                   {data.summaries.executive}

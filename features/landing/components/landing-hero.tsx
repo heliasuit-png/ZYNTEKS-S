@@ -4,12 +4,14 @@ import Link from "next/link";
 import { motion, useReducedMotion } from "framer-motion";
 import { ArrowRight } from "lucide-react";
 
+import { useDictionary } from "@/components/i18n/locale-provider";
 import { ROUTES } from "@/lib/constants";
-import { LANDING_COPY } from "@/features/landing/data/content";
 import { HeroIllustration } from "@/features/landing/components/hero-illustration";
 
 export function LandingHero() {
   const reduce = useReducedMotion();
+  const { dict } = useDictionary();
+  const hero = dict.landing.hero;
 
   return (
     <section className="relative overflow-hidden px-5 pb-16 pt-14 sm:px-8 sm:pb-24 sm:pt-20">
@@ -21,7 +23,7 @@ export function LandingHero() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.45 }}
           >
-            {LANDING_COPY.brand}
+            {hero.brand}
           </motion.p>
           <motion.h1
             className="mt-4 font-[family-name:var(--font-landing-display)] text-4xl font-semibold tracking-tight text-zt-text sm:text-6xl sm:leading-[1.05]"
@@ -29,7 +31,7 @@ export function LandingHero() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.55, delay: 0.05 }}
           >
-            {LANDING_COPY.headline}
+            {hero.headline}
           </motion.h1>
           <motion.p
             className="mx-auto mt-5 max-w-2xl text-base leading-relaxed text-zt-muted sm:text-lg"
@@ -37,7 +39,7 @@ export function LandingHero() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.55, delay: 0.1 }}
           >
-            {LANDING_COPY.subheadline}
+            {hero.subheadline}
           </motion.p>
           <motion.div
             className="mt-8 flex flex-wrap items-center justify-center gap-3"
@@ -49,14 +51,14 @@ export function LandingHero() {
               href={ROUTES.register}
               className="inline-flex h-12 items-center gap-2 rounded-xl bg-zt-primary px-5 text-sm font-semibold text-[#041018] transition-transform hover:-translate-y-0.5 hover:bg-zt-primary/90"
             >
-              {LANDING_COPY.primaryCta}
+              {hero.primaryCta}
               <ArrowRight className="size-4" aria-hidden />
             </Link>
             <a
               href="#how-it-works"
               className="inline-flex h-12 items-center rounded-xl border border-zt-border px-5 text-sm font-medium text-zt-text transition-colors hover:border-zt-border-strong hover:bg-white/[0.03]"
             >
-              {LANDING_COPY.secondaryCta}
+              {hero.secondaryCta}
             </a>
           </motion.div>
         </div>

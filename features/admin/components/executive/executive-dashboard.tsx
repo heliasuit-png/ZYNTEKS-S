@@ -1,6 +1,10 @@
+"use client";
+
 import type { ExecutiveDashboardData } from "@/services/admin/executive-dashboard.types";
 import { hasAdminPermission } from "@/services/admin/permissions";
 import type { AdminPlatformRole } from "@/services/admin/types";
+import { useDictionary } from "@/components/i18n/locale-provider";
+import { fillTemplate } from "@/lib/i18n/fill-template";
 import { MetricCard } from "@/features/admin/components/executive/metric-card";
 import { SectionCard } from "@/features/admin/components/executive/section-card";
 import { RangeTabs } from "@/features/admin/components/executive/range-tabs";
@@ -21,48 +25,73 @@ interface ExecutiveDashboardProps {
   role: AdminPlatformRole;
 }
 
+const QUICK_ACTION_KEY: Record<
+  string,
+  "createAdmin" | "broadcast" | "maintenance" | "generateKey" | "monitoring" | "security"
+> = {
+  "create-admin": "createAdmin",
+  broadcast: "broadcast",
+  maintenance: "maintenance",
+  "generate-key": "generateKey",
+  monitoring: "monitoring",
+  security: "security",
+};
+
 export function ExecutiveDashboard({ data, role }: ExecutiveDashboardProps) {
+  const { dict, locale } = useDictionary();
+  const t = dict.admin.executive;
+  const common = dict.admin.common;
+  const shell = dict.admin.shell;
   const { kpis } = data;
 
   const kpiCards = [
-    { label: "Total Users", value: formatNumber(kpis.totalUsers) },
+    { label: t.metrics.totalUsers, value: formatNumber(kpis.totalUsers) },
     {
-      label: "Active Users (24h)",
+      label: t.metrics.activeUsers24h,
       value: formatNumber(kpis.activeUsers24h),
-      hint: "Distinct sessions",
+      hint: t.metrics.activeUsersHint,
     },
-    { label: "Total Workspaces", value: formatNumber(kpis.totalWorkspaces) },
-    { label: "Total Projects", value: formatNumber(kpis.totalProjects) },
+    { label: t.metrics.totalWorkspaces, value: formatNumber(kpis.totalWorkspaces) },
+    { label: t.metrics.totalProjects, value: formatNumber(kpis.totalProjects) },
     {
-      label: "Total API Keys",
+      label: t.metrics.totalApiKeys,
       value: formatNumber(kpis.totalApiKeys),
-      hint: "Active keys",
+      hint: t.metrics.totalApiKeysHint,
     },
-    { label: "AI Requests Today", value: formatNumber(kpis.aiRequestsToday) },
-    { label: "Errors Today", value: formatNumber(kpis.errorsToday) },
+    { label: t.metrics.aiRequestsToday, value: formatNumber(kpis.aiRequestsToday) },
+    { label: t.metrics.errorsToday, value: formatNumber(kpis.errorsToday) },
     {
-      label: "Incidents",
+      label: t.metrics.incidents,
       value: formatNumber(kpis.openIncidents),
-      hint: "Not resolved",
+      hint: t.metrics.incidentsHint,
     },
     {
-      label: "Average Response Time",
+      label: t.metrics.averageResponseTime,
       value: formatMs(kpis.averageResponseTimeMs),
-      hint: "Client TTFB (24h)",
+      hint: t.metrics.averageResponseTimeHint,
     },
     {
-      label: "Uptime",
+      label: t.metrics.uptime,
       value: formatPercent(kpis.uptimePercent30d),
-      hint: "30d from incidents",
+      hint: t.metrics.uptimeHint,
     },
   ];
+
+  const usageDesc =
+    data.range === "24h"
+      ? t.usageChartsDesc24h
+      : data.range === "7d"
+        ? t.usageChartsDesc7d
+        : t.usageChartsDesc30d;
 
   return (
     <div className="space-y-5">
       <AdminPageHeader
-        eyebrow="Control plane"
-        title="Executive Dashboard"
-        description={`Live platform telemetry · generated ${formatWhen(data.generatedAt)}`}
+        eyebrow={t.eyebrow}
+        title={t.title}
+        description={fillTemplate(t.description, {
+          when: formatWhen(data.generatedAt),
+        })}
         actions={<RangeTabs range={data.range} />}
       />
 
@@ -80,14 +109,14 @@ export function ExecutiveDashboard({ data, role }: ExecutiveDashboardProps) {
 
       <div className="grid gap-4 xl:grid-cols-5">
         <SectionCard
-          title="Live Activity"
-          description="Newest platform events first"
+          title={t.liveActivity}
+          description={t.liveActivityDesc}
           className="xl:col-span-3"
         >
           <ul className="max-h-[28rem] space-y-2 overflow-y-auto pr-1">
             {data.activity.length === 0 ? (
               <li className="text-sm text-[var(--admin-muted)]">
-                No recent activity in the last 14 days.
+                {t.liveActivityEmpty}
               </li>
             ) : (
               data.activity.map((item) => (
@@ -98,7 +127,7 @@ export function ExecutiveDashboard({ data, role }: ExecutiveDashboardProps) {
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
                       <p className="text-sm font-medium text-[var(--admin-text)]">
-                        {item.title}
+                        {t.activity[item.kind] ?? item.title}
                       </p>
                       <p className="truncate text-xs text-[var(--admin-muted)]">
                         {item.description}
@@ -108,7 +137,7 @@ export function ExecutiveDashboard({ data, role }: ExecutiveDashboardProps) {
                       className="shrink-0 text-[11px] text-[var(--admin-muted)]"
                       dateTime={item.occurredAt}
                     >
-                      {formatRelative(item.occurredAt)}
+                      {formatRelative(item.occurredAt, locale)}
                     </time>
                   </div>
                 </li>
@@ -118,8 +147,8 @@ export function ExecutiveDashboard({ data, role }: ExecutiveDashboardProps) {
         </SectionCard>
 
         <SectionCard
-          title="Monitoring Summary"
-          description="Live subsystem probes"
+          title={t.monitoringSummary}
+          description={t.monitoringSummaryDesc}
           className="xl:col-span-2"
         >
           <ul className="space-y-2">
@@ -131,11 +160,9 @@ export function ExecutiveDashboard({ data, role }: ExecutiveDashboardProps) {
                 <HealthDot tone={item.tone} />
                 <div className="min-w-0">
                   <p className="text-sm font-medium text-[var(--admin-text)]">
-                    {item.label}
+                    {t.monitoringLabels[item.id] ?? item.label}
                   </p>
-                  <p className="text-xs text-[var(--admin-muted)]">
-                    {item.detail}
-                  </p>
+                  <p className="text-xs text-[var(--admin-muted)]">{item.detail}</p>
                 </div>
               </li>
             ))}
@@ -143,31 +170,25 @@ export function ExecutiveDashboard({ data, role }: ExecutiveDashboardProps) {
         </SectionCard>
       </div>
 
-      <SectionCard
-        title="Usage Charts"
-        description={`Series for ${data.range === "24h" ? "the last 24 hours" : data.range === "7d" ? "the last 7 days" : "the last 30 days"}`}
-      >
+      <SectionCard title={t.usageCharts} description={usageDesc}>
         <UsageChart data={data.usage} />
       </SectionCard>
 
       <div className="grid gap-4 lg:grid-cols-2">
         <SectionCard
-          title="Geographic Usage"
-          description="Top countries from session geo headers"
+          title={t.geographicUsage}
+          description={t.geographicUsageDesc}
         >
           {data.geography.countries.length === 0 ? (
-            <p className="text-sm text-[var(--admin-muted)]">
-              No country data yet. Sessions populate country when the host
-              provides geo headers (e.g. Vercel).
-            </p>
+            <p className="text-sm text-[var(--admin-muted)]">{t.geographicEmpty}</p>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-left text-sm">
                 <thead className="text-[11px] uppercase tracking-wider text-[var(--admin-muted)]">
                   <tr>
-                    <th className="pb-2 font-medium">Country</th>
-                    <th className="pb-2 font-medium">Sessions</th>
-                    <th className="pb-2 font-medium">Users</th>
+                    <th className="pb-2 font-medium">{t.country}</th>
+                    <th className="pb-2 font-medium">{t.sessions}</th>
+                    <th className="pb-2 font-medium">{t.users}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -176,9 +197,7 @@ export function ExecutiveDashboard({ data, role }: ExecutiveDashboardProps) {
                       key={row.country}
                       className="border-t border-[var(--admin-border)]"
                     >
-                      <td className="py-2 text-[var(--admin-text)]">
-                        {row.country}
-                      </td>
+                      <td className="py-2 text-[var(--admin-text)]">{row.country}</td>
                       <td className="py-2 text-[var(--admin-muted)]">
                         {formatNumber(row.sessions)}
                       </td>
@@ -191,19 +210,18 @@ export function ExecutiveDashboard({ data, role }: ExecutiveDashboardProps) {
               </table>
             </div>
           )}
-          <p className="mt-3 text-xs text-[var(--admin-muted)]">
-            {data.geography.cityNote}
-          </p>
+          <p className="mt-3 text-xs text-[var(--admin-muted)]">{t.cityNote}</p>
         </SectionCard>
 
-        <SectionCard
-          title="Quick Actions"
-          description="Actions unlock as admin modules ship"
-        >
+        <SectionCard title={t.quickActions} description={t.quickActionsDesc}>
           <div className="grid gap-2 sm:grid-cols-2">
             {data.quickActions.map((action) => {
               const allowed = hasAdminPermission(role, action.permission);
               const interactive = action.enabled && allowed && action.href;
+              const qaKey = QUICK_ACTION_KEY[action.id];
+              const qa = qaKey ? t.quickActionItems[qaKey] : null;
+              const label = qa?.label ?? action.label;
+              const description = qa?.description ?? action.description;
               if (interactive && action.href) {
                 return (
                   <a
@@ -212,10 +230,10 @@ export function ExecutiveDashboard({ data, role }: ExecutiveDashboardProps) {
                     className="admin-accent-ring rounded-xl border border-[var(--admin-border-strong)] bg-[var(--admin-accent-soft)] px-3 py-3 transition-opacity hover:opacity-90"
                   >
                     <p className="text-sm font-medium text-[var(--admin-text)]">
-                      {action.label}
+                      {label}
                     </p>
                     <p className="mt-1 text-xs text-[var(--admin-muted)]">
-                      {action.description}
+                      {description}
                     </p>
                   </a>
                 );
@@ -226,16 +244,16 @@ export function ExecutiveDashboard({ data, role }: ExecutiveDashboardProps) {
                   className="cursor-not-allowed rounded-xl border border-[var(--admin-border)] bg-[var(--admin-surface)] px-3 py-3 opacity-45"
                   title={
                     !allowed
-                      ? "Insufficient permissions"
-                      : "Available in a later phase"
+                      ? shell.insufficientPermissions
+                      : shell.availableLater
                   }
                   aria-disabled="true"
                 >
                   <p className="text-sm font-medium text-[var(--admin-text)]">
-                    {action.label}
+                    {label}
                   </p>
                   <p className="mt-1 text-xs text-[var(--admin-muted)]">
-                    {action.description}
+                    {description}
                   </p>
                 </div>
               );
@@ -246,13 +264,13 @@ export function ExecutiveDashboard({ data, role }: ExecutiveDashboardProps) {
 
       <div className="grid gap-4 xl:grid-cols-2">
         <SectionCard
-          title="Security Overview"
-          description="API key auth failures and platform signals"
+          title={t.securityOverview}
+          description={t.securityOverviewDesc}
         >
           <div className="mb-4 grid grid-cols-2 gap-2">
             <div className="rounded-xl border border-[var(--admin-border)] bg-[var(--admin-surface)] px-3 py-2">
               <p className="text-[11px] uppercase tracking-wider text-[var(--admin-muted)]">
-                Failed key auth (24h)
+                {t.failedKeyAuth24h}
               </p>
               <p className="mt-1 text-xl font-semibold text-[var(--admin-text)]">
                 {formatNumber(data.security.failedApiKeyAuth24h)}
@@ -260,23 +278,19 @@ export function ExecutiveDashboard({ data, role }: ExecutiveDashboardProps) {
             </div>
             <div className="rounded-xl border border-[var(--admin-border)] bg-[var(--admin-surface)] px-3 py-2">
               <p className="text-[11px] uppercase tracking-wider text-[var(--admin-muted)]">
-                Suspicious signals
+                {t.suspiciousSignals}
               </p>
               <p className="mt-1 text-xl font-semibold text-[var(--admin-text)]">
                 {formatNumber(data.security.suspiciousCount24h)}
               </p>
             </div>
           </div>
-          <p className="mb-2 text-xs text-[var(--admin-muted)]">
-            {data.security.blockedSignal}
-          </p>
-          <p className="mb-3 text-xs text-[var(--admin-muted)]">
-            {data.security.rateLimitNote}
-          </p>
+          <p className="mb-2 text-xs text-[var(--admin-muted)]">{t.blockedSignal}</p>
+          <p className="mb-3 text-xs text-[var(--admin-muted)]">{t.rateLimitNote}</p>
           <ul className="max-h-56 space-y-2 overflow-y-auto">
             {data.security.newest.length === 0 ? (
               <li className="text-sm text-[var(--admin-muted)]">
-                No failed API key authentications in the last 24 hours.
+                {t.failedAuthEmpty}
               </li>
             ) : (
               data.security.newest.map((event) => (
@@ -284,9 +298,14 @@ export function ExecutiveDashboard({ data, role }: ExecutiveDashboardProps) {
                   key={event.id}
                   className="rounded-lg border border-[var(--admin-border)] px-3 py-2 text-sm"
                 >
-                  <p className="text-[var(--admin-text)]">{event.title}</p>
+                  <p className="text-[var(--admin-text)]">{t.authFailedTitle}</p>
                   <p className="text-xs text-[var(--admin-muted)]">
-                    {event.detail} · {formatRelative(event.occurredAt)}
+                    {event.detail.startsWith("IP ")
+                      ? fillTemplate(t.ipDetail, {
+                          ip: event.detail.slice(3),
+                        })
+                      : common.ipUnknown}{" "}
+                    · {formatRelative(event.occurredAt, locale)}
                   </p>
                 </li>
               ))
@@ -294,34 +313,37 @@ export function ExecutiveDashboard({ data, role }: ExecutiveDashboardProps) {
           </ul>
         </SectionCard>
 
-        <SectionCard title="Recent Incidents" description="By lifecycle status">
-          <IncidentGroup title="Open" items={data.incidents.open} />
+        <SectionCard
+          title={t.recentIncidents}
+          description={t.recentIncidentsDesc}
+        >
+          <IncidentGroup title={t.incidentOpen} items={data.incidents.open} none={common.none} />
           <IncidentGroup
-            title="Monitoring"
+            title={t.incidentMonitoring}
             items={data.incidents.monitoring}
+            none={common.none}
           />
-          <IncidentGroup title="Resolved" items={data.incidents.resolved} />
+          <IncidentGroup
+            title={t.incidentResolved}
+            items={data.incidents.resolved}
+            none={common.none}
+          />
         </SectionCard>
       </div>
 
       <div className="grid gap-4 xl:grid-cols-2">
-        <SectionCard
-          title="API Overview"
-          description="Top URLs from performance + error ingest"
-        >
+        <SectionCard title={t.apiOverview} description={t.apiOverviewDesc}>
           {data.api.length === 0 ? (
-            <p className="text-sm text-[var(--admin-muted)]">
-              No endpoint traffic in this range.
-            </p>
+            <p className="text-sm text-[var(--admin-muted)]">{t.apiEmpty}</p>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-left text-sm">
                 <thead className="text-[11px] uppercase tracking-wider text-[var(--admin-muted)]">
                   <tr>
-                    <th className="pb-2 font-medium">Endpoint</th>
-                    <th className="pb-2 font-medium">Traffic</th>
-                    <th className="pb-2 font-medium">Failures</th>
-                    <th className="pb-2 font-medium">Latency</th>
+                    <th className="pb-2 font-medium">{t.endpoint}</th>
+                    <th className="pb-2 font-medium">{t.traffic}</th>
+                    <th className="pb-2 font-medium">{t.failures}</th>
+                    <th className="pb-2 font-medium">{t.latency}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -350,14 +372,11 @@ export function ExecutiveDashboard({ data, role }: ExecutiveDashboardProps) {
           )}
         </SectionCard>
 
-        <SectionCard
-          title="AI Overview"
-          description="Usage from ai_usage metering"
-        >
+        <SectionCard title={t.aiOverview} description={t.aiOverviewDesc}>
           <div className="mb-4 grid grid-cols-2 gap-2">
             <div className="rounded-xl border border-[var(--admin-border)] bg-[var(--admin-surface)] px-3 py-2">
               <p className="text-[11px] uppercase tracking-wider text-[var(--admin-muted)]">
-                Requests
+                {t.aiRequests}
               </p>
               <p className="mt-1 text-xl font-semibold text-[var(--admin-text)]">
                 {formatNumber(data.ai.requestsInRange)}
@@ -365,7 +384,7 @@ export function ExecutiveDashboard({ data, role }: ExecutiveDashboardProps) {
             </div>
             <div className="rounded-xl border border-[var(--admin-border)] bg-[var(--admin-surface)] px-3 py-2">
               <p className="text-[11px] uppercase tracking-wider text-[var(--admin-muted)]">
-                Tokens
+                {t.aiTokens}
               </p>
               <p className="mt-1 text-xl font-semibold text-[var(--admin-text)]">
                 {formatNumber(data.ai.tokensInRange)}
@@ -373,15 +392,15 @@ export function ExecutiveDashboard({ data, role }: ExecutiveDashboardProps) {
             </div>
           </div>
           <p className="mb-3 text-xs text-[var(--admin-muted)]">
-            Average latency:{" "}
-            {data.ai.averageLatencyMs == null
-              ? "not recorded in ai_usage"
-              : formatMs(data.ai.averageLatencyMs)}
+            {fillTemplate(t.aiLatency, {
+              value:
+                data.ai.averageLatencyMs == null
+                  ? t.aiLatencyMissing
+                  : formatMs(data.ai.averageLatencyMs),
+            })}
           </p>
           {data.ai.models.length === 0 ? (
-            <p className="text-sm text-[var(--admin-muted)]">
-              No AI usage in this range.
-            </p>
+            <p className="text-sm text-[var(--admin-muted)]">{t.aiEmpty}</p>
           ) : (
             <ul className="space-y-2">
               {data.ai.models.map((model) => (
@@ -393,8 +412,10 @@ export function ExecutiveDashboard({ data, role }: ExecutiveDashboardProps) {
                     {model.model}
                   </span>
                   <span className="text-[var(--admin-muted)]">
-                    {formatNumber(model.requests)} req ·{" "}
-                    {formatNumber(model.tokens)} tok
+                    {fillTemplate(t.reqTok, {
+                      requests: formatNumber(model.requests),
+                      tokens: formatNumber(model.tokens),
+                    })}
                   </span>
                 </li>
               ))}
@@ -409,17 +430,20 @@ export function ExecutiveDashboard({ data, role }: ExecutiveDashboardProps) {
 function IncidentGroup({
   title,
   items,
+  none,
 }: {
   title: string;
   items: ExecutiveDashboardData["incidents"]["open"];
+  none: string;
 }) {
+  const { locale } = useDictionary();
   return (
     <div className="mb-4 last:mb-0">
       <h3 className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-[var(--admin-muted)]">
         {title}
       </h3>
       {items.length === 0 ? (
-        <p className="text-xs text-[var(--admin-muted)]">None</p>
+        <p className="text-xs text-[var(--admin-muted)]">{none}</p>
       ) : (
         <ul className="space-y-2">
           {items.map((item) => (
@@ -432,7 +456,7 @@ function IncidentGroup({
                   {item.title}
                 </p>
                 <p className="text-[11px] text-[var(--admin-muted)]">
-                  {item.status} · {formatRelative(item.detectedAt)}
+                  {item.status} · {formatRelative(item.detectedAt, locale)}
                 </p>
               </div>
               <SeverityBadge severity={item.severity} />

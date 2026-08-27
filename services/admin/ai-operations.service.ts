@@ -644,8 +644,6 @@ export async function getAiOperations(
       })),
       weekly,
       monthly,
-      successVsFailureNote:
-        "Only successful completions are written to ai_usage. Failed/timeout/rate-limit outcomes are not persisted.",
     },
     prompts: {
       topConversationTitles,
@@ -659,7 +657,6 @@ export async function getAiOperations(
         value: promptGrowthFull.get(label) ?? 0,
       })),
       contentExposed: false,
-      note: "Prompt and response bodies are not listed. Stats use message lengths and conversation titles only.",
     },
     workspaceAi: tokensByWorkspace.slice(0, 25).map((row) => ({
       workspaceId: row.workspaceId,
@@ -685,24 +682,25 @@ export async function getAiOperations(
       openaiConfigured,
       openaiModel: env.OPENAI_MODEL,
       openaiTone,
-      openaiDetail: openaiConfigured
-        ? `Configured · model ${env.OPENAI_MODEL}`
-        : "OPENAI_API_KEY not configured",
-      queueNote:
-        "No dedicated AI request queue is persisted. Completions are recorded after success only.",
       averageLatencyMs: null,
       errorRate: null,
       availabilityPercent,
-      availabilityNote:
-        availabilityPercent == null
-          ? "No AI usage in range while API is configured — availability cannot be proven from completions alone."
-          : availabilityPercent === 0
-            ? "OpenAI is not configured."
-            : `Based on ${totalRequests} recorded completions across ~${round(windowDays)} day(s). Failures are not stored.`,
+      availabilityNoteKey: !openaiConfigured
+        ? "not_configured"
+        : availabilityPercent == null
+          ? "none"
+          : "from_completions",
+      availabilityWindowDays:
+        !openaiConfigured || availabilityPercent == null
+          ? null
+          : round(windowDays),
+      availabilityRequestCount:
+        !openaiConfigured || availabilityPercent == null
+          ? null
+          : totalRequests,
     },
     incidents: {
       items: incidentItems,
-      note: "Timeouts, rate limits, and model provider errors are not stored as AI incidents. Showing negative feedback signals only.",
     },
     cost: {
       estimatedDailyUsd: Math.round(dailyCost * 1_000_000) / 1_000_000,
@@ -718,8 +716,6 @@ export async function getAiOperations(
         projectName: row.projectName,
         estimatedCostUsd: row.estimatedCostUsd,
       })),
-      pricingNote:
-        "Costs are estimates from public OpenAI list prices × recorded prompt/completion tokens. Not invoices.",
     },
     filterOptions: {
       workspaces: (workspacesRes.data ?? []).map((row) => ({

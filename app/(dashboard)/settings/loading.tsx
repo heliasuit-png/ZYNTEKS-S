@@ -1,4 +1,8 @@
-export default function SettingsLoading() {
+import { getDictionary } from "@/lib/i18n/get-dictionary";
+
+export default async function SettingsLoading() {
+  const { dict } = await getDictionary();
+
   return (
     <div className="space-y-6" role="status" aria-live="polite">
       <div className="space-y-2">
@@ -14,7 +18,7 @@ export default function SettingsLoading() {
           />
         ))}
       </div>
-      <span className="sr-only">Loading settings…</span>
+      <span className="sr-only">{dict.dashboardCommon.loadingStates.settings}</span>
     </div>
   );
 }

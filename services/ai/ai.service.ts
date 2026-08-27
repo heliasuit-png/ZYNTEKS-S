@@ -26,6 +26,7 @@ import type { StreamEmitter } from "@/services/ai/streaming";
 import { recordUsage } from "@/services/ai/usage.service";
 import type { TokenUsage } from "@/services/ai/types";
 import { parsePreferences } from "@/features/settings/lib/preferences";
+import { getDictionary } from "@/lib/i18n/get-dictionary";
 
 type Supabase = TypedSupabaseClient;
 
@@ -94,11 +95,12 @@ export async function handleChat(
       content: sanitized,
     });
     if (isNewConversation) {
+      const { dict } = await getDictionary();
       await renameConversation(
         supabase,
         userId,
         conversation.id,
-        deriveTitle(sanitized),
+        deriveTitle(sanitized, dict.dash.ai.newChat),
       );
     }
   }

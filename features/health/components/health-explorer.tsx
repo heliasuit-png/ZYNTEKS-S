@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import {
@@ -11,6 +11,7 @@ import {
   Timer,
 } from "lucide-react";
 
+import { useDictionary } from "@/components/i18n/locale-provider";
 import {
   Panel,
   PanelContent,
@@ -25,7 +26,6 @@ import type { Column } from "@/components/dashboard/data-table";
 import { CopyButton } from "@/components/dashboard/copy-button";
 import {
   API_KEY_ENVIRONMENTS,
-  API_KEY_ENVIRONMENT_LABELS,
   DASHBOARD_ROUTES,
 } from "@/lib/constants";
 import { formatDateTime, formatRelativeTime } from "@/utils/format";
@@ -33,7 +33,6 @@ import { cn } from "@/lib/utils";
 import { HealthChart } from "@/features/health/components/health-chart";
 import { ScoreGauge } from "@/features/health/components/score-gauge";
 import {
-  HEALTH_STATUS_LABELS,
   HEALTH_STATUS_TONE,
   HEALTH_STATUSES,
 } from "@/features/health/lib/status";
@@ -42,6 +41,7 @@ import type {
   HealthTimelineEvent,
   ProjectHealthRow,
 } from "@/features/health/types";
+import type { HealthStatus } from "@/features/health/types";
 
 const selectClass =
   "h-9 rounded-xl border border-zt-border bg-zt-surface px-3 text-sm text-zt-text focus:outline-none focus:ring-2 focus:ring-zt-primary/40";
@@ -74,12 +74,22 @@ const timelineTone: Record<HealthTimelineEvent["tone"], string> = {
   default: "bg-zt-muted",
 };
 
+function fill(template: string, vars: Record<string, string | number>) {
+  return Object.entries(vars).reduce(
+    (s, [k, v]) => s.replaceAll(`{${k}}`, String(v)),
+    template,
+  );
+}
+
 export function HealthExplorer({
   data,
   projects,
   search,
   filters,
 }: HealthExplorerProps) {
+  const { dict, locale } = useDictionary();
+  const t = dict.dash.health;
+  const common = dict.dashboardCommon;
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -166,83 +176,90 @@ export function HealthExplorer({
     2,
   );
 
-  const columns: Column<ProjectHealthRow>[] = [
-    {
-      key: "name",
-      header: "Project",
-      render: (row) => (
-        <button
-          type="button"
-          onClick={() => updateParam("projectId", row.id)}
-          className="text-left font-medium text-zt-text transition-colors hover:text-zt-primary"
-        >
-          {row.name}
-        </button>
-      ),
-    },
-    {
-      key: "status",
-      header: "Status",
-      render: (row) => (
-        <Badge tone={HEALTH_STATUS_TONE[row.status]}>
-          {HEALTH_STATUS_LABELS[row.status]}
-        </Badge>
-      ),
-    },
-    {
-      key: "score",
-      header: "Score",
-      align: "right",
-      render: (row) => (
-        <span className="tabular-nums text-zt-text">{row.score}</span>
-      ),
-    },
-    {
-      key: "uptime",
-      header: "Uptime 30d",
-      align: "right",
-      render: (row) => (
-        <span className="tabular-nums text-zt-muted">
-          {row.uptime.toFixed(2)}%
-        </span>
-      ),
-    },
-    {
-      key: "latency",
-      header: "Latency",
-      align: "right",
-      render: (row) => (
-        <span className="tabular-nums text-zt-muted">
-          {row.latencyMs ? `${row.latencyMs} ms` : "—"}
-        </span>
-      ),
-    },
-    {
-      key: "heartbeat",
-      header: "Last heartbeat",
-      align: "right",
-      render: (row) => (
-        <span className="text-zt-muted">
-          {row.lastHeartbeatAt
-            ? formatRelativeTime(row.lastHeartbeatAt)
-            : "Never"}
-        </span>
-      ),
-    },
-  ];
+  const trendLabel =
+    t.trends[data.trend.direction as keyof typeof t.trends] ??
+    data.trend.direction;
+
+  const columns: Column<ProjectHealthRow>[] = useMemo(
+    () => [
+      {
+        key: "name",
+        header: t.colProject,
+        render: (row) => (
+          <button
+            type="button"
+            onClick={() => updateParam("projectId", row.id)}
+            className="text-left font-medium text-zt-text transition-colors hover:text-zt-primary"
+          >
+            {row.name}
+          </button>
+        ),
+      },
+      {
+        key: "status",
+        header: t.colStatus,
+        render: (row) => (
+          <Badge tone={HEALTH_STATUS_TONE[row.status]}>
+            {t.statuses[row.status as HealthStatus]}
+          </Badge>
+        ),
+      },
+      {
+        key: "score",
+        header: t.colScore,
+        align: "right",
+        render: (row) => (
+          <span className="tabular-nums text-zt-text">{row.score}</span>
+        ),
+      },
+      {
+        key: "uptime",
+        header: t.colUptime30d,
+        align: "right",
+        render: (row) => (
+          <span className="tabular-nums text-zt-muted">
+            {row.uptime.toFixed(2)}%
+          </span>
+        ),
+      },
+      {
+        key: "latency",
+        header: t.colLatency,
+        align: "right",
+        render: (row) => (
+          <span className="tabular-nums text-zt-muted">
+            {row.latencyMs ? `${row.latencyMs} ms` : "—"}
+          </span>
+        ),
+      },
+      {
+        key: "heartbeat",
+        header: t.colLastHeartbeat,
+        align: "right",
+        render: (row) => (
+          <span className="text-zt-muted">
+            {row.lastHeartbeatAt
+              ? formatRelativeTime(row.lastHeartbeatAt, undefined, locale)
+              : t.never}
+          </span>
+        ),
+      },
+    ],
+    [t, updateParam],
+  );
 
   if (projects.length === 0) {
     return (
       <EmptyState
         icon={Activity}
-        title="Create a project first"
-        description="Health monitoring tracks heartbeats and performance from the SDK."
+        title={t.createProjectFirst}
+        description={t.createProjectFirstDesc}
         action={
           <Link
             href={DASHBOARD_ROUTES.projects}
             className="inline-flex items-center gap-2 rounded-xl bg-zt-primary px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-zt-primary/90"
           >
-            Go to Projects
+            {t.goToProjects}
           </Link>
         }
       />
@@ -262,13 +279,13 @@ export function HealthExplorer({
               type="search"
               value={searchValue}
               onChange={(e) => setSearchValue(e.target.value)}
-              placeholder="Search project, status, incident…"
-              aria-label="Search health"
+              placeholder={t.searchPlaceholder}
+              aria-label={t.searchAria}
               className="h-9 w-full rounded-xl border border-zt-border bg-zt-surface pl-9 pr-3 text-sm text-zt-text placeholder:text-zt-muted focus:outline-none focus:ring-2 focus:ring-zt-primary/40"
             />
           </div>
           <div className="flex flex-wrap items-center gap-2">
-            <CopyButton value={exportJson} label="Copy JSON" />
+            <CopyButton value={exportJson} label={t.copyJson} />
             <button
               type="button"
               onClick={() => download("json")}
@@ -291,7 +308,7 @@ export function HealthExplorer({
                 onClick={clearFilters}
                 className="text-xs font-medium text-zt-primary hover:underline"
               >
-                Clear filters
+                {t.clearFilters}
               </button>
             ) : null}
           </div>
@@ -299,7 +316,7 @@ export function HealthExplorer({
 
         <div className="flex flex-wrap items-center gap-2">
           <select
-            aria-label="Filter by project"
+            aria-label={t.filterByProject}
             value={filters.projectId || data.selectedProjectId || ""}
             onChange={(e) => updateParam("projectId", e.target.value)}
             className={selectClass}
@@ -311,48 +328,48 @@ export function HealthExplorer({
             ))}
           </select>
           <select
-            aria-label="Filter by environment"
+            aria-label={t.filterByEnvironment}
             value={filters.environment}
             onChange={(e) => updateParam("environment", e.target.value)}
             className={selectClass}
           >
-            <option value="">All environments</option>
+            <option value="">{t.allEnvironments}</option>
             {API_KEY_ENVIRONMENTS.map((env) => (
               <option key={env} value={env}>
-                {API_KEY_ENVIRONMENT_LABELS[env]}
+                {common.environments[env]}
               </option>
             ))}
           </select>
           <select
-            aria-label="Filter by status"
+            aria-label={t.filterByStatus}
             value={filters.status}
             onChange={(e) => updateParam("status", e.target.value)}
             className={selectClass}
           >
-            <option value="">All statuses</option>
+            <option value="">{t.allStatuses}</option>
             {HEALTH_STATUSES.map((status) => (
               <option key={status} value={status}>
-                {HEALTH_STATUS_LABELS[status]}
+                {t.statuses[status]}
               </option>
             ))}
           </select>
           <label className="flex items-center gap-1.5 text-xs text-zt-muted">
-            From
+            {t.from}
             <input
               type="date"
               value={filters.from}
               onChange={(e) => updateParam("from", e.target.value)}
-              aria-label="From date"
+              aria-label={t.from}
               className={selectClass}
             />
           </label>
           <label className="flex items-center gap-1.5 text-xs text-zt-muted">
-            To
+            {t.to}
             <input
               type="date"
               value={filters.to}
               onChange={(e) => updateParam("to", e.target.value)}
-              aria-label="To date"
+              aria-label={t.to}
               className={selectClass}
             />
           </label>
@@ -362,14 +379,14 @@ export function HealthExplorer({
       {!data.hasTelemetry ? (
         <EmptyState
           icon={HeartPulse}
-          title="Waiting for telemetry"
-          description="Install the SDK to start receiving heartbeats and performance metrics. Scores stay neutral until data arrives."
+          title={t.waitingTelemetry}
+          description={t.waitingTelemetryDesc}
           action={
             <Link
               href={DASHBOARD_ROUTES.projects}
               className="inline-flex items-center gap-2 rounded-xl bg-zt-primary px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-zt-primary/90"
             >
-              Open Projects
+              {t.openProjects}
             </Link>
           }
         />
@@ -381,15 +398,15 @@ export function HealthExplorer({
             <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
               <div className="flex items-center gap-6">
                 <ScoreGauge
-                  label="Overall"
+                  label={t.overall}
                   value={data.score.overall}
                   size={132}
                 />
                 <div>
-                  <p className="text-xs font-medium text-zt-muted">Status</p>
+                  <p className="text-xs font-medium text-zt-muted">{t.status}</p>
                   <div className="mt-1 flex flex-wrap items-center gap-2">
                     <Badge tone={HEALTH_STATUS_TONE[data.status]}>
-                      {HEALTH_STATUS_LABELS[data.status]}
+                      {t.statuses[data.status as HealthStatus]}
                     </Badge>
                     <Badge
                       tone={
@@ -400,29 +417,46 @@ export function HealthExplorer({
                             : "default"
                       }
                     >
-                      {data.trend.direction}
+                      {trendLabel}
                     </Badge>
                   </div>
                   <p className="mt-2 text-sm text-zt-muted">{data.trend.label}</p>
                   <p className="mt-1 text-xs text-zt-muted">
-                    Previous window score {data.trend.previousOverall} · error
-                    rate Δ {data.trend.changePct > 0 ? "+" : ""}
-                    {data.trend.changePct}%
+                    {fill(t.previousWindowScore, {
+                      score: data.trend.previousOverall,
+                      delta: `${data.trend.changePct > 0 ? "+" : ""}${data.trend.changePct}`,
+                    })}
                   </p>
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-                <ScoreGauge label="Reliability" value={data.score.reliability} delay={0.05} />
-                <ScoreGauge label="Performance" value={data.score.performance} delay={0.1} />
-                <ScoreGauge label="Availability" value={data.score.availability} delay={0.15} />
-                <ScoreGauge label="Heartbeat" value={data.score.heartbeat} delay={0.2} />
+                <ScoreGauge
+                  label={t.reliability}
+                  value={data.score.reliability}
+                  delay={0.05}
+                />
+                <ScoreGauge
+                  label={t.performance}
+                  value={data.score.performance}
+                  delay={0.1}
+                />
+                <ScoreGauge
+                  label={t.availability}
+                  value={data.score.availability}
+                  delay={0.15}
+                />
+                <ScoreGauge
+                  label={t.heartbeat}
+                  value={data.score.heartbeat}
+                  delay={0.2}
+                />
               </div>
             </div>
             <div className="mt-6 grid grid-cols-2 gap-3 border-t border-zt-border pt-4 sm:grid-cols-4">
-              <Factor label="Error rate" value={data.score.errorRate} />
-              <Factor label="Latency" value={data.score.latency} />
-              <Factor label="Recovery" value={data.score.recovery} />
-              <Factor label="Overall" value={data.score.overall} />
+              <Factor label={t.errorRate} value={data.score.errorRate} />
+              <Factor label={t.latency} value={data.score.latency} />
+              <Factor label={t.recovery} value={data.score.recovery} />
+              <Factor label={t.overall} value={data.score.overall} />
             </div>
           </PanelContent>
         </Panel>
@@ -432,19 +466,19 @@ export function HealthExplorer({
         <FadeIn delay={0.05}>
           <Panel className="h-full">
             <PanelHeader>
-              <PanelTitle>Uptime</PanelTitle>
+              <PanelTitle>{t.uptime}</PanelTitle>
             </PanelHeader>
             <PanelContent>
               <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-                <UptimeChip label="24 Hours" value={data.uptime.h24} />
-                <UptimeChip label="7 Days" value={data.uptime.d7} />
-                <UptimeChip label="30 Days" value={data.uptime.d30} />
-                <UptimeChip label="90 Days" value={data.uptime.d90} />
-                <UptimeChip label="Current" value={data.uptime.current} />
+                <UptimeChip label={t.uptime24h} value={data.uptime.h24} />
+                <UptimeChip label={t.uptime7d} value={data.uptime.d7} />
+                <UptimeChip label={t.uptime30d} value={data.uptime.d30} />
+                <UptimeChip label={t.uptime90d} value={data.uptime.d90} />
+                <UptimeChip label={t.uptimeCurrent} value={data.uptime.current} />
                 <div className="rounded-xl border border-zt-border bg-zt-surface-2/50 px-3 py-3">
-                  <p className="text-xs text-zt-muted">Trend</p>
+                  <p className="text-xs text-zt-muted">{t.trend}</p>
                   <p className="mt-1 text-sm font-medium capitalize text-zt-text">
-                    {data.trend.direction}
+                    {trendLabel}
                   </p>
                 </div>
               </div>
@@ -455,24 +489,24 @@ export function HealthExplorer({
         <FadeIn delay={0.08}>
           <Panel className="h-full">
             <PanelHeader>
-              <PanelTitle>Heartbeat</PanelTitle>
+              <PanelTitle>{t.heartbeat}</PanelTitle>
             </PanelHeader>
             <PanelContent className="space-y-4">
               <dl className="grid grid-cols-2 gap-3 text-sm">
                 <Metric
-                  label="Last heartbeat"
+                  label={t.lastHeartbeat}
                   value={
                     data.heartbeat.lastAt
-                      ? formatRelativeTime(data.heartbeat.lastAt)
-                      : "Never"
+                      ? formatRelativeTime(data.heartbeat.lastAt, undefined, locale)
+                      : t.never
                   }
                 />
                 <Metric
-                  label="Beats in window"
+                  label={t.beatsInWindow}
                   value={String(data.heartbeat.count)}
                 />
                 <Metric
-                  label="Avg interval"
+                  label={t.avgInterval}
                   value={
                     data.heartbeat.averageIntervalSec != null
                       ? `${data.heartbeat.averageIntervalSec}s`
@@ -480,30 +514,29 @@ export function HealthExplorer({
                   }
                 />
                 <Metric
-                  label="Expected"
+                  label={t.expected}
                   value={`${data.heartbeat.expectedIntervalSec}s`}
                 />
                 <Metric
-                  label="Missing beats"
+                  label={t.missingBeats}
                   value={String(data.heartbeat.missingCount)}
                 />
                 <Metric
-                  label="Consistency"
+                  label={t.consistency}
                   value={`${data.heartbeat.consistencyScore}`}
                 />
               </dl>
               {data.heartbeat.stale ? (
                 <p className="rounded-lg border border-zt-danger/30 bg-zt-danger/10 px-3 py-2 text-xs text-zt-danger">
-                  Missing heartbeat detected — last beat exceeds the outage
-                  threshold.
+                  {t.missingHeartbeatAlert}
                 </p>
               ) : null}
               <div>
-                <p className="mb-2 text-xs text-zt-muted">Interval timeline</p>
+                <p className="mb-2 text-xs text-zt-muted">{t.intervalTimeline}</p>
                 <HealthChart
                   values={data.heartbeat.intervals.slice(-40)}
                   tone={data.heartbeat.stale ? "danger" : "success"}
-                  label="Heartbeat intervals"
+                  label={t.heartbeatIntervals}
                 />
               </div>
             </PanelContent>
@@ -515,40 +548,39 @@ export function HealthExplorer({
         <FadeIn delay={0.1}>
           <Panel className="h-full">
             <PanelHeader>
-              <PanelTitle>Latency & response time</PanelTitle>
+              <PanelTitle>{t.latencyResponse}</PanelTitle>
             </PanelHeader>
             <PanelContent className="space-y-4">
               <dl className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+                <Metric label={t.average} value={fmtMs(data.latency.average)} />
+                <Metric label={t.minimum} value={fmtMs(data.latency.min)} />
+                <Metric label={t.maximum} value={fmtMs(data.latency.max)} />
+                <Metric label={t.p95} value={fmtMs(data.latency.p95)} />
+                <Metric label={t.p99} value={fmtMs(data.latency.p99)} />
                 <Metric
-                  label="Average"
-                  value={fmtMs(data.latency.average)}
-                />
-                <Metric label="Minimum" value={fmtMs(data.latency.min)} />
-                <Metric label="Maximum" value={fmtMs(data.latency.max)} />
-                <Metric label="P95" value={fmtMs(data.latency.p95)} />
-                <Metric label="P99" value={fmtMs(data.latency.p99)} />
-                <Metric
-                  label="Samples"
+                  label={t.samples}
                   value={String(data.latency.sampleCount)}
                 />
               </dl>
               <div>
                 <p className="mb-2 flex items-center gap-1.5 text-xs text-zt-muted">
                   <Timer className="size-3.5" aria-hidden />
-                  TTFB timeline
+                  {t.ttfbTimeline}
                 </p>
                 <HealthChart
                   values={data.latency.series}
                   tone="accent"
-                  label="TTFB"
+                  label={t.ttfb}
                 />
               </div>
               <div>
-                <p className="mb-2 text-xs text-zt-muted">Response time (page load)</p>
+                <p className="mb-2 text-xs text-zt-muted">
+                  {t.responseTimePageLoad}
+                </p>
                 <HealthChart
                   values={data.latency.responseSeries}
                   tone="primary"
-                  label="Page load"
+                  label={t.pageLoad}
                 />
               </div>
             </PanelContent>
@@ -558,28 +590,28 @@ export function HealthExplorer({
         <FadeIn delay={0.12}>
           <Panel className="h-full">
             <PanelHeader>
-              <PanelTitle>Performance</PanelTitle>
+              <PanelTitle>{t.performance}</PanelTitle>
             </PanelHeader>
             <PanelContent>
               <dl className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-                <Metric label="FCP" value={fmtMs(data.performance.fcp)} />
-                <Metric label="LCP" value={fmtMs(data.performance.lcp)} />
+                <Metric label={t.fcp} value={fmtMs(data.performance.fcp)} />
+                <Metric label={t.lcp} value={fmtMs(data.performance.lcp)} />
                 <Metric
-                  label="CLS"
+                  label={t.cls}
                   value={
                     data.performance.cls != null
                       ? String(data.performance.cls)
                       : "—"
                   }
                 />
-                <Metric label="INP" value={fmtMs(data.performance.inp)} />
-                <Metric label="TTFB" value={fmtMs(data.performance.ttfb)} />
+                <Metric label={t.inp} value={fmtMs(data.performance.inp)} />
+                <Metric label={t.ttfb} value={fmtMs(data.performance.ttfb)} />
                 <Metric
-                  label="Page load"
+                  label={t.pageLoad}
                   value={fmtMs(data.performance.pageLoad)}
                 />
                 <Metric
-                  label="Memory used"
+                  label={t.memoryUsed}
                   value={
                     data.performance.memoryUsedMb != null
                       ? `${data.performance.memoryUsedMb} MB`
@@ -587,7 +619,7 @@ export function HealthExplorer({
                   }
                 />
                 <Metric
-                  label="Memory total"
+                  label={t.memoryTotal}
                   value={
                     data.performance.memoryTotalMb != null
                       ? `${data.performance.memoryTotalMb} MB`
@@ -595,17 +627,17 @@ export function HealthExplorer({
                   }
                 />
                 <Metric
-                  label="Samples"
+                  label={t.samples}
                   value={String(data.performance.sampleCount)}
                 />
               </dl>
               {data.performance.navigation ? (
                 <div className="mt-4">
                   <div className="mb-2 flex items-center justify-between">
-                    <p className="text-xs text-zt-muted">Navigation timing</p>
+                    <p className="text-xs text-zt-muted">{t.navigationTiming}</p>
                     <CopyButton
                       value={JSON.stringify(data.performance.navigation, null, 2)}
-                      label="Copy"
+                      label={common.copy}
                     />
                   </div>
                   <pre className="max-h-40 overflow-auto rounded-xl border border-zt-border bg-black/30 p-3 font-mono text-[11px] text-zt-muted">
@@ -614,7 +646,7 @@ export function HealthExplorer({
                 </div>
               ) : (
                 <p className="mt-4 text-sm text-zt-muted">
-                  No navigation timing reported yet.
+                  {t.noNavigationTiming}
                 </p>
               )}
             </PanelContent>
@@ -625,14 +657,11 @@ export function HealthExplorer({
       <FadeIn delay={0.14}>
         <Panel>
           <PanelHeader>
-            <PanelTitle>Health Timeline</PanelTitle>
+            <PanelTitle>{t.healthTimeline}</PanelTitle>
           </PanelHeader>
           <PanelContent>
             {data.timeline.length === 0 ? (
-              <p className="text-sm text-zt-muted">
-                Timeline events appear as heartbeats, errors, incidents, and
-                deployments are recorded.
-              </p>
+              <p className="text-sm text-zt-muted">{t.timelineEmpty}</p>
             ) : (
               <ol className="relative max-h-96 space-y-4 overflow-y-auto border-l border-zt-border pl-5">
                 {data.timeline.map((event) => (
@@ -669,14 +698,14 @@ export function HealthExplorer({
       <FadeIn delay={0.16}>
         <Panel>
           <PanelHeader>
-            <PanelTitle>Monitored projects</PanelTitle>
+            <PanelTitle>{t.monitoredProjects}</PanelTitle>
           </PanelHeader>
           <PanelContent>
             {data.projects.length === 0 ? (
               <EmptyState
                 icon={Activity}
-                title="No matching projects"
-                description="Try adjusting search or filters."
+                title={t.noMatching}
+                description={t.noMatchingDesc}
                 action={
                   hasActiveFilters ? (
                     <button
@@ -684,7 +713,7 @@ export function HealthExplorer({
                       onClick={clearFilters}
                       className="inline-flex items-center gap-2 rounded-xl bg-zt-primary px-4 py-2 text-sm font-medium text-white"
                     >
-                      Clear filters
+                      {t.clearFilters}
                     </button>
                   ) : undefined
                 }

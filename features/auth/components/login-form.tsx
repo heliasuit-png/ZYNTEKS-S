@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useActionState } from "react";
 
+import { useDictionary } from "@/components/i18n/locale-provider";
 import { ROUTES } from "@/lib/constants";
 import { signInAction } from "@/features/auth/actions";
 import { initialAuthFormState } from "@/features/auth/types";
@@ -11,6 +12,8 @@ import { FormMessage } from "@/features/auth/components/form-message";
 import { SubmitButton } from "@/features/auth/components/submit-button";
 
 export function LoginForm({ redirectTo }: { redirectTo?: string }) {
+  const { dict } = useDictionary();
+  const f = dict.authForms;
   const [state, formAction, pending] = useActionState(
     signInAction,
     initialAuthFormState,
@@ -23,17 +26,17 @@ export function LoginForm({ redirectTo }: { redirectTo?: string }) {
       ) : null}
       <FormMessage state={state} />
       <Field
-        label="Email"
+        label={f.email}
         name="email"
         type="email"
         autoComplete="email"
-        placeholder="you@example.com"
+        placeholder={f.emailPlaceholder}
         required
         errors={state.fieldErrors?.email}
       />
       <div className="space-y-1.5">
         <Field
-          label="Password"
+          label={f.password}
           name="password"
           type="password"
           autoComplete="current-password"
@@ -45,12 +48,12 @@ export function LoginForm({ redirectTo }: { redirectTo?: string }) {
             href={ROUTES.forgotPassword}
             className="text-xs text-muted-foreground hover:text-foreground"
           >
-            Forgot password?
+            {f.forgotPassword}
           </Link>
         </div>
       </div>
       <SubmitButton pending={pending} className="w-full">
-        Sign in
+        {f.signIn}
       </SubmitButton>
     </form>
   );

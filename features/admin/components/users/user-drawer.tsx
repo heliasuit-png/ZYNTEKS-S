@@ -1,8 +1,7 @@
 "use client";
 
-import { useEffect, useState, useTransition, type ReactNode } from "react";
-import { AnimatePresence, motion } from "framer-motion";
-
+import { useDictionary } from "@/components/i18n/locale-provider";
+import { fillTemplate } from "@/lib/i18n/fill-template";
 import { hasAdminPermission } from "@/services/admin/permissions";
 import type { AdminPlatformRole } from "@/services/admin/types";
 import type { AdminUserDetail } from "@/services/admin/users.types";
@@ -17,6 +16,8 @@ import {
   suspendUserAction,
   transferWorkspaceAction,
 } from "@/features/admin/users-actions";
+import { useEffect, useState, useTransition, type ReactNode } from "react";
+import { AnimatePresence, motion } from "framer-motion";
 
 interface UserDrawerProps {
   userId: string | null;
@@ -25,6 +26,9 @@ interface UserDrawerProps {
 }
 
 export function UserDrawer({ userId, role, onClose }: UserDrawerProps) {
+  const { dict } = useDictionary();
+  const t = dict.admin.users.drawer;
+  const common = dict.admin.common;
   const [detail, setDetail] = useState<AdminUserDetail | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
@@ -45,14 +49,14 @@ export function UserDrawer({ userId, role, onClose }: UserDrawerProps) {
         if (!cancelled) setDetail(data);
       } catch (err) {
         if (!cancelled) {
-          setError(err instanceof Error ? err.message : "Failed to load user");
+          setError(err instanceof Error ? err.message : t.loadFailed);
         }
       }
     });
     return () => {
       cancelled = true;
     };
-  }, [userId]);
+  }, [userId, t.loadFailed]);
 
   function run(action: () => Promise<{ ok: boolean; message: string }>) {
     startTransition(async () => {
@@ -82,7 +86,7 @@ export function UserDrawer({ userId, role, onClose }: UserDrawerProps) {
         <>
           <motion.button
             type="button"
-            aria-label="Close user drawer"
+            aria-label={t.closeAria}
             className="fixed inset-0 z-40 bg-black/55"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -92,7 +96,7 @@ export function UserDrawer({ userId, role, onClose }: UserDrawerProps) {
           <motion.aside
             role="dialog"
             aria-modal="true"
-            aria-label="User profile"
+            aria-label={t.profileAria}
             initial={{ x: "100%" }}
             animate={{ x: 0 }}
             exit={{ x: "100%" }}
@@ -102,7 +106,9 @@ export function UserDrawer({ userId, role, onClose }: UserDrawerProps) {
             <header className="flex items-start justify-between gap-3 border-b border-[var(--admin-border)] px-5 py-4">
               <div>
                 <h2 className="text-lg font-semibold text-[var(--admin-text)]">
-                  {detail?.profile.fullName || detail?.profile.email || "User"}
+                  {detail?.profile.fullName ||
+                    detail?.profile.email ||
+                    common.userFallback}
                 </h2>
                 <p className="text-xs text-[var(--admin-muted)]">
                   {detail?.profile.email}
@@ -113,7 +119,7 @@ export function UserDrawer({ userId, role, onClose }: UserDrawerProps) {
                 onClick={onClose}
                 className="rounded-lg border border-[var(--admin-border)] px-2 py-1 text-xs text-[var(--admin-muted)]"
               >
-                Close
+                {common.close}
               </button>
             </header>
 
@@ -130,36 +136,39 @@ export function UserDrawer({ userId, role, onClose }: UserDrawerProps) {
                     </p>
                   ) : null}
 
-                  <Section title="Profile">
+                  <Section title={t.profile}>
                     <Grid
                       rows={[
-                        ["Avatar", detail.profile.avatarUrl ? "Set" : "None"],
-                        ["Email", detail.profile.email],
-                        ["Phone", "Not collected"],
-                        ["Country", detail.profile.country ?? "—"],
-                        ["Timezone", detail.timezone],
-                        ["Language", detail.language],
-                        ["Plan", detail.subscriptionPlan],
-                        ["Status", detail.profile.status],
                         [
-                          "Verified",
+                          t.fields.avatar,
+                          detail.profile.avatarUrl ? t.set : common.none,
+                        ],
+                        [t.fields.email, detail.profile.email],
+                        [t.fields.phone, t.notCollected],
+                        [t.fields.country, detail.profile.country ?? "—"],
+                        [t.fields.timezone, detail.timezone],
+                        [t.fields.language, detail.language],
+                        [t.fields.plan, detail.subscriptionPlan],
+                        [t.fields.status, detail.profile.status],
+                        [
+                          t.fields.verified,
                           detail.profile.verified == null
                             ? "—"
                             : detail.profile.verified
-                              ? "Yes"
-                              : "No",
+                              ? common.yes
+                              : common.no,
                         ],
-                        ["Role", detail.profile.displayRole],
+                        [t.fields.role, detail.profile.displayRole],
                         [
-                          "Auth providers",
+                          t.fields.authProviders,
                           detail.profile.authProviders.join(", "),
                         ],
                         [
-                          "MFA",
-                          detail.profile.mfaEnabled ? "Enabled" : "Not enabled",
+                          t.fields.mfa,
+                          detail.profile.mfaEnabled ? t.enabled : t.notEnabled,
                         ],
                         [
-                          "Last login",
+                          t.fields.lastLogin,
                           detail.profile.lastLoginAt
                             ? formatWhen(detail.profile.lastLoginAt)
                             : "—",
@@ -168,40 +177,40 @@ export function UserDrawer({ userId, role, onClose }: UserDrawerProps) {
                     />
                   </Section>
 
-                  <Section title="Actions">
+                  <Section title={t.actions}>
                     <div className="flex flex-wrap gap-2">
                       {canWrite ? (
                         <>
                           <ActionButton
-                            label="Promote to Admin"
+                            label={t.promote}
                             disabled={pending}
                             onClick={() =>
                               run(() => promoteUserAction(detail.profile.id))
                             }
                           />
                           <ActionButton
-                            label="Demote"
+                            label={t.demote}
                             disabled={pending || !detail.profile.platformRole}
                             onClick={() =>
                               run(() => demoteUserAction(detail.profile.id))
                             }
                           />
                           <ActionButton
-                            label="Suspend"
+                            label={t.suspend}
                             disabled={pending || detail.profile.status === "banned"}
                             onClick={() =>
                               run(() => suspendUserAction(detail.profile.id))
                             }
                           />
                           <ActionButton
-                            label="Reactivate"
+                            label={t.reactivate}
                             disabled={pending || detail.profile.status === "active"}
                             onClick={() =>
                               run(() => reactivateUserAction(detail.profile.id))
                             }
                           />
                           <ActionButton
-                            label="Force Logout"
+                            label={t.forceLogout}
                             disabled={pending}
                             onClick={() =>
                               run(() => forceLogoutAction(detail.profile.id))
@@ -211,7 +220,7 @@ export function UserDrawer({ userId, role, onClose }: UserDrawerProps) {
                       ) : null}
                       {canReset ? (
                         <ActionButton
-                          label="Force Password Reset"
+                          label={t.resetPassword}
                           disabled={pending}
                           onClick={() =>
                             run(() => forcePasswordResetAction(detail.profile.id))
@@ -220,13 +229,15 @@ export function UserDrawer({ userId, role, onClose }: UserDrawerProps) {
                       ) : null}
                       {canDelete ? (
                         <ActionButton
-                          label="Delete User"
+                          label={t.deleteUser}
                           danger
                           disabled={pending}
                           onClick={() => {
                             if (
                               window.confirm(
-                                `Delete ${detail.profile.email}? This cannot be undone.`,
+                                fillTemplate(t.deleteConfirm, {
+                                  email: detail.profile.email,
+                                }),
                               )
                             ) {
                               run(() => deleteUserAction(detail.profile.id));
@@ -239,7 +250,7 @@ export function UserDrawer({ userId, role, onClose }: UserDrawerProps) {
                     {canTransfer && detail.ownedWorkspaces.length > 0 ? (
                       <div className="mt-3 space-y-2 rounded-xl border border-[var(--admin-border)] p-3">
                         <p className="text-xs text-[var(--admin-muted)]">
-                          Transfer workspace ownership to another user id
+                          {t.transferHint}
                         </p>
                         <select
                           className="w-full rounded-lg border border-[var(--admin-border)] bg-[var(--admin-surface)] px-2 py-1.5 text-xs text-[var(--admin-text)]"
@@ -255,11 +266,11 @@ export function UserDrawer({ userId, role, onClose }: UserDrawerProps) {
                         <input
                           value={transferOwnerId}
                           onChange={(e) => setTransferOwnerId(e.target.value)}
-                          placeholder="New owner user UUID"
+                          placeholder={t.transferPlaceholder}
                           className="w-full rounded-lg border border-[var(--admin-border)] bg-[var(--admin-surface)] px-2 py-1.5 text-xs text-[var(--admin-text)]"
                         />
                         <ActionButton
-                          label="Transfer Workspace"
+                          label={t.transferWorkspace}
                           disabled={pending || !transferOwnerId.trim()}
                           onClick={() => {
                             const select = document.getElementById(
@@ -279,23 +290,30 @@ export function UserDrawer({ userId, role, onClose }: UserDrawerProps) {
                     ) : null}
                   </Section>
 
-                  <Section title="Security">
+                  <Section title={t.security}>
                     <Grid
                       rows={[
                         [
-                          "Failed logins (24h)",
+                          t.fields.failedLogins24h,
                           String(detail.security.failedLogins24h),
                         ],
                         [
-                          "API key auth failures (24h)",
+                          t.fields.apiKeyAuthFailures24h,
                           String(detail.security.failedApiKeyAuth24h),
                         ],
                         [
-                          "Active Sessions",
+                          t.fields.activeSessions,
                           String(detail.security.activeSessions),
                         ],
-                        ["Blocked Requests", detail.security.blockedNote],
-                        ["Suspicious Activity", detail.security.suspiciousNote],
+                        [t.fields.blockedRequests, t.notes.blocked],
+                        [
+                          t.fields.suspiciousActivity,
+                          detail.security.suspiciousLoginCount > 0
+                            ? fillTemplate(t.notes.suspiciousCount, {
+                                count: detail.security.suspiciousLoginCount,
+                              })
+                            : t.notes.suspiciousNone,
+                        ],
                       ]}
                     />
                     <ul className="mt-2 space-y-1">
@@ -310,10 +328,10 @@ export function UserDrawer({ userId, role, onClose }: UserDrawerProps) {
                     </ul>
                   </Section>
 
-                  <Section title="Login history">
+                  <Section title={t.loginHistory}>
                     {detail.loginHistory.length === 0 ? (
                       <p className="text-xs text-[var(--admin-muted)]">
-                        No product login events recorded yet.
+                        {t.noLoginHistory}
                       </p>
                     ) : (
                       <ul className="space-y-1">
@@ -327,8 +345,10 @@ export function UserDrawer({ userId, role, onClose }: UserDrawerProps) {
                             </span>
                             {event.provider ? ` · ${event.provider}` : ""} ·{" "}
                             {event.result}
-                            {event.isSuspicious ? " · suspicious" : ""} ·{" "}
-                            {event.deviceLabel ?? "—"} ·{" "}
+                            {event.isSuspicious
+                              ? ` · ${common.suspicious}`
+                              : ""}{" "}
+                            · {event.deviceLabel ?? "—"} ·{" "}
                             {event.country ?? "—"} · {event.ipAddress ?? "—"} ·{" "}
                             {formatWhen(event.createdAt)}
                           </li>
@@ -337,10 +357,12 @@ export function UserDrawer({ userId, role, onClose }: UserDrawerProps) {
                     )}
                   </Section>
 
-                  <Section title="Subscription & Projects">
+                  <Section title={t.subscriptionProjects}>
                     <p className="text-xs text-[var(--admin-muted)]">
-                      Plan: {detail.subscriptionPlan} · Projects:{" "}
-                      {detail.projects.length}
+                      {fillTemplate(t.planProjects, {
+                        plan: detail.subscriptionPlan,
+                        count: detail.projects.length,
+                      })}
                     </p>
                     <ul className="mt-2 space-y-1">
                       {detail.projects.map((project) => (
@@ -357,11 +379,11 @@ export function UserDrawer({ userId, role, onClose }: UserDrawerProps) {
                     </ul>
                   </Section>
 
-                  <Section title="API Keys">
+                  <Section title={t.apiKeys}>
                     <ul className="space-y-1">
                       {detail.apiKeys.length === 0 ? (
                         <li className="text-xs text-[var(--admin-muted)]">
-                          No API keys
+                          {t.noApiKeys}
                         </li>
                       ) : (
                         detail.apiKeys.map((key) => (
@@ -376,16 +398,18 @@ export function UserDrawer({ userId, role, onClose }: UserDrawerProps) {
                     </ul>
                   </Section>
 
-                  <Section title="AI Usage">
+                  <Section title={t.aiUsage}>
                     <p className="text-xs text-[var(--admin-muted)]">
-                      {detail.aiUsage.requests.toLocaleString()} requests ·{" "}
-                      {detail.aiUsage.tokens.toLocaleString()} tokens
+                      {fillTemplate(t.aiUsageSummary, {
+                        requests: detail.aiUsage.requests.toLocaleString(),
+                        tokens: detail.aiUsage.tokens.toLocaleString(),
+                      })}
                     </p>
                   </Section>
 
-                  <Section title="Recent Errors">
+                  <Section title={t.recentErrors}>
                     <List
-                      empty="No recent errors"
+                      empty={t.noRecentErrors}
                       items={detail.recentErrors.map((item) => ({
                         id: item.id,
                         title: item.message,
@@ -394,9 +418,9 @@ export function UserDrawer({ userId, role, onClose }: UserDrawerProps) {
                     />
                   </Section>
 
-                  <Section title="Recent Incidents">
+                  <Section title={t.recentIncidents}>
                     <List
-                      empty="No recent incidents"
+                      empty={t.noRecentIncidents}
                       items={detail.recentIncidents.map((item) => ({
                         id: item.id,
                         title: item.title,
@@ -405,7 +429,7 @@ export function UserDrawer({ userId, role, onClose }: UserDrawerProps) {
                     />
                   </Section>
 
-                  <Section title="Sessions & Devices">
+                  <Section title={t.sessionsDevices}>
                     <ul className="space-y-2">
                       {detail.sessions.map((session) => (
                         <li
@@ -413,9 +437,9 @@ export function UserDrawer({ userId, role, onClose }: UserDrawerProps) {
                           className="rounded-lg border border-[var(--admin-border)] px-3 py-2 text-xs"
                         >
                           <p className="text-[var(--admin-text)]">
-                            {session.deviceLabel ?? "Unknown device"}
-                            {session.isCurrent ? " · current" : ""}
-                            {session.revokedAt ? " · revoked" : ""}
+                            {session.deviceLabel ?? t.unknownDevice}
+                            {session.isCurrent ? ` · ${common.current}` : ""}
+                            {session.revokedAt ? ` · ${common.revoked}` : ""}
                           </p>
                           <p className="text-[var(--admin-muted)]">
                             {[session.browser, session.os, session.country]
@@ -428,9 +452,9 @@ export function UserDrawer({ userId, role, onClose }: UserDrawerProps) {
                     </ul>
                   </Section>
 
-                  <Section title="Activity Timeline">
+                  <Section title={t.activityTimeline}>
                     <List
-                      empty="No activity"
+                      empty={t.noActivity}
                       items={detail.activity.map((item) => ({
                         id: item.id,
                         title: item.title,

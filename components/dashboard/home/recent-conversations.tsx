@@ -1,3 +1,5 @@
+"use client";
+
 import { MessageSquare, Sparkles } from "lucide-react";
 import Link from "next/link";
 
@@ -8,7 +10,9 @@ import {
   PanelTitle,
 } from "@/components/dashboard/panel";
 import { EmptyState } from "@/components/dashboard/empty-state";
+import { useDictionary } from "@/components/i18n/locale-provider";
 import { DASHBOARD_ROUTES } from "@/lib/constants";
+import { fillTemplate } from "@/lib/i18n/fill-template";
 import { formatDate } from "@/utils/format";
 import type { AiConversation } from "@/types/dashboard";
 
@@ -17,24 +21,28 @@ export function RecentConversations({
 }: {
   conversations: AiConversation[];
 }) {
+  const { dict } = useDictionary();
+  const t = dict.dash.home.recentConversations;
+  const openAi = dict.dash.home.quickActions.openAiAssistant;
+
   return (
     <Panel className="h-full">
       <PanelHeader>
-        <PanelTitle>Recent AI Conversations</PanelTitle>
+        <PanelTitle>{t.title}</PanelTitle>
       </PanelHeader>
       <PanelContent>
         {conversations.length === 0 ? (
           <EmptyState
             icon={Sparkles}
-            title="No conversations yet"
-            description="Ask the AI assistant about errors, performance, or architecture. Your recent chats will show up here."
+            title={t.empty}
+            description={t.emptyDesc}
             action={
               <Link
                 href={DASHBOARD_ROUTES.aiAssistant}
                 className="inline-flex items-center gap-2 rounded-xl bg-zt-primary px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-zt-primary/90"
               >
                 <Sparkles className="size-4" aria-hidden />
-                Open AI Assistant
+                {openAi}
               </Link>
             }
           />
@@ -53,8 +61,11 @@ export function RecentConversations({
                     {conversation.title}
                   </Link>
                   <p className="truncate text-xs text-zt-muted">
-                    {conversation.model} · {conversation.messageCount} messages ·{" "}
-                    {formatDate(conversation.updatedAt)}
+                    {conversation.model} ·{" "}
+                    {fillTemplate(t.messages, {
+                      count: conversation.messageCount,
+                    })}{" "}
+                    · {formatDate(conversation.updatedAt)}
                   </p>
                 </div>
               </li>

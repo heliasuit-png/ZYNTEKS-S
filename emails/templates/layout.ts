@@ -27,6 +27,8 @@ export interface EmailLayoutInput {
   details?: EmailDetail[];
   actionUrl?: string;
   actionLabel?: string;
+  footerNotice: string;
+  copyrightTemplate: string;
 }
 
 /**
@@ -104,12 +106,14 @@ export function renderEmailLayout(input: EmailLayoutInput): string {
             <tr>
               <td style="padding:18px 28px;background:#f9fafb;border-top:1px solid #e5e7eb;">
                 <p style="margin:0;color:#9ca3af;font-size:12px;line-height:1.5;">
-                  You are receiving this email because notifications are enabled for your ${escapeHtml(
-                    input.appName,
-                  )} account. Manage your preferences in the dashboard.
+                  ${escapeHtml(
+                    input.footerNotice.replaceAll("{app}", input.appName),
+                  )}
                 </p>
-                <p style="margin:8px 0 0;color:#9ca3af;font-size:12px;">&copy; ${year} ${escapeHtml(
-                  input.appName,
+                <p style="margin:8px 0 0;color:#9ca3af;font-size:12px;">${escapeHtml(
+                  input.copyrightTemplate
+                    .replaceAll("{year}", String(year))
+                    .replaceAll("{app}", input.appName),
                 )}</p>
               </td>
             </tr>

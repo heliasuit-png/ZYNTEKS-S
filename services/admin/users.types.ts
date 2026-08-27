@@ -128,8 +128,7 @@ export interface AdminUserDetail {
     failedApiKeyAuth24h: number;
     failedLogins24h: number;
     activeSessions: number;
-    blockedNote: string;
-    suspiciousNote: string;
+    suspiciousLoginCount: number;
     newestFailures: {
       id: string;
       detail: string;

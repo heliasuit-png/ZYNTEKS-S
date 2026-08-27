@@ -4,14 +4,37 @@
  * `SUGGESTED_ANALYSES` powers the suggested-prompt chips shown in the empty
  * chat state. `INTENT_PROMPTS` maps the `?intent=` deep-links used by the
  * dashboard AI Core action cards to a concrete starter prompt.
+ *
+ * Prompt BODIES stay English (sent to the model). UI labels come from
+ * `dict.dash.ai.prompts` via `promptLabelForIntent`.
  */
+
+import type { DashDictionary } from "@/lib/i18n/dictionaries/dash-types";
 
 export interface SuggestedAnalysis {
   /** Deep-link intent key (also used by the dashboard AI Core cards). */
   intent: string;
+  /** English fallback label; prefer `promptLabelForIntent` in UI. */
   label: string;
   prompt: string;
 }
+
+type AiPromptLabels = DashDictionary["ai"]["prompts"];
+
+const INTENT_LABEL_KEYS: Record<string, keyof AiPromptLabels> = {
+  "analyze-project": "analyzeProject",
+  "analyze-error": "analyzeError",
+  "analyze-incident": "analyzeIncident",
+  "performance-audit": "analyzePerformance",
+  "analyze-api": "analyzeApi",
+  "analyze-logs": "analyzeLogs",
+  "analyze-stack-trace": "analyzeStackTrace",
+  "analyze-sdk-events": "analyzeSdkEvents",
+  "deployment-review": "deploymentReview",
+  "security-scan": "securityScan",
+  "review-architecture": "architectureReview",
+  "database-review": "databaseReview",
+};
 
 export const SUGGESTED_ANALYSES: SuggestedAnalysis[] = [
   {
@@ -96,4 +119,15 @@ export const INTENT_PROMPTS: Record<string, string> = Object.fromEntries(
 export function promptForIntent(intent: string | undefined): string | null {
   if (!intent) return null;
   return INTENT_PROMPTS[intent] ?? null;
+}
+
+/** Localized chip / card label for a known intent; falls back to English. */
+export function promptLabelForIntent(
+  intent: string,
+  prompts: AiPromptLabels,
+  fallback?: string,
+): string {
+  const key = INTENT_LABEL_KEYS[intent];
+  if (key) return prompts[key];
+  return fallback ?? intent;
 }

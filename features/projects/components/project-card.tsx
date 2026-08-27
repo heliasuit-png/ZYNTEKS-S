@@ -7,15 +7,13 @@ import {
   Trash2,
 } from "lucide-react";
 
+import { useDictionary } from "@/components/i18n/locale-provider";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/dashboard/badge";
 import type { BadgeProps } from "@/components/dashboard/badge";
 import { Dropdown, dropdownItemClass } from "@/components/dashboard/dropdown";
 import { Panel } from "@/components/dashboard/panel";
-import {
-  PROJECT_FRAMEWORK_LABELS,
-  PROJECT_STATUS_LABELS,
-} from "@/lib/constants";
+import { PROJECT_FRAMEWORK_LABELS } from "@/lib/constants";
 import { formatDate } from "@/utils/format";
 import type { ProjectStatus } from "@/types/database";
 import type { Project } from "@/features/projects/types";
@@ -33,6 +31,10 @@ interface ProjectCardProps {
 }
 
 export function ProjectCard({ project, onEdit, onDelete }: ProjectCardProps) {
+  const { dict } = useDictionary();
+  const t = dict.dash.projects;
+  const common = dict.dashboardCommon;
+
   return (
     <Panel className="flex h-full flex-col p-5">
       <div className="flex items-start justify-between gap-3">
@@ -57,7 +59,7 @@ export function ProjectCard({ project, onEdit, onDelete }: ProjectCardProps) {
             onClick={() => onEdit(project)}
           >
             <Pencil className="size-4" aria-hidden />
-            Edit
+            {common.edit}
           </button>
           <button
             type="button"
@@ -65,7 +67,7 @@ export function ProjectCard({ project, onEdit, onDelete }: ProjectCardProps) {
             onClick={() => onDelete(project)}
           >
             <Trash2 className="size-4" aria-hidden />
-            Delete
+            {common.delete}
           </button>
         </Dropdown>
       </div>
@@ -81,7 +83,7 @@ export function ProjectCard({ project, onEdit, onDelete }: ProjectCardProps) {
           {PROJECT_FRAMEWORK_LABELS[project.framework]}
         </Badge>
         <Badge tone={statusTone[project.status]}>
-          {PROJECT_STATUS_LABELS[project.status]}
+          {t.statuses[project.status]}
         </Badge>
       </div>
 
@@ -113,7 +115,7 @@ export function ProjectCard({ project, onEdit, onDelete }: ProjectCardProps) {
       ) : null}
 
       <div className="mt-auto pt-4 text-xs text-zt-muted">
-        Created {formatDate(project.created_at)}
+        {t.createdLabel.replace("{date}", formatDate(project.created_at))}
       </div>
     </Panel>
   );

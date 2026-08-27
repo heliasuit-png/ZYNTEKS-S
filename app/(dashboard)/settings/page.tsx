@@ -1,4 +1,3 @@
-import type { Metadata } from "next";
 import Link from "next/link";
 import {
   Bell,
@@ -18,78 +17,54 @@ import { PageHeader } from "@/components/dashboard/page-header";
 import { Panel } from "@/components/dashboard/panel";
 import { FadeIn } from "@/components/dashboard/motion";
 import { DASHBOARD_ROUTES } from "@/lib/constants";
+import { dashboardPageMetadata } from "@/lib/i18n/dashboard-metadata";
+import { getDictionary } from "@/lib/i18n/get-dictionary";
 
-export const metadata: Metadata = { title: "Settings" };
+export const generateMetadata = () => dashboardPageMetadata("settings");
 
-const sections: Array<{
-  title: string;
-  description: string;
-  href: string;
-  icon: LucideIcon;
-}> = [
-  {
-    title: "Profile",
-    description: "Avatar, display name, email, password, language and timezone.",
-    href: DASHBOARD_ROUTES.profile,
-    icon: User,
-  },
-  {
-    title: "Workspace",
-    description: "Name, logo, brand color, timezone, URL and ownership.",
-    href: DASHBOARD_ROUTES.organization,
-    icon: Building2,
-  },
-  {
-    title: "Team",
-    description: "Members, roles, invitations and permissions.",
-    href: DASHBOARD_ROUTES.members,
-    icon: Users,
-  },
-  {
-    title: "Security",
-    description: "Sessions, devices, recent logins and 2FA policy.",
-    href: DASHBOARD_ROUTES.security,
-    icon: Shield,
-  },
-  {
-    title: "Notifications",
-    description: "Email, dashboard, Slack, Discord and per-category prefs.",
-    href: DASHBOARD_ROUTES.notifications,
-    icon: Bell,
-  },
-  {
-    title: "Appearance",
-    description: "Dark/light/system theme, accent, motion, sidebar and density.",
-    href: DASHBOARD_ROUTES.settingsAppearance,
-    icon: Palette,
-  },
-  {
-    title: "AI settings",
-    description: "Usage, history, default model and streaming.",
-    href: DASHBOARD_ROUTES.settingsAi,
-    icon: Bot,
-  },
-  {
-    title: "API settings",
-    description: "API keys, SDK keys, webhooks and rate limits.",
-    href: DASHBOARD_ROUTES.settingsApi,
-    icon: KeyRound,
-  },
-  {
-    title: "Billing",
-    description: "Current plan, usage and subscription management.",
-    href: DASHBOARD_ROUTES.billing,
-    icon: CreditCard,
-  },
-];
+const SECTION_KEYS = [
+  "profile",
+  "workspace",
+  "team",
+  "security",
+  "notifications",
+  "appearance",
+  "ai",
+  "api",
+  "billing",
+] as const;
 
-export default function SettingsPage() {
+const SECTION_META: Record<
+  (typeof SECTION_KEYS)[number],
+  { href: string; icon: LucideIcon }
+> = {
+  profile: { href: DASHBOARD_ROUTES.profile, icon: User },
+  workspace: { href: DASHBOARD_ROUTES.organization, icon: Building2 },
+  team: { href: DASHBOARD_ROUTES.members, icon: Users },
+  security: { href: DASHBOARD_ROUTES.security, icon: Shield },
+  notifications: { href: DASHBOARD_ROUTES.notifications, icon: Bell },
+  appearance: { href: DASHBOARD_ROUTES.settingsAppearance, icon: Palette },
+  ai: { href: DASHBOARD_ROUTES.settingsAi, icon: Bot },
+  api: { href: DASHBOARD_ROUTES.settingsApi, icon: KeyRound },
+  billing: { href: DASHBOARD_ROUTES.billing, icon: CreditCard },
+};
+
+export default async function SettingsPage() {
+  const { dict } = await getDictionary();
+  const titles = dict.dashboard.pageTitles.settings;
+  const sectionCopy = dict.dashboard.settingsSections;
+
+  const sections = SECTION_KEYS.map((key) => ({
+    key,
+    title: sectionCopy[key].title,
+    description: sectionCopy[key].description,
+    href: SECTION_META[key].href,
+    icon: SECTION_META[key].icon,
+  }));
+
   return (
     <div className="space-y-6">
-      <PageHeader
-        title="Settings"
-        description="Manage your account, workspace, security and preferences."
-      />
+      <PageHeader title={titles.title} description={titles.description} />
       <div className="grid gap-3">
         {sections.map((section, index) => {
           const Icon = section.icon;

@@ -1,5 +1,5 @@
-import type { Metadata } from "next";
 import { redirect } from "next/navigation";
+import { dashboardPageMetadata } from "@/lib/i18n/dashboard-metadata";
 
 import { DASHBOARD_ROUTES, ROUTES } from "@/lib/constants";
 import { isAppError } from "@/lib/errors";
@@ -22,7 +22,7 @@ import type {
   ProjectOption,
 } from "@/features/ai/types";
 
-export const metadata: Metadata = { title: "AI Assistant" };
+export const generateMetadata = () => dashboardPageMetadata("ai");
 
 export default async function AiAssistantPage({
   searchParams,

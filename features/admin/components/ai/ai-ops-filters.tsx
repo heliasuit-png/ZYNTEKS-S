@@ -3,10 +3,14 @@
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useTransition } from "react";
 
+import { useDictionary } from "@/components/i18n/locale-provider";
 import { ADMIN_ROUTES } from "@/lib/constants";
 import type { AiOpsData } from "@/services/admin/ai-operations.types";
 
 export function AiOpsFilters({ options }: { options: AiOpsData["filterOptions"] }) {
+  const { dict } = useDictionary();
+  const t = dict.admin.ai.filters;
+  const common = dict.admin.common;
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -32,28 +36,30 @@ export function AiOpsFilters({ options }: { options: AiOpsData["filterOptions"] 
   return (
     <div className="admin-glass admin-panel space-y-3 rounded-2xl p-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <p className="admin-eyebrow">AI filters & export</p>
+        <p className="admin-eyebrow">{t.title}</p>
         <div className="flex flex-wrap items-center gap-2">
           {pending ? (
-            <span className="text-[10px] text-[var(--admin-muted)]">Updating…</span>
+            <span className="text-[10px] text-[var(--admin-muted)]">
+              {common.updating}
+            </span>
           ) : null}
           <a
             href={`/api/admin/ai/export?format=csv&${exportQuery}`}
             className="admin-btn-ghost"
           >
-            Export CSV
+            {common.exportCsv}
           </a>
           <a
             href={`/api/admin/ai/export?format=json&${exportQuery}`}
             className="admin-btn-ghost"
           >
-            Export JSON
+            {common.exportJson}
           </a>
           <a
             href={ADMIN_ROUTES.ai}
             className="text-xs text-[var(--admin-muted)] hover:text-[var(--admin-accent-text)]"
           >
-            Reset
+            {common.reset}
           </a>
         </div>
       </div>
@@ -63,34 +69,34 @@ export function AiOpsFilters({ options }: { options: AiOpsData["filterOptions"] 
           className="admin-select"
           value={searchParams.get("range") ?? "30d"}
           onChange={(e) => update("range", e.target.value)}
-          aria-label="Date range"
+          aria-label={common.dateRange}
         >
-          <option value="24h">Last 24h</option>
-          <option value="7d">Last 7d</option>
-          <option value="30d">Last 30d</option>
-          <option value="90d">Last 90d</option>
+          <option value="24h">{common.range24h}</option>
+          <option value="7d">{common.range7d}</option>
+          <option value="30d">{common.range30d}</option>
+          <option value="90d">{common.range90d}</option>
         </select>
         <input
           className="admin-select"
           type="date"
           value={searchParams.get("from") ?? ""}
           onChange={(e) => update("from", e.target.value)}
-          aria-label="From date"
+          aria-label={common.fromDate}
         />
         <input
           className="admin-select"
           type="date"
           value={searchParams.get("to") ?? ""}
           onChange={(e) => update("to", e.target.value)}
-          aria-label="To date"
+          aria-label={common.toDate}
         />
         <select
           className="admin-select"
           value={workspaceId}
           onChange={(e) => update("workspaceId", e.target.value)}
-          aria-label="Workspace"
+          aria-label={common.workspace}
         >
-          <option value="">Workspace</option>
+          <option value="">{common.workspace}</option>
           {options.workspaces.map((ws) => (
             <option key={ws.id} value={ws.id}>
               {ws.name}
@@ -101,9 +107,9 @@ export function AiOpsFilters({ options }: { options: AiOpsData["filterOptions"] 
           className="admin-select"
           value={searchParams.get("projectId") ?? ""}
           onChange={(e) => update("projectId", e.target.value)}
-          aria-label="Project"
+          aria-label={common.project}
         >
-          <option value="">Project</option>
+          <option value="">{common.project}</option>
           {projects.map((project) => (
             <option key={project.id} value={project.id}>
               {project.name}
@@ -114,9 +120,9 @@ export function AiOpsFilters({ options }: { options: AiOpsData["filterOptions"] 
           className="admin-select"
           value={searchParams.get("model") ?? ""}
           onChange={(e) => update("model", e.target.value)}
-          aria-label="Model"
+          aria-label={common.model}
         >
-          <option value="">Model</option>
+          <option value="">{common.model}</option>
           {options.models.map((model) => (
             <option key={model} value={model}>
               {model}
@@ -127,19 +133,16 @@ export function AiOpsFilters({ options }: { options: AiOpsData["filterOptions"] 
           className="admin-select"
           value={searchParams.get("environment") ?? ""}
           onChange={(e) => update("environment", e.target.value)}
-          aria-label="Environment (not stored on AI usage)"
-          title="Environment is not stored on AI usage rows"
+          aria-label={t.envAria}
+          title={t.envTitle}
         >
-          <option value="">Environment (n/a)</option>
-          <option value="production">Production</option>
-          <option value="staging">Staging</option>
-          <option value="development">Development</option>
+          <option value="">{t.envNa}</option>
+          <option value="production">{common.envProduction}</option>
+          <option value="staging">{common.envStaging}</option>
+          <option value="development">{common.envDevelopment}</option>
         </select>
       </div>
-      <p className="text-[10px] text-[var(--admin-muted)]">
-        Environment is not a column on `ai_usage` / conversations — filter is UI
-        parity only and does not change results.
-      </p>
+      <p className="text-[10px] text-[var(--admin-muted)]">{t.envNote}</p>
     </div>
   );
 }

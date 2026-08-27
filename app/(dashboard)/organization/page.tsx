@@ -1,5 +1,6 @@
-import type { Metadata } from "next";
 import { redirect } from "next/navigation";
+import { dashboardPageMetadata } from "@/lib/i18n/dashboard-metadata";
+import { getDictionary } from "@/lib/i18n/get-dictionary";
 
 import { PageHeader } from "@/components/dashboard/page-header";
 import { DASHBOARD_ROUTES } from "@/lib/constants";
@@ -22,9 +23,11 @@ import {
 } from "@/components/dashboard/panel";
 import { FadeIn } from "@/components/dashboard/motion";
 
-export const metadata: Metadata = { title: "Organization" };
+export const generateMetadata = () => dashboardPageMetadata("organization");
 
 export default async function OrganizationPage() {
+  const { dict } = await getDictionary();
+  const pageCopy = dict.dashboard.pageTitles.organization;
   const supabase = await createSupabaseServerClient();
   const user = await getAuthenticatedUser(supabase);
   if (!user) redirect(DASHBOARD_ROUTES.dashboard);
@@ -48,20 +51,23 @@ export default async function OrganizationPage() {
     (item) => item.owner_id === user.id,
   ).length;
   const workspaceUrl = `${env.NEXT_PUBLIC_APP_URL.replace(/\/$/, "")}/w/${workspace.slug}`;
+  const usageCopy = dict.dash.billingUi;
+  const orgCopy = dict.dash.organization;
 
   return (
     <div className="space-y-6">
-      <PageHeader
-        title="Organization"
-        description="Workspace branding, defaults and security policies for your company."
+      <PageHeader title={pageCopy.title} description={pageCopy.description}
       />
 
       <FadeIn>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <UsageTile label="Members" value={usage.memberCount} />
-          <UsageTile label="Projects" value={usage.projectCount} />
-          <UsageTile label="API keys" value={usage.apiKeyCount} />
-          <UsageTile label="AI messages (30d)" value={usage.aiMessageCount} />
+          <UsageTile label={usageCopy.usageMembers} value={usage.memberCount} />
+          <UsageTile label={usageCopy.usageProjects} value={usage.projectCount} />
+          <UsageTile label={usageCopy.usageApiKeys} value={usage.apiKeyCount} />
+          <UsageTile
+            label={usageCopy.usageAiMessages}
+            value={usage.aiMessageCount}
+          />
         </div>
       </FadeIn>
 
@@ -76,16 +82,16 @@ export default async function OrganizationPage() {
       <FadeIn delay={0.05}>
         <Panel>
           <PanelHeader>
-            <PanelTitle>Workspace metadata</PanelTitle>
+            <PanelTitle>{orgCopy.metadataTitle}</PanelTitle>
           </PanelHeader>
           <PanelContent className="grid gap-3 text-sm sm:grid-cols-2">
-            <Meta label="Your role" value={active.role} />
-            <Meta label="Plan" value={workspace.plan} />
+            <Meta label={orgCopy.yourRole} value={active.role} />
+            <Meta label={orgCopy.plan} value={workspace.plan} />
             <Meta
-              label="Created"
+              label={orgCopy.created}
               value={new Date(workspace.created_at).toLocaleString()}
             />
-            <Meta label="Workspace ID" value={workspace.id} />
+            <Meta label={orgCopy.workspaceId} value={workspace.id} />
           </PanelContent>
         </Panel>
       </FadeIn>

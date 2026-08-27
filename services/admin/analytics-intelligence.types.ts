@@ -69,7 +69,6 @@ export interface AnalyticsIntelligenceData {
     returningSessions: number;
     /** Always null — dwell time is not stored. */
     averageSessionDurationMs: number | null;
-    sessionDurationNote: string;
   };
   workspaces: {
     growth: number;
@@ -161,7 +160,6 @@ export interface AnalyticsIntelligenceData {
   geography: {
     countries: CountryPoint[];
     regions: NamedCount[];
-    cityNote: string;
   };
   filterOptions: {
     workspaces: { id: string; name: string }[];

@@ -13,12 +13,8 @@ import {
   Dropdown,
   dropdownItemClass,
 } from "@/components/dashboard/dropdown";
-
-const PLAN_LABELS: Record<string, string> = {
-  free: "Starter",
-  pro: "Pro",
-  enterprise: "Enterprise",
-};
+import { useDictionary } from "@/components/i18n/locale-provider";
+import { fillTemplate } from "@/lib/i18n/fill-template";
 
 export function WorkspaceSwitcher({
   workspace,
@@ -27,11 +23,15 @@ export function WorkspaceSwitcher({
   workspace: DashboardWorkspaceContext;
   collapsed?: boolean;
 }) {
+  const { dict } = useDictionary();
+  const shell = dict.dash.shell;
+  const planNames = dict.dash.billingUi.planNames;
   const [pending, startTransition] = useTransition();
   const [creating, setCreating] = useState(false);
   const [name, setName] = useState("");
   const active = workspace.active;
-  const planLabel = PLAN_LABELS[active.plan] ?? active.plan;
+  const planLabel =
+    planNames[active.plan as keyof typeof planNames] ?? active.plan;
 
   function switchTo(id: string) {
     if (id === active.id) return;
@@ -83,7 +83,10 @@ export function WorkspaceSwitcher({
               {active.name}
             </span>
             <span className="block truncate text-[11px] text-zt-muted">
-              {planLabel} · {active.memberCount} members
+              {planLabel} ·{" "}
+              {fillTemplate(shell.membersCount, {
+                count: active.memberCount,
+              })}
             </span>
           </span>
           <ChevronsUpDown className="size-3.5 shrink-0 text-zt-muted" />
@@ -101,7 +104,7 @@ export function WorkspaceSwitcher({
         menuClassName="w-72"
       >
         <p className="px-2 py-1.5 text-[11px] font-medium uppercase tracking-wide text-zt-muted">
-          Workspaces
+          {dict.dash.commandPalette.workspaces}
         </p>
         {workspace.workspaces.map((w) => (
           <button
@@ -114,7 +117,8 @@ export function WorkspaceSwitcher({
             <span className="min-w-0 truncate text-left">
               <span className="block truncate text-sm text-zt-text">{w.name}</span>
               <span className="block truncate text-[11px] text-zt-muted">
-                {PLAN_LABELS[w.plan] ?? w.plan} · {w.projectCount} projects
+                {planNames[w.plan as keyof typeof planNames] ?? w.plan} ·{" "}
+                {fillTemplate(shell.projectsCount, { count: w.projectCount })}
               </span>
             </span>
             {w.id === active.id ? (
@@ -132,7 +136,7 @@ export function WorkspaceSwitcher({
             <input
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="Workspace name"
+              placeholder={dict.dash.organization.workspaceName}
               className="w-full rounded-lg border border-zt-border bg-zt-surface px-2.5 py-1.5 text-sm text-zt-text outline-none focus:border-zt-primary"
             />
             <button
@@ -141,7 +145,7 @@ export function WorkspaceSwitcher({
               disabled={pending || !name.trim()}
               className="w-full rounded-lg bg-gradient-to-r from-zt-primary to-zt-purple px-3 py-1.5 text-xs font-medium text-white disabled:opacity-50"
             >
-              Create workspace
+              {shell.createWorkspace}
             </button>
           </div>
         ) : (
@@ -155,7 +159,7 @@ export function WorkspaceSwitcher({
             className={dropdownItemClass}
           >
             <Plus className="size-4" aria-hidden />
-            New workspace
+            {shell.newWorkspace}
           </button>
         )}
       </Dropdown>

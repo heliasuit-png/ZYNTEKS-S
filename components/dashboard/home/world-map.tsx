@@ -9,6 +9,7 @@ import {
   PanelHeader,
   PanelTitle,
 } from "@/components/dashboard/panel";
+import { useDictionary } from "@/components/i18n/locale-provider";
 
 const W = 800;
 const H = 360;
@@ -42,17 +43,20 @@ function arc(a: { x: number; y: number }, b: { x: number; y: number }): string {
 }
 
 export function WorldMap() {
+  const { dict } = useDictionary();
+  const t = dict.dash.home.worldMap;
+
   return (
     <Panel className="overflow-hidden">
       <PanelHeader>
         <PanelTitle>
           <span className="flex items-center gap-2">
             <Globe className="size-4 text-zt-primary" aria-hidden />
-            Global Activity
+            {t.title}
           </span>
         </PanelTitle>
         <span className="rounded-full border border-zt-border bg-white/[0.03] px-2.5 py-0.5 text-[11px] font-medium text-zt-muted">
-          Preview
+          {t.preview}
         </span>
       </PanelHeader>
       <PanelContent className="p-0">
@@ -61,7 +65,7 @@ export function WorldMap() {
             viewBox={`0 0 ${W} ${H}`}
             className="h-auto w-full"
             role="img"
-            aria-label="Ambient global activity map"
+            aria-label={t.ariaLabel}
           >
             <defs>
               <radialGradient id="wm-glow" cx="50%" cy="40%" r="60%">
@@ -77,7 +81,6 @@ export function WorldMap() {
 
             <rect width={W} height={H} fill="url(#wm-glow)" />
 
-            {/* Graticule */}
             <g stroke="rgba(255,255,255,0.05)" strokeWidth="1" fill="none">
               {[80, 140, 200, 260].map((y) => (
                 <line key={`h${y}`} x1="40" y1={y} x2={W - 40} y2={y} />
@@ -87,7 +90,6 @@ export function WorldMap() {
               ))}
             </g>
 
-            {/* Connection arcs with a travelling pulse */}
             {links.map(([a, b], i) => {
               const na = nodes[a]!;
               const nb = nodes[b]!;
@@ -120,7 +122,6 @@ export function WorldMap() {
               );
             })}
 
-            {/* Nodes */}
             {nodes.map((n, i) => (
               <g key={`n${i}`}>
                 <motion.circle
@@ -148,10 +149,7 @@ export function WorldMap() {
               </g>
             ))}
           </svg>
-          <p className="px-5 pb-4 pt-1 text-xs text-zt-muted">
-            Realtime visitor locations will appear here once analytics are
-            connected.
-          </p>
+          <p className="px-5 pb-4 pt-1 text-xs text-zt-muted">{t.empty}</p>
         </div>
       </PanelContent>
     </Panel>

@@ -1,4 +1,8 @@
-export default function IncidentDetailLoading() {
+import { getDictionary } from "@/lib/i18n/get-dictionary";
+
+export default async function IncidentDetailLoading() {
+  const { dict } = await getDictionary();
+
   return (
     <div className="space-y-6" role="status" aria-live="polite">
       <div className="h-4 w-32 animate-pulse rounded bg-zt-surface-2" />
@@ -16,7 +20,7 @@ export default function IncidentDetailLoading() {
         <div className="h-64 animate-pulse rounded-2xl border border-zt-border bg-zt-surface" />
         <div className="h-64 animate-pulse rounded-2xl border border-zt-border bg-zt-surface" />
       </div>
-      <span className="sr-only">Loading incident…</span>
+      <span className="sr-only">{dict.dashboardCommon.loadingStates.incident}</span>
     </div>
   );
 }

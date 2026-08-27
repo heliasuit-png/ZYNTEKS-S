@@ -1,5 +1,8 @@
+"use client";
+
 import type { ReactNode } from "react";
 
+import { useDictionaryOptional } from "@/components/i18n/locale-provider";
 import { cn } from "@/lib/utils";
 
 type Align = "left" | "center" | "right";
@@ -32,6 +35,10 @@ export function DataTable<T>({
   getRowId,
   empty,
 }: DataTableProps<T>) {
+  const ctx = useDictionaryOptional();
+  const defaultEmpty =
+    ctx?.dict.dashboardCommon.noRecords ?? ctx?.dict.dashboardCommon.empty ?? "";
+
   return (
     <div className="zt-card overflow-hidden rounded-2xl">
       <div className="overflow-x-auto">
@@ -58,7 +65,7 @@ export function DataTable<T>({
                 <td colSpan={columns.length} className="px-4 py-10">
                   {empty ?? (
                     <p className="text-center text-sm text-zt-muted">
-                      No records to display.
+                      {defaultEmpty}
                     </p>
                   )}
                 </td>

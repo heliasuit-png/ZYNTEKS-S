@@ -12,6 +12,7 @@ import {
 import type { LucideIcon } from "lucide-react";
 
 import { cn } from "@/lib/utils";
+import { useDictionary } from "@/components/i18n/locale-provider";
 
 export type ToastVariant = "success" | "warning" | "error" | "info";
 
@@ -59,6 +60,7 @@ export function Toast({
   variant?: ToastVariant;
   title?: string;
 }) {
+  const { dict } = useDictionary();
   const [open, setOpen] = useState(true);
   const meta = variantMeta[variant];
   const Icon = meta.icon;
@@ -98,7 +100,7 @@ export function Toast({
             <button
               type="button"
               onClick={() => setOpen(false)}
-              aria-label="Dismiss notification"
+              aria-label={dict.dash.shell.dismissNotification}
               className="rounded-md text-zt-muted transition-colors hover:text-zt-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zt-primary/50"
             >
               <X className="size-4" aria-hidden />

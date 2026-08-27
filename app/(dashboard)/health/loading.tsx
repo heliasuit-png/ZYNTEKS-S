@@ -1,4 +1,8 @@
-export default function HealthLoading() {
+import { getDictionary } from "@/lib/i18n/get-dictionary";
+
+export default async function HealthLoading() {
+  const { dict } = await getDictionary();
+
   return (
     <div className="space-y-6" role="status" aria-live="polite">
       <div className="space-y-2">
@@ -15,7 +19,7 @@ export default function HealthLoading() {
         <div className="h-64 animate-pulse rounded-2xl border border-zt-border bg-zt-surface" />
         <div className="h-64 animate-pulse rounded-2xl border border-zt-border bg-zt-surface" />
       </div>
-      <span className="sr-only">Loading health monitoring…</span>
+      <span className="sr-only">{dict.dashboardCommon.loadingStates.health}</span>
     </div>
   );
 }

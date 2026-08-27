@@ -2,6 +2,8 @@
 
 import { useMemo, useState, useTransition } from "react";
 
+import { useDictionary } from "@/components/i18n/locale-provider";
+import { fillTemplate } from "@/lib/i18n/fill-template";
 import type { FeatureFlagRow } from "@/services/admin/platform-settings.types";
 import type { FeatureFlagStatus } from "@/types/database";
 import {
@@ -35,6 +37,8 @@ export function FeatureFlagsPanel({
   flags: FeatureFlagRow[];
   canWrite: boolean;
 }) {
+  const { dict, locale } = useDictionary();
+  const t = dict.admin.settings;
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [scopeFilter, setScopeFilter] = useState<string>("all");
@@ -81,22 +85,22 @@ export function FeatureFlagsPanel({
         <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
           <div className="grid flex-1 gap-3 sm:grid-cols-3">
             <label className="block text-xs text-[var(--admin-muted)]">
-              Search
+              {t.flags.search}
               <input
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
-                placeholder="Flag, name, description"
+                placeholder={t.flags.searchPlaceholder}
                 className="admin-select mt-1 w-full"
               />
             </label>
             <label className="block text-xs text-[var(--admin-muted)]">
-              Status
+              {t.flags.status}
               <select
                 value={statusFilter}
                 onChange={(event) => setStatusFilter(event.target.value)}
                 className="admin-select mt-1 w-full"
               >
-                <option value="all">All</option>
+                <option value="all">{t.flags.all}</option>
                 {STATUS_OPTIONS.map((status) => (
                   <option key={status} value={status}>
                     {status}
@@ -105,13 +109,13 @@ export function FeatureFlagsPanel({
               </select>
             </label>
             <label className="block text-xs text-[var(--admin-muted)]">
-              Scope
+              {t.flags.scope}
               <select
                 value={scopeFilter}
                 onChange={(event) => setScopeFilter(event.target.value)}
                 className="admin-select mt-1 w-full"
               >
-                <option value="all">All</option>
+                <option value="all">{t.flags.all}</option>
                 <option value="global">global</option>
                 <option value="workspace">workspace</option>
                 <option value="project">project</option>
@@ -120,7 +124,10 @@ export function FeatureFlagsPanel({
             </label>
           </div>
           <p className="text-xs text-[var(--admin-muted)]">
-            {filtered.length} of {flags.length} flags
+            {fillTemplate(t.flags.ofFlags, {
+              shown: filtered.length,
+              total: flags.length,
+            })}
           </p>
         </div>
       </div>
@@ -133,19 +140,23 @@ export function FeatureFlagsPanel({
 
       {filtered.length === 0 ? (
         <AdminEmptyState
-          title="No feature flags match the current filters."
-          description="Adjust search or status/scope filters to broaden results."
+          title={t.flagsEmpty.title}
+          description={t.flagsEmpty.description}
         />
       ) : (
         <div className="overflow-x-auto rounded-xl border border-[var(--admin-border)]">
           <table className="min-w-full text-left text-sm">
             <thead className="bg-[var(--admin-surface)] text-[11px] uppercase tracking-wide text-[var(--admin-muted)]">
               <tr>
-                <th className="px-3 py-2.5 font-medium">Flag</th>
-                <th className="px-3 py-2.5 font-medium">Description</th>
-                <th className="px-3 py-2.5 font-medium">Scope</th>
-                <th className="px-3 py-2.5 font-medium">Status</th>
-                <th className="px-3 py-2.5 font-medium">Last updated</th>
+                <th className="px-3 py-2.5 font-medium">{t.flags.flag}</th>
+                <th className="px-3 py-2.5 font-medium">
+                  {t.flags.description}
+                </th>
+                <th className="px-3 py-2.5 font-medium">{t.flags.scope}</th>
+                <th className="px-3 py-2.5 font-medium">{t.flags.status}</th>
+                <th className="px-3 py-2.5 font-medium">
+                  {t.flags.lastUpdated}
+                </th>
               </tr>
             </thead>
             <tbody>
@@ -190,7 +201,7 @@ export function FeatureFlagsPanel({
                   </td>
                   <td className="px-3 py-3 text-xs text-[var(--admin-muted)]">
                     <p title={formatWhen(flag.updatedAt)}>
-                      {formatRelative(flag.updatedAt)}
+                      {formatRelative(flag.updatedAt, locale)}
                     </p>
                   </td>
                 </tr>
@@ -206,28 +217,28 @@ export function FeatureFlagsPanel({
           action={(formData) => createFlag(formData)}
         >
           <p className="admin-eyebrow sm:col-span-2 lg:col-span-3">
-            Create feature flag
+            {t.createFeatureFlag}
           </p>
           <label className="block text-xs text-[var(--admin-muted)]">
-            Key
+            {t.flags.key}
             <input
               name="key"
               required
-              placeholder="module.feature"
+              placeholder={t.flags.keyPlaceholder}
               className="admin-select mt-1 w-full"
             />
           </label>
           <label className="block text-xs text-[var(--admin-muted)]">
-            Name
+            {t.flags.name}
             <input
               name="name"
               required
-              placeholder="Display name"
+              placeholder={t.flags.namePlaceholder}
               className="admin-select mt-1 w-full"
             />
           </label>
           <label className="block text-xs text-[var(--admin-muted)]">
-            Scope
+            {t.flags.scope}
             <select
               name="scope"
               defaultValue="global"
@@ -240,15 +251,15 @@ export function FeatureFlagsPanel({
             </select>
           </label>
           <label className="block text-xs text-[var(--admin-muted)] sm:col-span-2">
-            Description
+            {t.flags.description}
             <input
               name="description"
-              placeholder="What this flag controls"
+              placeholder={t.flags.descriptionPlaceholder}
               className="admin-select mt-1 w-full"
             />
           </label>
           <label className="block text-xs text-[var(--admin-muted)]">
-            Status
+            {t.flags.status}
             <select
               name="status"
               defaultValue="disabled"
@@ -267,7 +278,7 @@ export function FeatureFlagsPanel({
               disabled={pending}
               className="rounded-lg bg-[var(--admin-accent)] px-3 py-2 text-sm font-medium text-white transition hover:opacity-90 disabled:opacity-50"
             >
-              Create flag
+              {t.createFlag}
             </button>
           </div>
         </form>

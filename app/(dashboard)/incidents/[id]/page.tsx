@@ -8,11 +8,15 @@ import { PageHeader } from "@/components/dashboard/page-header";
 import { FadeIn } from "@/components/dashboard/motion";
 import { DASHBOARD_ROUTES } from "@/lib/constants";
 import { isAppError } from "@/lib/errors";
+import { getDictionary } from "@/lib/i18n/get-dictionary";
 import { getIncidentDetail } from "@/services/dashboard/incidents.service";
 import { IncidentDetailView } from "@/features/incidents/components/incident-detail-view";
 import type { IncidentDetailBundle } from "@/features/incidents/types";
 
-export const metadata: Metadata = { title: "Incident" };
+export async function generateMetadata(): Promise<Metadata> {
+  const { dict } = await getDictionary();
+  return { title: dict.system.incident };
+}
 
 export default async function IncidentDetailPage({
   params,
@@ -20,6 +24,7 @@ export default async function IncidentDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
+  const { dict } = await getDictionary();
 
   let bundle: IncidentDetailBundle;
   try {
@@ -46,7 +51,7 @@ export default async function IncidentDetailPage({
           className="inline-flex items-center gap-1.5 text-sm text-zt-muted transition-colors hover:text-zt-text"
         >
           <ArrowLeft className="size-4" aria-hidden />
-          Back to incidents
+          {dict.dash.incidents.backToList}
         </Link>
         <FadeIn>
           <PageHeader

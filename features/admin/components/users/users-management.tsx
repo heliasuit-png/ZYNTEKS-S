@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 
+import { useDictionary } from "@/components/i18n/locale-provider";
 import type { AdminPlatformRole } from "@/services/admin/types";
 import type {
   AdminUserListItem,
@@ -33,14 +34,16 @@ export function UsersManagement({
   search,
   role,
 }: UsersManagementProps) {
+  const { dict } = useDictionary();
+  const t = dict.admin.users;
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
 
   return (
     <div className="space-y-5">
       <AdminPageHeader
-        eyebrow="Directory"
-        title="User Management"
-        description="Platform-wide directory, security context, and administrative actions."
+        eyebrow={t.eyebrow}
+        title={t.pageTitle}
+        description={t.description}
       />
 
       <UsersOverview stats={overview} />

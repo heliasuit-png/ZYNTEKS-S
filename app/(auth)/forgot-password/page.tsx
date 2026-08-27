@@ -17,16 +17,16 @@ export default async function ForgotPasswordPage() {
 
   return (
     <AuthCard
-      title="Forgot your password?"
-      description="Enter your email and we'll send you a reset link"
+      title={dict.auth.forgotTitle}
+      description={dict.auth.forgotDesc}
       footer={
         <>
-          Remembered it?{" "}
+          {dict.auth.rememberedIt}{" "}
           <Link
             href={ROUTES.login}
             className="font-medium text-foreground hover:underline"
           >
-            Back to sign in
+            {dict.auth.backToSignIn}
           </Link>
         </>
       }
