@@ -1,0 +1,10 @@
+import {
+  LegalDocument,
+  legalMetadata,
+} from "@/features/landing/components/legal-document";
+
+export const generateMetadata = () => legalMetadata("preliminary-information");
+
+export default function Page() {
+  return <LegalDocument kind="preliminary-information" />;
+}

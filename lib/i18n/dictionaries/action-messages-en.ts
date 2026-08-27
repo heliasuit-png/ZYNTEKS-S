@@ -82,6 +82,10 @@ export const actionMessagesEn: ActionMessagesDictionary = {
     passwordMinLength: "Password must be at least {min} characters",
     accountCreatedVerify:
       "Account created. Check your inbox to verify your email address.",
+    accountCreatedSignIn:
+      "Account created. You can sign in with your email and password.",
+    accountExistsCheckEmail:
+      "If an account already exists for that email, check your inbox or sign in.",
     magicLinkSent: "Check your email for a secure sign-in link.",
     unknownProvider: "Unknown authentication provider.",
     resetLinkSent:

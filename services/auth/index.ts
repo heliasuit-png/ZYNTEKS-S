@@ -8,6 +8,7 @@ export {
   updateEmail,
   resendEmailVerification,
   exchangeCodeForSession,
+  verifyEmailOtp,
   signInWithMagicLink,
   startOAuthSignIn,
   getAuthenticatedUser,
@@ -21,6 +22,8 @@ export type {
   MagicLinkParams,
   OAuthSignInParams,
 } from "@/services/auth/auth.service";
+export { completeEmailLinkAuth } from "@/services/auth/complete-email-link";
+export type { EmailLinkAuthResult } from "@/services/auth/complete-email-link";
 export {
   getOAuthProviderConfigs,
   getEnabledOAuthProviders,

@@ -2,54 +2,61 @@ import type { Metadata } from "next";
 
 import { LegalPage } from "@/features/landing/components/legal-page";
 import {
-  cookieSections,
-  kvkkSections,
-  legalDraftNotice,
-  privacySections,
-  termsSections,
+  getLegalDocument,
+  type LegalDocumentKind,
 } from "@/features/landing/data/legal-content";
 import { getDictionary } from "@/lib/i18n/get-dictionary";
-import type { Locale } from "@/lib/i18n/config";
+import type { Dictionary } from "@/lib/i18n/dictionaries";
 
-type Kind = "privacy" | "terms" | "cookie" | "kvkk";
+export type LegalKind = LegalDocumentKind;
 
-export async function LegalDocument({ kind }: { kind: Kind }) {
-  const { locale, dict } = await getDictionary();
+export async function LegalDocument({ kind }: { kind: LegalKind }) {
+  const { dict } = await getDictionary();
   const title = titleFor(kind, dict.legal);
-  const sections = sectionsFor(kind, locale);
+  const doc = getLegalDocument(kind);
 
   return (
-    <LegalPage title={title}>
-      <p className="rounded-lg border border-zt-border/80 bg-zt-surface/40 px-3 py-2 text-xs text-zt-muted">
-        {legalDraftNotice(locale)}
-      </p>
-      {sections.map((s) => (
-        <div key={s.h}>
-          <h2 className="pt-4 text-lg font-semibold text-zt-text">{s.h}</h2>
-          <p>{s.p}</p>
-        </div>
+    <LegalPage title={title} lastUpdated={doc.lastUpdated}>
+      {doc.intro.map((paragraph, index) => (
+        <p key={`intro-${index}`}>{paragraph}</p>
+      ))}
+      {doc.sections.map((section) => (
+        <section key={section.heading} className="space-y-3">
+          <h2 className="pt-4 text-lg font-semibold text-zt-text">
+            {section.heading}
+          </h2>
+          {section.paragraphs.map((paragraph, index) => (
+            <p key={`p-${index}`}>{paragraph}</p>
+          ))}
+          {section.bullets && section.bullets.length > 0 ? (
+            <ul className="list-disc space-y-1.5 pl-5">
+              {section.bullets.map((item, index) => (
+                <li key={`b-${index}`}>{item}</li>
+              ))}
+            </ul>
+          ) : null}
+          {section.paragraphsAfterBullets?.map((paragraph, index) => (
+            <p key={`pa-${index}`}>{paragraph}</p>
+          ))}
+        </section>
+      ))}
+      {doc.closing?.map((paragraph, index) => (
+        <p key={`close-${index}`}>{paragraph}</p>
       ))}
     </LegalPage>
   );
 }
 
-export async function legalMetadata(kind: Kind): Promise<Metadata> {
+export async function legalMetadata(kind: LegalKind): Promise<Metadata> {
   const { dict } = await getDictionary();
+  const title = titleFor(kind, dict.legal);
   return {
-    title: titleFor(kind, dict.legal),
-    description: dict.legal.draftNotice,
+    title,
+    description: title,
   };
 }
 
-function titleFor(
-  kind: Kind,
-  legal: {
-    privacyTitle: string;
-    termsTitle: string;
-    cookieTitle: string;
-    kvkkTitle: string;
-  },
-) {
+function titleFor(kind: LegalKind, legal: Dictionary["legal"]) {
   switch (kind) {
     case "privacy":
       return legal.privacyTitle;
@@ -59,18 +66,11 @@ function titleFor(
       return legal.cookieTitle;
     case "kvkk":
       return legal.kvkkTitle;
-  }
-}
-
-function sectionsFor(kind: Kind, locale: Locale) {
-  switch (kind) {
-    case "privacy":
-      return privacySections(locale);
-    case "terms":
-      return termsSections(locale);
-    case "cookie":
-      return cookieSections(locale);
-    case "kvkk":
-      return kvkkSections(locale);
+    case "distance-sales":
+      return legal.distanceSalesTitle;
+    case "preliminary-information":
+      return legal.preliminaryInformationTitle;
+    case "refund-cancellation":
+      return legal.refundCancellationTitle;
   }
 }

@@ -46,6 +46,7 @@ export type Dictionary = {
     terms: string;
     cookie: string;
     kvkk: string;
+    refund: string;
     rights: string;
     paymentMethods: string;
     paymentVisa: string;
@@ -77,6 +78,9 @@ export type Dictionary = {
     signedOut: string;
     passwordUpdated: string;
     authError: string;
+    authErrorMissingCode: string;
+    authErrorFailed: string;
+    authErrorSuspended: string;
     rememberedIt: string;
     backToSignIn: string;
     orDivider: string;
@@ -116,7 +120,9 @@ export type Dictionary = {
     termsTitle: string;
     cookieTitle: string;
     kvkkTitle: string;
-    draftNotice: string;
+    distanceSalesTitle: string;
+    preliminaryInformationTitle: string;
+    refundCancellationTitle: string;
   };
   dashboardNav: {
     dashboard: string;
@@ -243,6 +249,13 @@ export type Dictionary = {
       comingSoonClose: string;
       paymentMethodsNote: string;
       paymentSecureNote: string;
+      legalNoteBefore: string;
+      legalTermsLink: string;
+      legalRefundLink: string;
+      legalDistanceSalesLink: string;
+      legalPreliminaryLink: string;
+      legalNoteBetween: string;
+      legalNoteAnd: string;
       plans: {
         free: PricingPresentationPlanCopy;
         developer: PricingPresentationPlanCopy;

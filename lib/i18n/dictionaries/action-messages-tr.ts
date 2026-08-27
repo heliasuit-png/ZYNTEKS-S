@@ -83,6 +83,10 @@ export const actionMessagesTr: ActionMessagesDictionary = {
     passwordMinLength: "Şifre en az {min} karakter olmalı",
     accountCreatedVerify:
       "Hesap oluşturuldu. E-posta adresinizi doğrulamak için gelen kutunuzu kontrol edin.",
+    accountCreatedSignIn:
+      "Hesap oluşturuldu. E-posta ve şifrenizle giriş yapabilirsiniz.",
+    accountExistsCheckEmail:
+      "Bu e-posta için bir hesap zaten varsa gelen kutunuzu kontrol edin veya giriş yapın.",
     magicLinkSent: "Güvenli giriş bağlantısı için e-postanızı kontrol edin.",
     unknownProvider: "Bilinmeyen kimlik doğrulama sağlayıcısı.",
     resetLinkSent:

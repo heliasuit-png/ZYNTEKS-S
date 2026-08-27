@@ -1,4 +1,4 @@
-import type { AuthError, Session, User } from "@supabase/supabase-js";
+import type { AuthError, EmailOtpType, Session, User } from "@supabase/supabase-js";
 
 import { ERROR_CODE, HTTP_STATUS } from "@/lib/constants";
 import { AppError, ForbiddenError } from "@/lib/errors";
@@ -47,6 +47,13 @@ export interface SignUpResult {
   user: User | null;
   /** True when Supabase requires the user to confirm their email address. */
   requiresEmailVerification: boolean;
+  /**
+   * Supabase anti-enumeration placeholder: user object with empty identities
+   * when the email is already registered (or similar soft-fail cases).
+   */
+  isDuplicatePlaceholder: boolean;
+  /** True when Auth returned a usable session from signUp. */
+  hasSession: boolean;
 }
 
 export async function signUpWithPassword(
@@ -66,9 +73,14 @@ export async function signUpWithPassword(
     throw mapAuthError(error);
   }
 
+  const identities = data.user?.identities ?? [];
+  const isDuplicatePlaceholder = Boolean(data.user) && identities.length === 0;
+
   return {
     user: data.user,
-    requiresEmailVerification: data.session === null,
+    requiresEmailVerification: data.session === null && !isDuplicatePlaceholder,
+    isDuplicatePlaceholder,
+    hasSession: Boolean(data.session?.access_token),
   };
 }
 
@@ -232,6 +244,33 @@ export async function exchangeCodeForSession(
   }
   if (!data.session?.user) {
     throw new AppError("OAuth exchange did not return a session.", {
+      code: ERROR_CODE.UNAUTHORIZED,
+      statusCode: HTTP_STATUS.UNAUTHORIZED,
+    });
+  }
+  await assertAccountNotBanned(supabase, data.session.user.id);
+  return data.session;
+}
+
+export async function verifyEmailOtp(
+  supabase: Supabase,
+  {
+    type,
+    tokenHash,
+  }: {
+    type: EmailOtpType;
+    tokenHash: string;
+  },
+): Promise<Session> {
+  const { data, error } = await supabase.auth.verifyOtp({
+    type,
+    token_hash: tokenHash,
+  });
+  if (error) {
+    throw mapAuthError(error);
+  }
+  if (!data.session?.user) {
+    throw new AppError("Email verification did not return a session.", {
       code: ERROR_CODE.UNAUTHORIZED,
       statusCode: HTTP_STATUS.UNAUTHORIZED,
     });

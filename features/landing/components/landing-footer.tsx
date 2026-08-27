@@ -22,10 +22,11 @@ export async function LandingFooter() {
   ] as const;
 
   const LEGAL = [
-    { href: ROUTES.legalPrivacy, label: dict.footer.privacy },
     { href: ROUTES.legalTerms, label: dict.footer.terms },
+    { href: ROUTES.legalPrivacy, label: dict.footer.privacy },
     { href: ROUTES.legalCookie, label: dict.footer.cookie },
     { href: ROUTES.legalKvkk, label: dict.footer.kvkk },
+    { href: ROUTES.legalRefundCancellation, label: dict.footer.refund },
   ] as const;
 
   return (

@@ -85,6 +85,8 @@ export type ActionMessagesDictionary = {
     registrationDisabled: string;
     passwordMinLength: string;
     accountCreatedVerify: string;
+    accountCreatedSignIn: string;
+    accountExistsCheckEmail: string;
     magicLinkSent: string;
     unknownProvider: string;
     resetLinkSent: string;

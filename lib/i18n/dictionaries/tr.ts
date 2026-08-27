@@ -33,9 +33,10 @@ export const tr: Dictionary = {
     documentation: "Dokümantasyon",
     contact: "İletişim",
     privacy: "Gizlilik Politikası",
-    terms: "Kullanım Koşulları",
+    terms: "Hizmet Şartları",
     cookie: "Çerez Politikası",
-    kvkk: "KVKK / Aydınlatma",
+    kvkk: "KVKK Aydınlatma Metni",
+    refund: "İade ve İptal",
     rights: "Tüm hakları saklıdır.",
     paymentMethods: "Ödeme yöntemleri",
     paymentVisa: "Visa",
@@ -53,9 +54,9 @@ export const tr: Dictionary = {
     alreadyHaveAccount: "Zaten hesabınız var mı?",
     signInLink: "Giriş yap",
     legalNotice: "Devam ederek şunları kabul etmiş sayılırsınız:",
-    terms: "Kullanım Koşulları",
+    terms: "Hizmet Şartları",
     privacy: "Gizlilik Politikası",
-    kvkk: "KVKK aydınlatma metni",
+    kvkk: "KVKK Aydınlatma Metni",
     forgotTitle: "Şifremi unuttum",
     forgotDesc: "E-posta adresinizi girin, size bir sıfırlama bağlantısı gönderelim",
     resetTitle: "Şifreyi sıfırla",
@@ -69,6 +70,11 @@ export const tr: Dictionary = {
     passwordUpdated:
       "Şifreniz güncellendi. Yeni şifrenizle giriş yapın.",
     authError: "Kimlik doğrulama tamamlanamadı. Lütfen tekrar deneyin.",
+    authErrorMissingCode:
+      "Bu doğrulama bağlantısı geçersiz veya eksik. Az önce kayıt olduysanız e-posta ve şifrenizle giriş yapın.",
+    authErrorFailed:
+      "E-posta doğrulaması bu tarayıcıda tamamlanamadı. Az önce hesap oluşturduysanız e-posta ve şifrenizle giriş yapın — hesabınız zaten oluşmuş olabilir.",
+    authErrorSuspended: "Bu hesap askıya alınmıştır.",
     rememberedIt: "Hatırladınız mı?",
     backToSignIn: "Girişe dön",
     orDivider: "veya",
@@ -106,11 +112,12 @@ export const tr: Dictionary = {
   },
   legal: {
     privacyTitle: "Gizlilik Politikası",
-    termsTitle: "Kullanım Koşulları",
+    termsTitle: "Hizmet Şartları",
     cookieTitle: "Çerez Politikası",
     kvkkTitle: "KVKK Aydınlatma Metni",
-    draftNotice:
-      "Bu metin ZYNTEKSIS operatörleri için ürün şablonudur; hukuki danışmanlık değildir. Üretime almadan önce TODO alanlarını doldurun ve hukuk danışmanınıza inceletin.",
+    distanceSalesTitle: "Mesafeli Satış Sözleşmesi",
+    preliminaryInformationTitle: "Ön Bilgilendirme Formu",
+    refundCancellationTitle: "İade ve İptal Politikası",
   },
   dashboardNav: {
     dashboard: "Panel",
@@ -311,6 +318,13 @@ export const tr: Dictionary = {
         "Kart markaları bilgilendirme amaçlıdır. Çevrimiçi ödeme henüz aktif değildir.",
       paymentSecureNote:
         "Aşağıdaki kart markaları yalnızca bilgilendirme amaçlıdır. Checkout henüz aktif değildir.",
+      legalNoteBefore: "Ücretli ödeme şu an aktif değil. İlgili belgeler:",
+      legalTermsLink: "Hizmet Şartları",
+      legalRefundLink: "İade ve İptal Politikası",
+      legalDistanceSalesLink: "Mesafeli Satış Sözleşmesi",
+      legalPreliminaryLink: "Ön Bilgilendirme Formu",
+      legalNoteBetween: ",",
+      legalNoteAnd: "ve",
       plans: {
         free: {
           name: "FREE",

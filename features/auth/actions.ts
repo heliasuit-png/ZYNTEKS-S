@@ -3,7 +3,7 @@
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 
-import { ROUTES } from "@/lib/constants";
+import { AUTH_ROUTES, ROUTES } from "@/lib/constants";
 import { env } from "@/lib/env";
 import { isAppError } from "@/lib/errors";
 import { fillTemplate } from "@/lib/i18n/fill-template";
@@ -179,23 +179,47 @@ export async function signUpAction(
 
   const supabase = await createSupabaseServerClient();
 
-  let requiresEmailVerification = true;
+  // Prefer token-hash confirm route for email links. `/auth/confirm` and
+  // `/auth/callback` both accept `code` and `token_hash` so mobile mail apps
+  // that open links without the original PKCE cookie can still verify.
+  const emailRedirectTo = `${env.NEXT_PUBLIC_APP_URL}${AUTH_ROUTES.confirm}?next=${encodeURIComponent(ROUTES.dashboard)}`;
+
+  let signup: Awaited<ReturnType<typeof signUpWithPassword>>;
   try {
-    const result = await signUpWithPassword(supabase, {
+    signup = await signUpWithPassword(supabase, {
       email: parsed.data.email,
       password: parsed.data.password,
       fullName: parsed.data.fullName,
-      emailRedirectTo: `${env.NEXT_PUBLIC_APP_URL}/auth/callback?next=${ROUTES.dashboard}`,
+      emailRedirectTo,
     });
-    requiresEmailVerification = result.requiresEmailVerification;
   } catch (error) {
     return toErrorState(error, am.unexpectedError);
   }
 
-  if (requiresEmailVerification) {
+  // Duplicate / anti-enumeration placeholder — never report as auth failure.
+  if (signup.isDuplicatePlaceholder) {
+    return {
+      status: "success",
+      message: am.auth.accountExistsCheckEmail,
+    };
+  }
+
+  // Email confirmation required: session is null by design — success, not error.
+  if (signup.requiresEmailVerification || !signup.hasSession) {
     return {
       status: "success",
       message: am.auth.accountCreatedVerify,
+    };
+  }
+
+  // Session returned: ensure cookies stuck before redirecting to a protected route.
+  const {
+    data: { user: sessionUser },
+  } = await supabase.auth.getUser();
+  if (!sessionUser) {
+    return {
+      status: "success",
+      message: am.auth.accountCreatedSignIn,
     };
   }
 

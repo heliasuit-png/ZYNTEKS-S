@@ -6,9 +6,8 @@ import {
 } from "@/lib/auth-callback-errors";
 import { ROUTES } from "@/lib/constants";
 import { logger } from "@/lib/logger";
-import { safeNextPath } from "@/lib/safe-redirect";
 import {
-  exchangeCodeForSession,
+  completeEmailLinkAuth,
   getAuthenticatedUser,
   recordLoginEvent,
 } from "@/services/auth";
@@ -47,22 +46,22 @@ function redirectLoginError(
 }
 
 /**
- * PKCE / email-link / OAuth callback. Exchanges the `code` returned by Supabase
- * for a session and records login telemetry.
+ * PKCE / email-link / OAuth callback.
+ * Accepts both `code` (PKCE) and `token_hash`+`type` (OTP) so mobile mail
+ * clients that open links without the original PKCE cookie can still verify.
  */
 export async function GET(request: Request): Promise<NextResponse> {
   const { searchParams, origin } = new URL(request.url);
-  const code = searchParams.get("code");
-  const next = safeNextPath(searchParams.get("next"), ROUTES.dashboard);
-
-  if (!code) {
-    return redirectLoginError(origin, AUTH_CALLBACK_ERROR.missing_code);
-  }
-
   const supabase = await createSupabaseServerClient();
 
+  let next: string = ROUTES.dashboard;
   try {
-    const session = await exchangeCodeForSession(supabase, code);
+    const result = await completeEmailLinkAuth(supabase, searchParams);
+    if (!result.ok) {
+      return redirectLoginError(origin, result.code);
+    }
+    next = result.next;
+    const session = result.session;
     const user = await getAuthenticatedUser(supabase);
     const ip =
       request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??

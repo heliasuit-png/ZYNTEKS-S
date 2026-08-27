@@ -156,6 +156,38 @@ export function MarketingPricingCards({
           <p className="mx-auto mt-2 max-w-2xl text-center text-xs leading-relaxed text-zt-muted/80">
             {p.paymentMethodsNote}
           </p>
+          <p className="mx-auto mt-4 max-w-3xl text-center text-xs leading-relaxed text-zt-muted">
+            {p.legalNoteBefore}{" "}
+            <Link
+              href={ROUTES.legalTerms}
+              className="text-zt-accent underline-offset-2 hover:underline"
+            >
+              {p.legalTermsLink}
+            </Link>
+            {p.legalNoteBetween}{" "}
+            <Link
+              href={ROUTES.legalRefundCancellation}
+              className="text-zt-accent underline-offset-2 hover:underline"
+            >
+              {p.legalRefundLink}
+            </Link>
+            {p.legalNoteBetween}{" "}
+            <Link
+              href={ROUTES.legalDistanceSales}
+              className="text-zt-accent underline-offset-2 hover:underline"
+            >
+              {p.legalDistanceSalesLink}
+            </Link>
+            {", "}
+            {p.legalNoteAnd}{" "}
+            <Link
+              href={ROUTES.legalPreliminaryInformation}
+              className="text-zt-accent underline-offset-2 hover:underline"
+            >
+              {p.legalPreliminaryLink}
+            </Link>
+            .
+          </p>
         </div>
       ) : null}
 

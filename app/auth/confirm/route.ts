@@ -1,45 +1,36 @@
 import { NextResponse } from "next/server";
 
-import type { EmailOtpType } from "@supabase/supabase-js";
-
 import {
   AUTH_CALLBACK_ERROR,
   sanitizeAuthCallbackError,
 } from "@/lib/auth-callback-errors";
 import { ROUTES } from "@/lib/constants";
 import { logger } from "@/lib/logger";
-import { safeNextPath } from "@/lib/safe-redirect";
+import { completeEmailLinkAuth } from "@/services/auth";
 import { createSupabaseServerClient } from "@/supabase/server";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 /**
- * Token-hash confirmation endpoint. Verifies an email OTP (`signup`,
- * `recovery`, `email_change`, ...) and redirects to the `next` destination.
- * Compatible with Supabase email templates that use `{{ .TokenHash }}`.
+ * Email confirmation / OTP endpoint.
+ * Handles `token_hash`+`type` (preferred for mobile) and PKCE `code`.
  */
 export async function GET(request: Request): Promise<NextResponse> {
   const { searchParams, origin } = new URL(request.url);
-  const tokenHash = searchParams.get("token_hash");
-  const type = searchParams.get("type") as EmailOtpType | null;
-  const next = safeNextPath(searchParams.get("next"), ROUTES.dashboard);
-
-  if (!tokenHash || !type) {
-    return NextResponse.redirect(
-      `${origin}${ROUTES.login}?error=${AUTH_CALLBACK_ERROR.missing_code}`,
-    );
-  }
-
   const supabase = await createSupabaseServerClient();
-  const { error } = await supabase.auth.verifyOtp({
-    type,
-    token_hash: tokenHash,
-  });
 
-  if (error) {
+  try {
+    const result = await completeEmailLinkAuth(supabase, searchParams);
+    if (!result.ok) {
+      return NextResponse.redirect(
+        `${origin}${ROUTES.login}?error=${AUTH_CALLBACK_ERROR.missing_code}`,
+      );
+    }
+    return NextResponse.redirect(`${origin}${result.next}`);
+  } catch (error) {
     const sanitized = sanitizeAuthCallbackError(error);
-    logger.warn("Auth confirm verifyOtp failed", {
+    logger.warn("Auth confirm verify failed", {
       code: sanitized.code,
       reason: sanitized.logMessage,
     });
@@ -47,6 +38,4 @@ export async function GET(request: Request): Promise<NextResponse> {
       `${origin}${ROUTES.login}?error=${sanitized.code}`,
     );
   }
-
-  return NextResponse.redirect(`${origin}${next}`);
 }

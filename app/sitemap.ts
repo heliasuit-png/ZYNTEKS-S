@@ -15,6 +15,21 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${base}/legal/terms`, changeFrequency: "yearly", priority: 0.4 },
     { url: `${base}/legal/cookie`, changeFrequency: "yearly", priority: 0.4 },
     { url: `${base}/legal/kvkk`, changeFrequency: "yearly", priority: 0.4 },
+    {
+      url: `${base}/legal/distance-sales-agreement`,
+      changeFrequency: "yearly",
+      priority: 0.3,
+    },
+    {
+      url: `${base}/legal/preliminary-information-form`,
+      changeFrequency: "yearly",
+      priority: 0.3,
+    },
+    {
+      url: `${base}/legal/refund-cancellation`,
+      changeFrequency: "yearly",
+      priority: 0.3,
+    },
     { url: `${base}/privacy`, changeFrequency: "yearly", priority: 0.2 },
     { url: `${base}/terms`, changeFrequency: "yearly", priority: 0.2 },
     { url: `${base}/contact`, changeFrequency: "monthly", priority: 0.5 },

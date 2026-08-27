@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { Metadata } from "next";
 
 import { ROUTES } from "@/lib/constants";
+import { AUTH_CALLBACK_ERROR } from "@/lib/auth-callback-errors";
 import { safeNextPath } from "@/lib/safe-redirect";
 import { AuthCard } from "@/features/auth/components/auth-card";
 import { AuthLegalLinks } from "@/features/auth/components/auth-legal-links";
@@ -15,6 +16,23 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export const dynamic = "force-dynamic";
+
+function loginErrorMessage(
+  error: string | undefined,
+  dict: Awaited<ReturnType<typeof getDictionary>>["dict"],
+): string | null {
+  if (!error) return null;
+  switch (error) {
+    case AUTH_CALLBACK_ERROR.missing_code:
+      return dict.auth.authErrorMissingCode;
+    case AUTH_CALLBACK_ERROR.suspended:
+      return dict.auth.authErrorSuspended;
+    case AUTH_CALLBACK_ERROR.auth_failed:
+      return dict.auth.authErrorFailed;
+    default:
+      return dict.auth.authError;
+  }
+}
 
 export default async function LoginPage({
   searchParams,
@@ -35,6 +53,7 @@ export default async function LoginPage({
   const redirectTo = safeNextPath(redirectParam, "");
   const providers = await getOAuthProviderConfigs();
   const { dict } = await getDictionary();
+  const errorMessage = loginErrorMessage(error, dict);
 
   return (
     <AuthCard
@@ -68,12 +87,12 @@ export default async function LoginPage({
           {dict.auth.passwordUpdated}
         </p>
       ) : null}
-      {error ? (
+      {errorMessage ? (
         <p
           role="alert"
           className="rounded-xl border border-rose-500/30 bg-rose-500/10 px-3 py-2 text-sm text-rose-200"
         >
-          {dict.auth.authError}
+          {errorMessage}
         </p>
       ) : null}
       <AuthMethodPanel

@@ -33,9 +33,10 @@ export const en: Dictionary = {
     documentation: "Documentation",
     contact: "Contact",
     privacy: "Privacy Policy",
-    terms: "Terms of Use",
+    terms: "Terms of Service",
     cookie: "Cookie Policy",
-    kvkk: "KVKK / Privacy Notice",
+    kvkk: "KVKK Disclosure Notice",
+    refund: "Refund & Cancellation",
     rights: "All rights reserved.",
     paymentMethods: "Payment methods",
     paymentVisa: "Visa",
@@ -53,9 +54,9 @@ export const en: Dictionary = {
     alreadyHaveAccount: "Already have an account?",
     signInLink: "Sign in",
     legalNotice: "By continuing you acknowledge our",
-    terms: "Terms of Use",
+    terms: "Terms of Service",
     privacy: "Privacy Policy",
-    kvkk: "KVKK notice",
+    kvkk: "KVKK Disclosure Notice",
     forgotTitle: "Forgot password",
     forgotDesc: "Enter your email and we'll send you a reset link",
     resetTitle: "Reset password",
@@ -69,6 +70,11 @@ export const en: Dictionary = {
     passwordUpdated:
       "Your password has been updated. Sign in with your new password.",
     authError: "Authentication could not be completed. Please try again.",
+    authErrorMissingCode:
+      "This verification link is invalid or incomplete. If you just registered, sign in with your email and password.",
+    authErrorFailed:
+      "We could not complete email verification in this browser. If you just created an account, sign in with your email and password — your account may already exist.",
+    authErrorSuspended: "This account has been suspended.",
     rememberedIt: "Remembered it?",
     backToSignIn: "Back to sign in",
     orDivider: "or",
@@ -106,11 +112,12 @@ export const en: Dictionary = {
   },
   legal: {
     privacyTitle: "Privacy Policy",
-    termsTitle: "Terms of Use",
+    termsTitle: "Terms of Service",
     cookieTitle: "Cookie Policy",
-    kvkkTitle: "KVKK Clarification Text",
-    draftNotice:
-      "This text is a product template for operators of ZYNTEKSIS. It is not legal advice. Have counsel review and replace TODO placeholders before relying on it in production.",
+    kvkkTitle: "KVKK Disclosure Notice",
+    distanceSalesTitle: "Distance Sales Agreement",
+    preliminaryInformationTitle: "Preliminary Information Form",
+    refundCancellationTitle: "Refund & Cancellation Policy",
   },
   dashboardNav: {
     dashboard: "Dashboard",
@@ -311,6 +318,13 @@ export const en: Dictionary = {
         "Accepted card brands are shown for reference. Online checkout is not active yet.",
       paymentSecureNote:
         "Card brands below are informational only. Checkout is not active yet.",
+      legalNoteBefore: "Paid checkout is not active. Related policies:",
+      legalTermsLink: "Terms of Service",
+      legalRefundLink: "Refund & Cancellation Policy",
+      legalDistanceSalesLink: "Distance Sales Agreement",
+      legalPreliminaryLink: "Preliminary Information Form",
+      legalNoteBetween: ",",
+      legalNoteAnd: "and",
       plans: {
         free: {
           name: "FREE",
