@@ -125,7 +125,7 @@ export class BillingService {
       email: input.email,
       plan: input.plan,
       interval: input.interval,
-      successUrl: `${base}/billing?checkout=success`,
+      successUrl: `${base}/billing?checkout=returned`,
       cancelUrl: `${base}/billing?checkout=canceled`,
     });
   }

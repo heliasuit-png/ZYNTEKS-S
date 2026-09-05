@@ -18,20 +18,29 @@ export const LEMON_SQUEEZY_ORDER_EVENTS = [
   "order_refunded",
 ] as const;
 
+export const LEMON_SQUEEZY_PAYMENT_EVENTS = [
+  "subscription_payment_success",
+  "subscription_payment_refunded",
+] as const;
+
 export type LemonSqueezySubscriptionEvent =
   (typeof LEMON_SQUEEZY_SUBSCRIPTION_EVENTS)[number];
 export type LemonSqueezyOrderEvent =
   (typeof LEMON_SQUEEZY_ORDER_EVENTS)[number];
+export type LemonSqueezyPaymentEvent =
+  (typeof LEMON_SQUEEZY_PAYMENT_EVENTS)[number];
 export type LemonSqueezyHandledEvent =
   | LemonSqueezySubscriptionEvent
-  | LemonSqueezyOrderEvent;
+  | LemonSqueezyOrderEvent
+  | LemonSqueezyPaymentEvent;
 
 export function isHandledLemonEvent(
   name: string,
 ): name is LemonSqueezyHandledEvent {
   return (
     (LEMON_SQUEEZY_SUBSCRIPTION_EVENTS as readonly string[]).includes(name) ||
-    (LEMON_SQUEEZY_ORDER_EVENTS as readonly string[]).includes(name)
+    (LEMON_SQUEEZY_ORDER_EVENTS as readonly string[]).includes(name) ||
+    (LEMON_SQUEEZY_PAYMENT_EVENTS as readonly string[]).includes(name)
   );
 }
 

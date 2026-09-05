@@ -122,20 +122,25 @@ export async function processLemonSqueezyEvent(opts: {
     extractSubscriptionStatus(attributes),
   );
 
-  // Orders: refunds revoke paid access; created alone does not grant plan
-  // (subscription events are source of truth for entitlements).
-  if (eventName === "order_created") {
+  // Orders / payment receipts: refunds revoke; success alone does not grant plan
+  // (subscription events remain source of truth for entitlements).
+  if (
+    eventName === "order_created" ||
+    eventName === "subscription_payment_success"
+  ) {
     await opts.idempotency.mark(eventId, eventName);
     return {
       status: "processed",
       eventName,
       eventId,
-      message:
-        "order_created acknowledged — entitlement waits for subscription events.",
+      message: `${eventName} acknowledged — entitlement waits for subscription events.`,
     };
   }
 
-  if (eventName === "order_refunded") {
+  if (
+    eventName === "order_refunded" ||
+    eventName === "subscription_payment_refunded"
+  ) {
     const decision = decideEntitlement({
       mappedPlan: "free",
       status: "expired",
@@ -158,7 +163,7 @@ export async function processLemonSqueezyEvent(opts: {
       status: "processed",
       eventName,
       eventId,
-      message: "order_refunded — paid entitlement closed.",
+      message: `${eventName} — paid entitlement closed.`,
       entitlementPlan: "free",
       paidAccessActive: false,
     };

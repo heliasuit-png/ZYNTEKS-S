@@ -23,6 +23,8 @@ export async function createLemonCheckout(opts: {
     data: {
       type: "checkouts",
       attributes: {
+        // TEST MODE only unless live is explicitly allowed.
+        test_mode: opts.config.mode !== "live",
         checkout_data: {
           email: opts.input.email,
           custom: {

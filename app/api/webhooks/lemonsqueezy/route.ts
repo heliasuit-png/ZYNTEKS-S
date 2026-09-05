@@ -72,11 +72,12 @@ export async function POST(request: NextRequest) {
 
   const eventName = payload.meta?.event_name ?? "unknown";
 
-  // Entitlement writes only when provider is ready (test/live allowed).
+  // Entitlement writes when checkout is configured (test/live allowed).
   // Frontend checkout redirects must never grant credits/plans.
+  // Webhook secret already verified above.
   let writer = undefined;
   let idempotency: WebhookIdempotencyStore = memoryIdempotency;
-  if (config.isReady) {
+  if (config.isCheckoutReady) {
     try {
       const admin = createSupabaseAdminClient();
       writer = createSupabaseEntitlementWriter(admin);

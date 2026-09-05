@@ -53,6 +53,18 @@ describe("Lemon Squeezy config & safety", () => {
     assert.match(config.notReadyReason ?? "", /LIVE mode blocked/i);
   });
 
+  it("is checkout-ready in TEST mode without webhook secret", () => {
+    const config = loadLemonSqueezyConfig({
+      LEMON_SQUEEZY_MODE: "test",
+      LEMON_SQUEEZY_API_KEY: "test_key",
+      LEMON_SQUEEZY_STORE_ID: "1",
+    });
+    assert.equal(resolveLemonSqueezyMode({ LEMON_SQUEEZY_MODE: "test" }), "test");
+    assert.equal(config.isReady, true);
+    assert.equal(config.isCheckoutReady, true);
+    assert.equal(config.isWebhookReady, false);
+  });
+
   it("is ready in TEST mode with complete credentials", () => {
     const config = loadLemonSqueezyConfig({
       LEMON_SQUEEZY_MODE: "test",
@@ -60,8 +72,8 @@ describe("Lemon Squeezy config & safety", () => {
       LEMON_SQUEEZY_STORE_ID: "1",
       LEMON_SQUEEZY_WEBHOOK_SECRET: "whsec",
     });
-    assert.equal(resolveLemonSqueezyMode({ LEMON_SQUEEZY_MODE: "test" }), "test");
     assert.equal(config.isReady, true);
+    assert.equal(config.isWebhookReady, true);
   });
 
   it("factory keeps placeholder when mode off", () => {
@@ -70,16 +82,38 @@ describe("Lemon Squeezy config & safety", () => {
     assert.equal(provider.isConfigured(), false);
   });
 
-  it("factory selects lemonsqueezy in ready test mode", () => {
+  it("factory selects lemonsqueezy in ready test mode without webhook secret", () => {
     const provider = resolvePaymentProvider({
       LEMON_SQUEEZY_MODE: "test",
       LEMON_SQUEEZY_API_KEY: "test_key",
       LEMON_SQUEEZY_STORE_ID: "1",
-      LEMON_SQUEEZY_WEBHOOK_SECRET: "whsec",
-      LEMON_SQUEEZY_VARIANT_PRO_MONTH: "111",
+      LEMON_SQUEEZY_VARIANT_PRO: "111",
     });
     assert.equal(provider.id, "lemonsqueezy");
     assert.equal(provider.isConfigured(), true);
+  });
+});
+
+describe("Lemon commercial checkout plan mapping", () => {
+  it("maps developer/pro/business variants from env", async () => {
+    const {
+      loadCheckoutVariantMapping,
+      resolveCheckoutVariantId,
+      entitlementPlanFromCheckoutPlan,
+      checkoutPlanFromVariantId,
+    } = await import("../../services/billing/lemon-squeezy/checkout-plans");
+
+    const mapping = loadCheckoutVariantMapping({
+      LEMON_SQUEEZY_VARIANT_DEVELOPER: "2094197",
+      LEMON_SQUEEZY_VARIANT_PRO: "2094199",
+      LEMON_SQUEEZY_VARIANT_BUSINESS: "2094201",
+    });
+    assert.equal(resolveCheckoutVariantId("developer", mapping), "2094197");
+    assert.equal(resolveCheckoutVariantId("pro", mapping), "2094199");
+    assert.equal(resolveCheckoutVariantId("business", mapping), "2094201");
+    assert.equal(entitlementPlanFromCheckoutPlan("developer"), "pro");
+    assert.equal(entitlementPlanFromCheckoutPlan("business"), "enterprise");
+    assert.equal(checkoutPlanFromVariantId("2094201", mapping), "business");
   });
 });
 
@@ -145,6 +179,7 @@ describe("Lemon Squeezy checkout contract", () => {
     assert.match(capturedBody!, /user-server-1/);
     assert.match(capturedBody!, /ws-1/);
     assert.match(capturedBody!, /"101"/);
+    assert.match(capturedBody!, /"test_mode":true/);
   });
 
   it("errors when variant mapping missing", async () => {
@@ -307,6 +342,24 @@ describe("Lemon Squeezy webhook events & entitlement", () => {
     });
     assert.equal(first.status, "processed");
     assert.equal(second.status, "duplicate");
+  });
+
+  it("handles subscription_payment_success without granting entitlement", async () => {
+    const store = createMemoryIdempotencyStore();
+    const result = await processLemonSqueezyEvent({
+      payload: {
+        meta: {
+          event_name: "subscription_payment_success",
+          webhook_id: "evt-pay",
+          custom_data: { user_id: "user-1" },
+        },
+        data: { id: "inv_1", attributes: {} },
+      },
+      idempotency: store,
+      dryRun: true,
+    });
+    assert.equal(result.status, "processed");
+    assert.match(result.message, /waits for subscription/i);
   });
 
   it("handles subscription_expired and order_refunded", async () => {

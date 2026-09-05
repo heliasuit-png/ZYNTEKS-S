@@ -1,5 +1,5 @@
 export type { PaymentProvider } from "@/services/billing/provider";
-export { getPaymentProvider, resetPaymentProviderCache } from "@/services/billing/factory";
+export { getPaymentProvider, resetPaymentProviderCache, resolvePaymentProvider } from "@/services/billing/factory";
 export { PlaceholderPaymentProvider, placeholderPaymentProvider } from "@/services/billing/providers/placeholder.provider";
 export { BillingService, getBillingService } from "@/services/billing/billing.service";
 export {

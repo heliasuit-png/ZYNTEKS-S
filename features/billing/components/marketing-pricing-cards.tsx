@@ -37,20 +37,71 @@ const PREVIEW_FEATURES = 8;
 const COMPACT_PREVIEW_FEATURES = 5;
 
 /**
- * Lemon-review pricing cards. Paid CTAs never call checkout or Lemon.
+ * Lemon-review pricing cards.
+ * Paid CTAs stay Coming Soon unless `checkoutEnabled` (TEST MODE server flag).
  */
 export function MarketingPricingCards({
   showPaymentMethods = true,
   compact = false,
+  checkoutEnabled = false,
 }: {
   showPaymentMethods?: boolean;
   /** Landing teaser: fewer feature rows. */
   compact?: boolean;
+  /**
+   * When true (server-resolved TEST MODE + credentials), paid CTAs call
+   * POST /api/lemonsqueezy/checkout. Default false keeps Coming Soon.
+   */
+  checkoutEnabled?: boolean;
 }) {
   const { dict } = useDictionary();
   const p = dict.landing.pricing;
   const [comingSoonOpen, setComingSoonOpen] = useState(false);
+  const [checkoutBusy, setCheckoutBusy] = useState<PricingPresentationPlanId | null>(
+    null,
+  );
+  const [checkoutError, setCheckoutError] = useState<string | null>(null);
   const previewCount = compact ? COMPACT_PREVIEW_FEATURES : PREVIEW_FEATURES;
+
+  async function startCheckout(planId: PricingPresentationPlanId) {
+    if (planId === "free") return;
+    setCheckoutError(null);
+    setCheckoutBusy(planId);
+    try {
+      const res = await fetch("/api/lemonsqueezy/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ plan: planId }),
+      });
+      const json = (await res.json().catch(() => null)) as {
+        success?: boolean;
+        data?: { checkoutUrl?: string };
+        error?: { message?: string };
+      } | null;
+
+      if (res.status === 401) {
+        window.location.href = `${ROUTES.login}?next=${encodeURIComponent(ROUTES.pricing)}`;
+        return;
+      }
+
+      const url = json?.data?.checkoutUrl;
+      if (!res.ok || !json?.success || !url) {
+        setCheckoutError(
+          json?.error?.message ??
+            p.comingSoonBody,
+        );
+        setComingSoonOpen(true);
+        return;
+      }
+
+      window.location.assign(url);
+    } catch {
+      setCheckoutError(p.comingSoonBody);
+      setComingSoonOpen(true);
+    } finally {
+      setCheckoutBusy(null);
+    }
+  }
 
   return (
     <div className="space-y-12">
@@ -127,7 +178,15 @@ export function MarketingPricingCards({
                     planId={plan.id}
                     ctaKind={plan.ctaKind}
                     label={copy.cta}
-                    onPaidClick={() => setComingSoonOpen(true)}
+                    busy={checkoutBusy === plan.id}
+                    checkoutEnabled={checkoutEnabled}
+                    onPaidClick={() => {
+                      if (checkoutEnabled) {
+                        void startCheckout(plan.id);
+                      } else {
+                        setComingSoonOpen(true);
+                      }
+                    }}
                   />
                 </div>
               </article>
@@ -195,7 +254,7 @@ export function MarketingPricingCards({
         open={comingSoonOpen}
         onClose={() => setComingSoonOpen(false)}
         title={p.comingSoonTitle}
-        description={p.comingSoonBody}
+        description={checkoutError ?? p.comingSoonBody}
         footer={
           <button
             type="button"
@@ -294,15 +353,19 @@ function PlanCta({
   planId,
   ctaKind,
   label,
+  busy,
+  checkoutEnabled,
   onPaidClick,
 }: {
   planId: PricingPresentationPlanId;
   ctaKind: "start_free" | "subscribe";
   label: string;
+  busy?: boolean;
+  checkoutEnabled?: boolean;
   onPaidClick: () => void;
 }) {
   const className =
-    "inline-flex h-11 w-full items-center justify-center rounded-xl bg-zt-primary text-sm font-semibold text-[#041018] transition-colors hover:bg-zt-primary/90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zt-primary";
+    "inline-flex h-11 w-full items-center justify-center rounded-xl bg-zt-primary text-sm font-semibold text-[#041018] transition-colors hover:bg-zt-primary/90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zt-primary disabled:opacity-60";
 
   if (ctaKind === "start_free") {
     return (
@@ -316,11 +379,12 @@ function PlanCta({
     <button
       type="button"
       onClick={onPaidClick}
+      disabled={busy}
       className={className}
       data-pricing-cta={planId}
-      data-checkout="disabled"
+      data-checkout={checkoutEnabled ? "enabled" : "disabled"}
     >
-      {label}
+      {busy ? "…" : label}
     </button>
   );
 }

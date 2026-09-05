@@ -50,6 +50,19 @@ export function createSupabaseEntitlementWriter(
 
   return {
     async applyPlan(input) {
+      // Never trust webhook custom_data blindly — profile must exist.
+      const { data: profile, error: profileError } = await admin
+        .from("profiles")
+        .select("id")
+        .eq("id", input.userId)
+        .maybeSingle();
+
+      if (profileError || !profile?.id) {
+        throw new Error(
+          "Webhook user_id does not match an existing profile — entitlement skipped.",
+        );
+      }
+
       await admin
         .from("profiles")
         .update({ subscription_plan: input.plan })

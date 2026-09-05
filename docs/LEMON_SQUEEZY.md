@@ -39,6 +39,7 @@ quota. Only verified webhooks (or verified API state) update entitlement.
    - `subscription_resumed`, `subscription_expired`, `subscription_paused`
    - `subscription_unpaused`, `subscription_plan_changed`
    - `order_created`, `order_refunded`
+   - `subscription_payment_success`, `subscription_payment_refunded`
 5. Copy the webhook signing secret (test).
 
 ## Environment variables
@@ -49,37 +50,45 @@ Add to `.env.local` / staging (placeholders only — never commit secrets):
 LEMON_SQUEEZY_MODE=test          # off | test | live
 LEMON_SQUEEZY_API_KEY=           # test API key
 LEMON_SQUEEZY_STORE_ID=          # test store id
-LEMON_SQUEEZY_WEBHOOK_SECRET=    # webhook signing secret
+LEMON_SQUEEZY_WEBHOOK_SECRET=    # webhook signing secret (required for webhooks; not for checkout)
 LEMON_SQUEEZY_ALLOW_LIVE=false   # must stay false for prep
-# Optional override:
-# LEMON_SQUEEZY_API_BASE_URL=https://api.lemonsqueezy.com/v1
+# Optional: keep Coming Soon UI even in test mode
+# LEMON_SQUEEZY_CHECKOUT_UI=false
 
-LEMON_SQUEEZY_VARIANT_PRO_MONTH=
-LEMON_SQUEEZY_VARIANT_PRO_YEAR=
-LEMON_SQUEEZY_VARIANT_ENTERPRISE_MONTH=
-LEMON_SQUEEZY_VARIANT_ENTERPRISE_YEAR=
+# Commercial marketing plans → variants (preferred)
+LEMON_SQUEEZY_VARIANT_DEVELOPER=
+LEMON_SQUEEZY_VARIANT_PRO=
+LEMON_SQUEEZY_VARIANT_BUSINESS=
+
+# Legacy catalog fallbacks (optional):
+# LEMON_SQUEEZY_VARIANT_PRO_MONTH=
+# LEMON_SQUEEZY_VARIANT_PRO_YEAR=
+# LEMON_SQUEEZY_VARIANT_ENTERPRISE_MONTH=
+# LEMON_SQUEEZY_VARIANT_ENTERPRISE_YEAR=
 ```
 
-`LEMON_SQUEEZY_MODE=off` (default) keeps the placeholder provider.
+`LEMON_SQUEEZY_MODE=off` (default) keeps the placeholder provider + Coming Soon CTAs.
 
 ## Store / variant mapping
 
-Plans in catalog: `free` | `pro` | `enterprise`.
+Marketing checkout plans: `developer` | `pro` | `business`.
 
-| Plan | Interval | Env key |
-| ---- | -------- | ------- |
-| pro | month | `LEMON_SQUEEZY_VARIANT_PRO_MONTH` |
-| pro | year | `LEMON_SQUEEZY_VARIANT_PRO_YEAR` |
-| enterprise | month | `LEMON_SQUEEZY_VARIANT_ENTERPRISE_MONTH` |
-| enterprise | year | `LEMON_SQUEEZY_VARIANT_ENTERPRISE_YEAR` |
+| Checkout plan | Env key | Local entitlement enum |
+| ------------- | ------- | ---------------------- |
+| developer | `LEMON_SQUEEZY_VARIANT_DEVELOPER` | `pro` |
+| pro | `LEMON_SQUEEZY_VARIANT_PRO` | `pro` |
+| business | `LEMON_SQUEEZY_VARIANT_BUSINESS` | `enterprise` |
 
-Free has no variant.
+Free has no variant / no Lemon checkout.
 
 ## Checkout
 
-`BillingService.startPurchase` → `createCheckoutSession`:
+Preferred API: `POST /api/lemonsqueezy/checkout` with body `{ "plan": "developer" | "pro" | "business" }`.
+
+Also: `BillingService.startPurchase` → `createCheckoutSession`:
 
 - Uses **server-authenticated** `userId` + `workspaceId` in Lemon `checkout_data.custom`
+- Sets `test_mode: true` unless LIVE is explicitly allowed
 - Never trusts a client-supplied arbitrary user id for entitlement
 - Redirects to Lemon hosted checkout URL
 - Success redirect: `/billing?checkout=returned` (informational only)

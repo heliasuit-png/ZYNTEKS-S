@@ -7,9 +7,19 @@ export interface LemonSqueezyConfig {
   webhookSecret: string;
   allowLive: boolean;
   apiBaseUrl: string;
-  /** True when test (or explicitly allowed live) credentials are complete. */
+  /**
+   * Checkout may run without webhook secret (secret is added later).
+   * True when mode is allowed and API key + store id are present.
+   */
+  isCheckoutReady: boolean;
+  /** Webhook signature verification available. */
+  isWebhookReady: boolean;
+  /**
+   * Provider ready for checkout sessions.
+   * Alias of isCheckoutReady (webhook secret is NOT required).
+   */
   isReady: boolean;
-  /** Human-readable reason when not ready. */
+  /** Human-readable reason when checkout is not ready. */
   notReadyReason: string | null;
 }
 
@@ -48,6 +58,8 @@ export function loadLemonSqueezyConfig(
     webhookSecret,
     allowLive,
     apiBaseUrl,
+    isCheckoutReady: false,
+    isWebhookReady: Boolean(webhookSecret),
     isReady: false,
     notReadyReason: null,
   };
@@ -67,15 +79,38 @@ export function loadLemonSqueezyConfig(
     };
   }
 
-  if (!apiKey || !storeId || !webhookSecret) {
+  if (!apiKey || !storeId) {
     return {
       ...base,
       notReadyReason:
-        "Missing LEMON_SQUEEZY_API_KEY, LEMON_SQUEEZY_STORE_ID, or LEMON_SQUEEZY_WEBHOOK_SECRET.",
+        "Missing LEMON_SQUEEZY_API_KEY or LEMON_SQUEEZY_STORE_ID.",
     };
   }
 
-  return { ...base, isReady: true, notReadyReason: null };
+  return {
+    ...base,
+    isCheckoutReady: true,
+    isReady: true,
+    notReadyReason: null,
+  };
+}
+
+/**
+ * Marketing / pricing CTAs may call checkout only in TEST mode when configured.
+ * Default MODE=off keeps Coming Soon UI (production-safe).
+ */
+export function isLemonCheckoutUiEnabled(
+  env: Record<string, string | undefined> = process.env,
+): boolean {
+  const config = loadLemonSqueezyConfig(env);
+  if (config.mode !== "test" || !config.isCheckoutReady) return false;
+  const explicit = (env.LEMON_SQUEEZY_CHECKOUT_UI ?? "").trim().toLowerCase();
+  if (explicit === "false" || explicit === "0" || explicit === "off") {
+    return false;
+  }
+  // Default: enable UI when test mode + checkout credentials exist.
+  // Set LEMON_SQUEEZY_CHECKOUT_UI=false to keep Coming Soon while testing API.
+  return true;
 }
 
 /** Redacted summary for logs — never includes secrets. */
@@ -85,6 +120,8 @@ export function lemonSqueezyConfigPresence(config: LemonSqueezyConfig): {
   storeId: "SET" | "UNSET";
   webhookSecret: "SET" | "UNSET";
   allowLive: boolean;
+  isCheckoutReady: boolean;
+  isWebhookReady: boolean;
   isReady: boolean;
   notReadyReason: string | null;
 } {
@@ -94,6 +131,8 @@ export function lemonSqueezyConfigPresence(config: LemonSqueezyConfig): {
     storeId: config.storeId ? "SET" : "UNSET",
     webhookSecret: config.webhookSecret ? "SET" : "UNSET",
     allowLive: config.allowLive,
+    isCheckoutReady: config.isCheckoutReady,
+    isWebhookReady: config.isWebhookReady,
     isReady: config.isReady,
     notReadyReason: config.notReadyReason,
   };
@@ -107,14 +146,18 @@ export function assertLemonSqueezyTestSafe(config: LemonSqueezyConfig): void {
   }
 }
 
-/** Env key names only (for docs / .env.example). */
+/** Env key names only (for docs / .env.example). Never values. */
 export const LEMON_SQUEEZY_ENV_KEYS = [
   "LEMON_SQUEEZY_MODE",
   "LEMON_SQUEEZY_API_KEY",
   "LEMON_SQUEEZY_STORE_ID",
   "LEMON_SQUEEZY_WEBHOOK_SECRET",
   "LEMON_SQUEEZY_ALLOW_LIVE",
+  "LEMON_SQUEEZY_CHECKOUT_UI",
   "LEMON_SQUEEZY_API_BASE_URL",
+  "LEMON_SQUEEZY_VARIANT_DEVELOPER",
+  "LEMON_SQUEEZY_VARIANT_PRO",
+  "LEMON_SQUEEZY_VARIANT_BUSINESS",
   "LEMON_SQUEEZY_VARIANT_PRO_MONTH",
   "LEMON_SQUEEZY_VARIANT_PRO_YEAR",
   "LEMON_SQUEEZY_VARIANT_ENTERPRISE_MONTH",

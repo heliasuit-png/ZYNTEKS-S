@@ -3,6 +3,11 @@ import type { Metadata } from "next";
 import { APP_NAME } from "@/lib/constants";
 import { getDictionary } from "@/lib/i18n/get-dictionary";
 import { MarketingPricingCards } from "@/features/billing/components/marketing-pricing-cards";
+import {
+  hasAllCheckoutVariants,
+  loadCheckoutVariantMapping,
+} from "@/services/billing/lemon-squeezy/checkout-plans";
+import { isLemonCheckoutUiEnabled } from "@/services/billing/lemon-squeezy/config";
 
 export async function generateMetadata(): Promise<Metadata> {
   const { dict } = await getDictionary();
@@ -22,6 +27,9 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function PricingPage() {
   const { dict } = await getDictionary();
   const p = dict.landing.pricing;
+  const checkoutEnabled =
+    isLemonCheckoutUiEnabled() &&
+    hasAllCheckoutVariants(loadCheckoutVariantMapping());
 
   return (
     <div className="mx-auto w-full max-w-7xl flex-1 overflow-x-hidden px-4 py-16 sm:px-6">
@@ -38,7 +46,10 @@ export default async function PricingPage() {
       </div>
 
       <div className="mt-14">
-        <MarketingPricingCards showPaymentMethods />
+        <MarketingPricingCards
+          showPaymentMethods
+          checkoutEnabled={checkoutEnabled}
+        />
       </div>
     </div>
   );
