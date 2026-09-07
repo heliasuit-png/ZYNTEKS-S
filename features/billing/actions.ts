@@ -1,6 +1,5 @@
 "use server";
 
-import { DASHBOARD_ROUTES } from "@/lib/constants";
 import { isAppError } from "@/lib/errors";
 import { getDictionary } from "@/lib/i18n/get-dictionary";
 import { getAuthenticatedUser } from "@/services/auth";
@@ -162,6 +161,3 @@ export async function manageSubscriptionAction(
     return fail(error);
   }
 }
-
-export { initialBillingActionState };
-export const BILLING_PAGE = DASHBOARD_ROUTES.billing;
