@@ -435,6 +435,254 @@ describe("Lemon Squeezy webhook events & entitlement", () => {
   });
 });
 
+describe("Lemon billing_subscriptions sibling deactivation", () => {
+  it("A) first active Pro subscription stays alone", async () => {
+    const {
+      upsertSubscriptionMirrorAndDeactivateSiblings,
+    } = await import("../../services/billing/lemon-squeezy/sibling-deactivation");
+
+    const rows = upsertSubscriptionMirrorAndDeactivateSiblings(
+      [],
+      {
+        user_id: "user-a",
+        provider: "lemonsqueezy",
+        provider_subscription_id: "sub_pro",
+        provider_customer_id: "cust_1",
+        plan: "pro",
+        status: "active",
+        paid_access_active: true,
+      },
+      { deactivateSiblings: true },
+    );
+    assert.equal(rows.length, 1);
+    assert.equal(rows[0]?.paid_access_active, true);
+    assert.equal(rows[0]?.plan, "pro");
+  });
+
+  it("B) Pro → Business deactivates Pro sibling", async () => {
+    const {
+      SIBLING_SUPERSEDED_STATUS,
+      upsertSubscriptionMirrorAndDeactivateSiblings,
+    } = await import("../../services/billing/lemon-squeezy/sibling-deactivation");
+
+    let rows = upsertSubscriptionMirrorAndDeactivateSiblings(
+      [],
+      {
+        user_id: "user-a",
+        provider: "lemonsqueezy",
+        provider_subscription_id: "sub_pro",
+        provider_customer_id: "cust_1",
+        plan: "pro",
+        status: "active",
+        paid_access_active: true,
+      },
+      { deactivateSiblings: true },
+    );
+    rows = upsertSubscriptionMirrorAndDeactivateSiblings(
+      rows,
+      {
+        user_id: "user-a",
+        provider: "lemonsqueezy",
+        provider_subscription_id: "sub_biz",
+        provider_customer_id: "cust_1",
+        plan: "enterprise",
+        status: "active",
+        paid_access_active: true,
+      },
+      { deactivateSiblings: true },
+    );
+
+    const pro = rows.find((r) => r.provider_subscription_id === "sub_pro");
+    const biz = rows.find((r) => r.provider_subscription_id === "sub_biz");
+    assert.equal(pro?.paid_access_active, false);
+    assert.equal(pro?.status, SIBLING_SUPERSEDED_STATUS);
+    assert.equal(biz?.paid_access_active, true);
+    assert.equal(biz?.status, "active");
+    assert.equal(rows.filter((r) => r.paid_access_active).length, 1);
+  });
+
+  it("C) Business → Pro deactivates Business sibling", async () => {
+    const {
+      upsertSubscriptionMirrorAndDeactivateSiblings,
+    } = await import("../../services/billing/lemon-squeezy/sibling-deactivation");
+
+    let rows = upsertSubscriptionMirrorAndDeactivateSiblings(
+      [],
+      {
+        user_id: "user-a",
+        provider: "lemonsqueezy",
+        provider_subscription_id: "sub_biz",
+        provider_customer_id: "cust_1",
+        plan: "enterprise",
+        status: "active",
+        paid_access_active: true,
+      },
+      { deactivateSiblings: true },
+    );
+    rows = upsertSubscriptionMirrorAndDeactivateSiblings(
+      rows,
+      {
+        user_id: "user-a",
+        provider: "lemonsqueezy",
+        provider_subscription_id: "sub_pro2",
+        provider_customer_id: "cust_1",
+        plan: "pro",
+        status: "active",
+        paid_access_active: true,
+      },
+      { deactivateSiblings: true },
+    );
+
+    assert.equal(
+      rows.find((r) => r.provider_subscription_id === "sub_biz")
+        ?.paid_access_active,
+      false,
+    );
+    assert.equal(
+      rows.find((r) => r.provider_subscription_id === "sub_pro2")
+        ?.paid_access_active,
+      true,
+    );
+    assert.equal(rows.filter((r) => r.paid_access_active).length, 1);
+  });
+
+  it("D/E) duplicate / update same subscription id does not create a second row", async () => {
+    const {
+      upsertSubscriptionMirrorAndDeactivateSiblings,
+    } = await import("../../services/billing/lemon-squeezy/sibling-deactivation");
+
+    let rows = upsertSubscriptionMirrorAndDeactivateSiblings(
+      [],
+      {
+        user_id: "user-a",
+        provider: "lemonsqueezy",
+        provider_subscription_id: "sub_1",
+        provider_customer_id: "cust_1",
+        plan: "pro",
+        status: "active",
+        paid_access_active: true,
+      },
+      { deactivateSiblings: true },
+    );
+    rows = upsertSubscriptionMirrorAndDeactivateSiblings(
+      rows,
+      {
+        user_id: "user-a",
+        provider: "lemonsqueezy",
+        provider_subscription_id: "sub_1",
+        provider_customer_id: "cust_1",
+        plan: "pro",
+        status: "active",
+        paid_access_active: true,
+      },
+      { deactivateSiblings: true },
+    );
+    assert.equal(rows.length, 1);
+    assert.equal(rows[0]?.paid_access_active, true);
+  });
+
+  it("F) subscription_plan_changed on same id updates plan without sibling self-kill", async () => {
+    const {
+      upsertSubscriptionMirrorAndDeactivateSiblings,
+    } = await import("../../services/billing/lemon-squeezy/sibling-deactivation");
+
+    let rows = upsertSubscriptionMirrorAndDeactivateSiblings(
+      [],
+      {
+        user_id: "user-a",
+        provider: "lemonsqueezy",
+        provider_subscription_id: "sub_1",
+        provider_customer_id: "cust_1",
+        plan: "pro",
+        status: "active",
+        paid_access_active: true,
+      },
+      { deactivateSiblings: true },
+    );
+    rows = upsertSubscriptionMirrorAndDeactivateSiblings(
+      rows,
+      {
+        user_id: "user-a",
+        provider: "lemonsqueezy",
+        provider_subscription_id: "sub_1",
+        provider_customer_id: "cust_1",
+        plan: "enterprise",
+        status: "active",
+        paid_access_active: true,
+      },
+      { deactivateSiblings: true },
+    );
+    assert.equal(rows.length, 1);
+    assert.equal(rows[0]?.plan, "enterprise");
+    assert.equal(rows[0]?.paid_access_active, true);
+  });
+
+  it("G) cancelled/expired does not deactivate other active siblings", async () => {
+    const {
+      shouldDeactivateSiblingSubscriptions,
+      upsertSubscriptionMirrorAndDeactivateSiblings,
+    } = await import("../../services/billing/lemon-squeezy/sibling-deactivation");
+
+    assert.equal(
+      shouldDeactivateSiblingSubscriptions({
+        paidAccessActive: false,
+        providerSubscriptionId: "sub_old",
+        status: "expired",
+      }),
+      false,
+    );
+    assert.equal(
+      shouldDeactivateSiblingSubscriptions({
+        paidAccessActive: true,
+        providerSubscriptionId: "sub_old",
+        status: "cancelled",
+      }),
+      false,
+    );
+    assert.equal(
+      shouldDeactivateSiblingSubscriptions({
+        paidAccessActive: true,
+        providerSubscriptionId: "sub_old",
+        status: "paused",
+      }),
+      false,
+    );
+
+    let rows = upsertSubscriptionMirrorAndDeactivateSiblings(
+      [],
+      {
+        user_id: "user-a",
+        provider: "lemonsqueezy",
+        provider_subscription_id: "sub_biz",
+        provider_customer_id: "cust_1",
+        plan: "enterprise",
+        status: "active",
+        paid_access_active: true,
+      },
+      { deactivateSiblings: true },
+    );
+    // Old Pro expires — must not supersede Business
+    rows = upsertSubscriptionMirrorAndDeactivateSiblings(
+      rows,
+      {
+        user_id: "user-a",
+        provider: "lemonsqueezy",
+        provider_subscription_id: "sub_pro",
+        provider_customer_id: "cust_1",
+        plan: "pro",
+        status: "expired",
+        paid_access_active: false,
+      },
+      { deactivateSiblings: true },
+    );
+    assert.equal(
+      rows.find((r) => r.provider_subscription_id === "sub_biz")
+        ?.paid_access_active,
+      true,
+    );
+  });
+});
+
 describe("Lemon Squeezy docs & route presence", () => {
   it("ships docs, webhook route, migration proposal, keeps placeholder", () => {
     const docs = readFileSync(

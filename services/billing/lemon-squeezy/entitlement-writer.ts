@@ -7,16 +7,16 @@
 import "server-only";
 
 import type { EntitlementWriter } from "@/services/billing/lemon-squeezy/webhook-processor";
+import {
+  SIBLING_SUPERSEDED_STATUS,
+  shouldDeactivateSiblingSubscriptions,
+} from "@/services/billing/lemon-squeezy/sibling-deactivation";
 import type { TypedSupabaseClient } from "@/supabase/types";
 
+/** Minimal untyped surface for optional billing_* tables (may be missing). */
 type UntypedClient = {
   from: (table: string) => {
-    update: (values: Record<string, unknown>) => {
-      eq: (
-        column: string,
-        value: string,
-      ) => Promise<{ error: { message: string } | null }>;
-    };
+    update: (values: Record<string, unknown>) => unknown;
     upsert: (
       values: Record<string, unknown>,
       opts?: { onConflict?: string },
@@ -42,6 +42,49 @@ type UntypedClient = {
     };
   };
 };
+
+type FilterChain = {
+  eq: (column: string, value: string | boolean) => FilterChain;
+  neq: (
+    column: string,
+    value: string,
+  ) => PromiseLike<{ error: { message: string } | null }>;
+};
+
+/**
+ * Close other paid Lemon mirror rows for this user/customer so only the
+ * current provider_subscription_id remains paid_access_active.
+ */
+async function deactivateSiblingPaidSubscriptions(
+  raw: UntypedClient,
+  input: {
+    userId: string;
+    providerSubscriptionId: string;
+    providerCustomerId: string | null;
+  },
+): Promise<void> {
+  const patch = {
+    paid_access_active: false,
+    status: SIBLING_SUPERSEDED_STATUS,
+    updated_at: new Date().toISOString(),
+  };
+
+  let query = (
+    raw.from("billing_subscriptions").update(patch) as FilterChain
+  )
+    .eq("provider", "lemonsqueezy")
+    .eq("user_id", input.userId)
+    .eq("paid_access_active", true);
+
+  if (input.providerCustomerId) {
+    query = query.eq("provider_customer_id", input.providerCustomerId);
+  }
+
+  await query.neq(
+    "provider_subscription_id",
+    input.providerSubscriptionId,
+  );
+}
 
 export function createSupabaseEntitlementWriter(
   admin: TypedSupabaseClient,
@@ -104,6 +147,20 @@ export function createSupabaseEntitlementWriter(
             },
             { onConflict: "provider,provider_subscription_id" },
           );
+
+          if (
+            shouldDeactivateSiblingSubscriptions({
+              paidAccessActive: input.paidAccessActive,
+              providerSubscriptionId: input.providerSubscriptionId,
+              status: input.status,
+            })
+          ) {
+            await deactivateSiblingPaidSubscriptions(raw, {
+              userId: input.userId,
+              providerSubscriptionId: input.providerSubscriptionId,
+              providerCustomerId: input.providerCustomerId,
+            });
+          }
         }
       } catch {
         // optional until migration applied
