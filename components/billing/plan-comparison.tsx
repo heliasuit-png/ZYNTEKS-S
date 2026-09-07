@@ -12,7 +12,7 @@ import {
 } from "@/components/dashboard/panel";
 import { FadeIn } from "@/components/dashboard/motion";
 import type { comparePlans } from "@/services/billing/catalog";
-import type { BillingPlanId } from "@/services/billing/types";
+import type { CommercialPlanId } from "@/services/billing/types";
 import { formatMoney } from "@/utils/billing";
 
 export function PlanComparison({
@@ -34,7 +34,7 @@ export function PlanComparison({
           </div>
         </PanelHeader>
         <PanelContent className="overflow-x-auto">
-          <table className="w-full min-w-[640px] border-collapse text-sm">
+          <table className="w-full min-w-[720px] border-collapse text-sm">
             <caption className="sr-only">{t.featureComparisonCaption}</caption>
             <thead>
               <tr className="border-b border-zt-border text-left">
@@ -45,7 +45,7 @@ export function PlanComparison({
                   const monthly =
                     plan.prices.find((p) => p.interval === "month") ??
                     plan.prices[0]!;
-                  const planCopy = t.catalog[plan.id as BillingPlanId];
+                  const planCopy = t.catalog[plan.id as CommercialPlanId];
                   return (
                     <th
                       key={plan.id}

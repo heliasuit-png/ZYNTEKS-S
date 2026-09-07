@@ -5,6 +5,7 @@ export { BillingService, getBillingService } from "@/services/billing/billing.se
 export {
   BILLING_CATALOG,
   comparePlans,
+  commercialPlanFromEntitlement,
   getPlanDefinition,
 } from "@/services/billing/catalog";
 export type {
@@ -18,6 +19,7 @@ export type {
   BillingUsageSnapshot,
   ChangePlanInput,
   CheckoutInput,
+  CommercialPlanId,
   InvoiceStatus,
   PlanDefinition,
   PlanFeature,
@@ -25,3 +27,4 @@ export type {
   PortalInput,
   SubscriptionStatus,
 } from "@/services/billing/types";
+

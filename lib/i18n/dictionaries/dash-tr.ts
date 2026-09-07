@@ -1513,25 +1513,27 @@ export const dashTr = {
       "Ödeme sonrası buraya yönlendirildiyseniz, plan değişikliği beklemeden önce webhook onayını bekleyin. Ön yüz başarısı yetki değildir.",
     unlimited: "Sınırsız",
     planNames: {
-      free: "Başlangıç",
+      free: "Ücretsiz",
       pro: "Pro",
-      enterprise: "Kurumsal",
+      enterprise: "Business",
     },
     catalog: {
       free: {
-        name: "Başlangıç",
-        description:
-          "ZYNTEKSIS’i production-ready formda değerlendiren bireyler için.",
+        name: "Ücretsiz",
+        description: "Küçük bir projeyle Zynteksis’i tanıyın.",
+      },
+      developer: {
+        name: "Developer",
+        description: "Bireysel geliştiriciler ve serbest çalışanlar için.",
       },
       pro: {
         name: "Pro",
         description:
-          "Daha yüksek limitler ve sınırsız AI’ya ihtiyaç duyan büyüyen ekipler için.",
+          "Profesyonel geliştiriciler, serbest çalışanlar ve küçük ekipler için.",
       },
-      enterprise: {
-        name: "Kurumsal",
-        description:
-          "Maksimum ölçek ve özel destek gereken kurumlar için.",
+      business: {
+        name: "Business",
+        description: "Büyüyen yazılım ekipleri ve şirketler için.",
       },
       features: {
         projects: "Projeler",

@@ -20,11 +20,13 @@ export function BillingDashboard({
   catalog,
   comparison,
   checkoutNotice,
+  checkoutEnabled = false,
 }: {
   overview: BillingOverview;
   catalog: readonly PlanDefinition[];
   comparison: ReturnType<typeof comparePlans>;
   checkoutNotice?: string | null;
+  checkoutEnabled?: boolean;
 }) {
   const { dict } = useDictionary();
   const t = dict.dash.billingUi;
@@ -76,7 +78,10 @@ export function BillingDashboard({
 
       {tab === "overview" ? (
         <div className="space-y-6">
-          <SubscriptionPanel subscription={overview.subscription} />
+          <SubscriptionPanel
+            subscription={overview.subscription}
+            checkoutEnabled={checkoutEnabled}
+          />
           <UsageDashboard usage={overview.usage} />
           <InvoiceHistory invoices={overview.invoices} />
         </div>
@@ -89,6 +94,7 @@ export function BillingDashboard({
             currentPlan={overview.subscription.plan}
             authenticated
             mode="dashboard"
+            checkoutEnabled={checkoutEnabled}
           />
           <PlanComparison comparison={comparison} />
         </div>

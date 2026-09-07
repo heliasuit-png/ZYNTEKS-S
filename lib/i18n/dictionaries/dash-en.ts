@@ -1505,25 +1505,27 @@ export const dashEn = {
       "If you were redirected here after checkout, wait for webhook confirmation before expecting a plan change. Frontend success is not entitlement.",
     unlimited: "Unlimited",
     planNames: {
-      free: "Starter",
+      free: "Free",
       pro: "Pro",
-      enterprise: "Enterprise",
+      enterprise: "Business",
     },
     catalog: {
       free: {
-        name: "Starter",
-        description:
-          "For individuals evaluating ZYNTEKSIS in production-ready form.",
+        name: "Free",
+        description: "Get to know Zynteksis with a small project.",
+      },
+      developer: {
+        name: "Developer",
+        description: "For individual developers and freelancers.",
       },
       pro: {
         name: "Pro",
         description:
-          "For growing teams that need higher limits and unlimited AI.",
+          "For professional developers, freelancers, and small teams.",
       },
-      enterprise: {
-        name: "Enterprise",
-        description:
-          "For organizations that need maximum scale and dedicated support.",
+      business: {
+        name: "Business",
+        description: "For growing software teams and companies.",
       },
       features: {
         projects: "Projects",

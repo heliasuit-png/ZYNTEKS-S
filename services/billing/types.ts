@@ -6,8 +6,13 @@
  */
 
 import type { SubscriptionPlan } from "@/types/database";
+import type { PricingPresentationPlanId } from "@/services/billing/pricing-presentation";
 
+/** Local entitlement / DB enum: free | pro | enterprise. */
 export type BillingPlanId = SubscriptionPlan;
+
+/** Commercial checkout / catalog slugs: free | developer | pro | business. */
+export type CommercialPlanId = PricingPresentationPlanId;
 
 export type BillingInterval = "month" | "year";
 
@@ -64,7 +69,8 @@ export interface PlanFeature {
 }
 
 export interface PlanDefinition {
-  id: BillingPlanId;
+  /** Commercial catalog id (not the DB entitlement enum). */
+  id: CommercialPlanId;
   name: string;
   description: string;
   highlighted: boolean;

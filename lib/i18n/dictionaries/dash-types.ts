@@ -1430,8 +1430,9 @@ export type DashDictionary = {
     };
     catalog: {
       free: { name: string; description: string };
+      developer: { name: string; description: string };
       pro: { name: string; description: string };
-      enterprise: { name: string; description: string };
+      business: { name: string; description: string };
       features: {
         projects: string;
         "api-keys": string;
