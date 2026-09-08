@@ -96,19 +96,22 @@ export function loadLemonSqueezyConfig(
 }
 
 /**
- * Marketing / pricing CTAs may call checkout only in TEST mode when configured.
- * Default MODE=off keeps Coming Soon UI (production-safe).
+ * Billing / pricing CTAs may open checkout when Lemon is checkout-ready.
+ * Ready means mode is test, or live with LEMON_SQUEEZY_ALLOW_LIVE + credentials
+ * (see loadLemonSqueezyConfig). MODE=off keeps Coming Soon UI.
+ * API route still enforces its own live/auth/variant gates separately.
  */
 export function isLemonCheckoutUiEnabled(
   env: Record<string, string | undefined> = process.env,
 ): boolean {
   const config = loadLemonSqueezyConfig(env);
-  if (config.mode !== "test" || !config.isCheckoutReady) return false;
+  // isCheckoutReady already false for off, live-without-ALLOW_LIVE, or missing creds.
+  if (!config.isCheckoutReady) return false;
   const explicit = (env.LEMON_SQUEEZY_CHECKOUT_UI ?? "").trim().toLowerCase();
   if (explicit === "false" || explicit === "0" || explicit === "off") {
     return false;
   }
-  // Default: enable UI when test mode + checkout credentials exist.
+  // Default: enable UI when checkout is ready (test or allowed live).
   // Set LEMON_SQUEEZY_CHECKOUT_UI=false to keep Coming Soon while testing API.
   return true;
 }
