@@ -304,22 +304,21 @@ export const tr: Dictionary = {
       pageDesc:
         "Zynteksis ile production-ready gözlemlenebilirliği ölçekleyin.",
       metaDescription:
-        "ZYNTEKSIS Free, Developer, Pro ve Business planlarını karşılaştırın. Limitler ve özellikler bir bakışta. Abonelik satın alma yakında.",
+        "ZYNTEKSIS Free, Developer, Pro ve Business planlarını karşılaştırın. Limitler ve özellikler bir bakışta. Güvenli çevrimiçi ödeme mevcuttur.",
       popular: "En Popüler",
       perMonth: "/ay",
       limitsLabel: "Limitler",
       featuresLabel: "Özellikler",
       moreFeatures: "Daha fazla göster ({count})",
       showLess: "Daha az göster",
-      comingSoonTitle: "Ödeme sistemi yakında aktif olacak.",
+      comingSoonTitle: "Ödeme başlatılamadı",
       comingSoonBody:
-        "Şimdilik abonelik satın alma işlemleri kullanıma açık değildir.",
+        "Checkout şu anda başlatılamadı. Lütfen tekrar deneyin veya giriş yapın.",
       comingSoonClose: "Anladım",
       paymentMethodsNote:
-        "Kart markaları bilgilendirme amaçlıdır. Çevrimiçi ödeme henüz aktif değildir.",
-      paymentSecureNote:
-        "Aşağıdaki kart markaları yalnızca bilgilendirme amaçlıdır. Checkout henüz aktif değildir.",
-      legalNoteBefore: "Ücretli ödeme şu an aktif değil. İlgili belgeler:",
+        "Güvenli çevrimiçi ödeme için kabul edilen kart markaları.",
+      paymentSecureNote: "Güvenli çevrimiçi ödeme mevcuttur.",
+      legalNoteBefore: "Çevrimiçi ödeme mevcuttur. İlgili belgeler:",
       legalTermsLink: "Hizmet Şartları",
       legalRefundLink: "İade ve İptal Politikası",
       legalDistanceSalesLink: "Mesafeli Satış Sözleşmesi",
@@ -332,10 +331,10 @@ export const tr: Dictionary = {
           description: "Küçük projeyi Zynteksis ile tanı.",
           cta: "Ücretsiz Başla",
           limits: [
-            "1 proje",
-            "1 kullanıcı",
-            "1 servis",
-            "7 günlük veri geçmişi",
+            "3 proje",
+            "3 API anahtarı / proje",
+            "200 AI mesajı / ay",
+            "1 koltuk",
           ],
           features: [
             "Temel production monitoring",
@@ -355,10 +354,10 @@ export const tr: Dictionary = {
           description: "Bireysel geliştiriciler ve freelancerlar için",
           cta: "Abone Ol",
           limits: [
-            "3 proje",
-            "3 servis / proje",
-            "1 kullanıcı",
-            "30 günlük veri geçmişi",
+            "25 proje",
+            "20 API anahtarı / proje",
+            "Sınırsız AI mesajı / ay",
+            "1 koltuk",
           ],
           features: [
             "Production monitoring",
@@ -386,10 +385,10 @@ export const tr: Dictionary = {
             "Profesyonel geliştiriciler, freelancerlar ve küçük ekipler için",
           cta: "Abone Ol",
           limits: [
-            "10 proje",
-            "50 servis",
-            "3 kullanıcı",
-            "90 gün veri geçmişi",
+            "25 proje",
+            "20 API anahtarı / proje",
+            "Sınırsız AI mesajı / ay",
+            "25 koltuk",
           ],
           features: [
             "Production monitoring",
@@ -430,10 +429,10 @@ export const tr: Dictionary = {
           description: "Büyüyen yazılım ekipleri ve şirketler için",
           cta: "Abone Ol",
           limits: [
-            "100 proje",
-            "500 servis",
-            "25 kullanıcı",
-            "12 ay veri geçmişi",
+            "1000 proje",
+            "200 API anahtarı / proje",
+            "Sınırsız AI mesajı / ay",
+            "Sınırsız koltuk",
           ],
           features: [
             "Production monitoring",
@@ -484,7 +483,7 @@ export const tr: Dictionary = {
         },
         {
           q: "Faturalama arayüzünü kullanmak için ödeme sağlayıcısı gerekir mi?",
-          a: "Hayır. Plan limitleri ve faturalama arayüzü hazır gelir. Abonelik satın alma çok yakında kullanıma sunulacaktır — checkout henüz aktif değildir.",
+          a: "Plan limitleri ve faturalama arayüzü ürüne dahildir. Giriş yaptığınızda Developer, Pro ve Business abonelikleri için güvenli çevrimiçi ödeme kullanılabilir.",
         },
         {
           q: "SDK hangi çerçeveleri destekler?",

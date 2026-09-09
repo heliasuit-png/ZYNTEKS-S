@@ -37,8 +37,8 @@ const PREVIEW_FEATURES = 8;
 const COMPACT_PREVIEW_FEATURES = 5;
 
 /**
- * Lemon-review pricing cards.
- * Paid CTAs stay Coming Soon unless `checkoutEnabled` (TEST MODE server flag).
+ * Marketing pricing cards.
+ * Paid CTAs call checkout when `checkoutEnabled` (Lemon checkout-ready).
  */
 export function MarketingPricingCards({
   showPaymentMethods = true,
@@ -49,8 +49,8 @@ export function MarketingPricingCards({
   /** Landing teaser: fewer feature rows. */
   compact?: boolean;
   /**
-   * When true (server-resolved TEST MODE + credentials), paid CTAs call
-   * POST /api/lemonsqueezy/checkout. Default false keeps Coming Soon.
+   * When true (server-resolved Lemon checkout-ready + variants), paid CTAs call
+   * POST /api/lemonsqueezy/checkout. Default false shows a retry/unavailable modal.
    */
   checkoutEnabled?: boolean;
 }) {

@@ -5,10 +5,14 @@ import { join } from "node:path";
 
 import { PRICING_PRESENTATION_PLANS } from "@/services/billing/pricing-presentation";
 import { dictionaries } from "@/lib/i18n/dictionaries";
+import {
+  AI_MONTHLY_MESSAGE_LIMITS,
+  PLAN_LIMITS,
+} from "@/lib/constants";
 
 const root = process.cwd();
 
-describe("pricing presentation (Lemon review, payments off)", () => {
+describe("pricing presentation (marketing aligned with backend limits)", () => {
   it("exposes four presentation plans with expected monthly prices", () => {
     assert.deepEqual(
       PRICING_PRESENTATION_PLANS.map((p) => [p.id, p.amountCents]),
@@ -25,7 +29,7 @@ describe("pricing presentation (Lemon review, payments off)", () => {
     );
   });
 
-  it("keeps TR/EN plan copy key parity and non-empty feature lists", () => {
+  it("keeps TR/EN plan copy key parity and backend-aligned limits", () => {
     for (const locale of ["en", "tr"] as const) {
       const pricing = dictionaries[locale].landing.pricing;
       assert.ok(pricing.moreFeatures.includes("{count}"));
@@ -40,40 +44,80 @@ describe("pricing presentation (Lemon review, payments off)", () => {
         assert.ok(plan.features.length >= 8, `${locale}.${id}.features`);
       }
     }
+
+    const en = dictionaries.en.landing.pricing.plans;
+    assert.ok(en.free.limits.some((l) => l.includes(String(PLAN_LIMITS.free.projects))));
+    assert.ok(
+      en.free.limits.some((l) =>
+        l.includes(String(PLAN_LIMITS.free.apiKeysPerProject)),
+      ),
+    );
+    assert.ok(
+      en.free.limits.some((l) =>
+        l.includes(String(AI_MONTHLY_MESSAGE_LIMITS.free)),
+      ),
+    );
+    assert.ok(en.developer.limits.some((l) => l.includes(String(PLAN_LIMITS.pro.projects))));
+    assert.ok(
+      en.developer.limits.some((l) =>
+        l.includes(String(PLAN_LIMITS.pro.apiKeysPerProject)),
+      ),
+    );
+    assert.ok(en.pro.limits.some((l) => l.includes(String(PLAN_LIMITS.pro.projects))));
+    assert.ok(
+      en.business.limits.some((l) =>
+        l.includes(String(PLAN_LIMITS.enterprise.projects)),
+      ),
+    );
+    assert.ok(
+      en.business.limits.some((l) =>
+        l.includes(String(PLAN_LIMITS.enterprise.apiKeysPerProject)),
+      ),
+    );
   });
 
-  it("paid plans use subscribe CTA kind (no checkout)", () => {
+  it("marketing pricing copy does not claim checkout is inactive", () => {
+    for (const locale of ["en", "tr"] as const) {
+      const pricing = dictionaries[locale].landing.pricing;
+      const blob = JSON.stringify({
+        meta: pricing.metaDescription,
+        secure: pricing.paymentSecureNote,
+        methods: pricing.paymentMethodsNote,
+        legal: pricing.legalNoteBefore,
+        faq: dictionaries[locale].landing.faq.items,
+      }).toLowerCase();
+      assert.doesNotMatch(blob, /not active/);
+      assert.doesNotMatch(blob, /coming soon/);
+      assert.doesNotMatch(blob, /henüz aktif değil/);
+      assert.doesNotMatch(blob, /yakında/);
+      assert.doesNotMatch(blob, /paid checkout is not active/);
+    }
+  });
+
+  it("paid plans use subscribe CTA kind", () => {
     assert.equal(
       PRICING_PRESENTATION_PLANS.find((p) => p.id === "business")?.ctaKind,
       "subscribe",
     );
   });
 
-  it("marketing pricing cards never call checkout or Lemon", () => {
+  it("marketing pricing cards support gated Lemon checkout", () => {
     const cards = readFileSync(
       join(root, "features/billing/components/marketing-pricing-cards.tsx"),
       "utf8",
     );
-    assert.match(cards, /data-checkout="disabled"/);
-    assert.doesNotMatch(cards, /purchasePlanAction|upgradePlanAction|createCheckout|lemonsqueezy|lemon-squeezy/i);
+    assert.match(cards, /data-checkout=\{checkoutEnabled \? "enabled" : "disabled"\}/);
+    assert.match(cards, /\/api\/lemonsqueezy\/checkout/);
     assert.match(cards, /comingSoonTitle/);
   });
 
-  it("pricing page uses presentation cards, not purchase actions", () => {
+  it("pricing page uses presentation cards with checkoutEnabled", () => {
     const page = readFileSync(
       join(root, "app/(marketing)/pricing/page.tsx"),
       "utf8",
     );
     assert.match(page, /MarketingPricingCards/);
+    assert.match(page, /checkoutEnabled/);
     assert.doesNotMatch(page, /purchasePlanAction|BILLING_CATALOG/);
-  });
-
-  it("payment factory remains placeholder (Lemon mode not activated)", () => {
-    const factory = readFileSync(
-      join(root, "services/billing/factory.ts"),
-      "utf8",
-    );
-    assert.match(factory, /placeholderPaymentProvider/);
-    assert.doesNotMatch(factory, /lemonSqueezy|LEMON_SQUEEZY_MODE/);
   });
 });

@@ -304,22 +304,21 @@ export const en: Dictionary = {
       pageDesc:
         "Scale production-ready observability with Zynteksis.",
       metaDescription:
-        "Compare ZYNTEKSIS Free, Developer, Pro, and Business plans. Limits and features at a glance. Subscription purchasing coming soon.",
+        "Compare ZYNTEKSIS Free, Developer, Pro, and Business plans. Limits and features at a glance. Secure online checkout available.",
       popular: "Most Popular",
       perMonth: "/mo",
       limitsLabel: "Limits",
       featuresLabel: "Features",
       moreFeatures: "Show more ({count})",
       showLess: "Show less",
-      comingSoonTitle: "Our payment system will be available soon.",
+      comingSoonTitle: "Checkout unavailable",
       comingSoonBody:
-        "Subscription purchasing is not available yet.",
+        "We couldn't start checkout right now. Please try again or sign in.",
       comingSoonClose: "Got it",
       paymentMethodsNote:
-        "Accepted card brands are shown for reference. Online checkout is not active yet.",
-      paymentSecureNote:
-        "Card brands below are informational only. Checkout is not active yet.",
-      legalNoteBefore: "Paid checkout is not active. Related policies:",
+        "Accepted card brands for secure online checkout.",
+      paymentSecureNote: "Secure online checkout available.",
+      legalNoteBefore: "Online checkout available. Related policies:",
       legalTermsLink: "Terms of Service",
       legalRefundLink: "Refund & Cancellation Policy",
       legalDistanceSalesLink: "Distance Sales Agreement",
@@ -332,10 +331,10 @@ export const en: Dictionary = {
           description: "Get to know Zynteksis with a small project.",
           cta: "Start Free",
           limits: [
-            "1 project",
-            "1 user",
-            "1 service",
-            "7-day data retention",
+            "3 projects",
+            "3 API keys / project",
+            "200 AI messages / month",
+            "1 seat",
           ],
           features: [
             "Basic production monitoring",
@@ -355,10 +354,10 @@ export const en: Dictionary = {
           description: "For individual developers and freelancers",
           cta: "Subscribe",
           limits: [
-            "3 projects",
-            "3 services / project",
-            "1 user",
-            "30-day data retention",
+            "25 projects",
+            "20 API keys / project",
+            "Unlimited AI messages / month",
+            "1 seat",
           ],
           features: [
             "Production monitoring",
@@ -386,10 +385,10 @@ export const en: Dictionary = {
             "For professional developers, freelancers, and small teams",
           cta: "Subscribe",
           limits: [
-            "10 projects",
-            "50 services",
-            "3 users",
-            "90-day data retention",
+            "25 projects",
+            "20 API keys / project",
+            "Unlimited AI messages / month",
+            "25 seats",
           ],
           features: [
             "Production monitoring",
@@ -430,10 +429,10 @@ export const en: Dictionary = {
           description: "For growing software teams and companies",
           cta: "Subscribe",
           limits: [
-            "100 projects",
-            "500 services",
-            "25 users",
-            "12-month data retention",
+            "1000 projects",
+            "200 API keys / project",
+            "Unlimited AI messages / month",
+            "Unlimited seats",
           ],
           features: [
             "Production monitoring",
@@ -484,7 +483,7 @@ export const en: Dictionary = {
         },
         {
           q: "Do I need a payment provider to use billing UI?",
-          a: "No. Plan limits and the billing interface ship ready. Subscription purchasing will be available shortly — checkout is not active yet.",
+          a: "Plan limits and the billing interface are built in. Secure online checkout is available for Developer, Pro, and Business subscriptions when you are signed in.",
         },
         {
           q: "Which frameworks does the SDK support?",
