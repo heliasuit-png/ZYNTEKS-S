@@ -76,14 +76,38 @@ export function extractCustomData(
   };
 }
 
+function asIdString(value: unknown): string | null {
+  if (typeof value === "number" && Number.isFinite(value)) return String(value);
+  if (typeof value === "string" && value.trim()) return value.trim();
+  return null;
+}
+
 export function extractVariantId(
   attributes: Record<string, unknown> | undefined,
 ): string | null {
   if (!attributes) return null;
-  const variantId = attributes.variant_id;
-  if (typeof variantId === "number") return String(variantId);
-  if (typeof variantId === "string" && variantId.trim()) return variantId.trim();
-  return null;
+  return asIdString(attributes.variant_id);
+}
+
+/** Lemon subscription/order payloads may include product_id. */
+export function extractProductId(
+  attributes: Record<string, unknown> | undefined,
+): string | null {
+  if (!attributes) return null;
+  return asIdString(attributes.product_id);
+}
+
+/**
+ * Order id on subscription events (when present).
+ * Prefer explicit order_id / first_order_id — never invent.
+ */
+export function extractOrderId(
+  attributes: Record<string, unknown> | undefined,
+): string | null {
+  if (!attributes) return null;
+  return (
+    asIdString(attributes.order_id) ?? asIdString(attributes.first_order_id)
+  );
 }
 
 export function extractSubscriptionStatus(

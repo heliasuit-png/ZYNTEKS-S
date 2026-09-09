@@ -8,9 +8,12 @@ import {
   decideEntitlement,
   mapLemonSubscriptionStatus,
 } from "@/services/billing/lemon-squeezy/entitlement";
+import { checkoutPlanFromVariantId } from "@/services/billing/lemon-squeezy/checkout-plans";
 import {
   extractCustomData,
   extractEndsAt,
+  extractOrderId,
+  extractProductId,
   extractSubscriptionStatus,
   extractVariantId,
   isHandledLemonEvent,
@@ -19,6 +22,7 @@ import {
 } from "@/services/billing/lemon-squeezy/events";
 import { planFromVariantId } from "@/services/billing/lemon-squeezy/variants";
 import type { BillingPlanId } from "@/services/billing/types";
+import type { LemonCheckoutPlanId } from "@/services/billing/lemon-squeezy/checkout-plans";
 
 export type WebhookProcessStatus =
   | "processed"
@@ -57,6 +61,7 @@ export interface EntitlementWriter {
   /**
    * Persist plan for the authenticated mapping from custom_data.
    * Must ignore client-supplied ids that fail ownership checks when a DB is wired.
+   * Optional mirror fields: omit (undefined) when unknown so upserts do not NULL-wipe.
    */
   applyPlan(input: {
     userId: string;
@@ -66,6 +71,11 @@ export interface EntitlementWriter {
     providerCustomerId: string | null;
     providerSubscriptionId: string | null;
     status: string;
+    /** Commercial slug: developer | pro | business */
+    commercialPlan?: LemonCheckoutPlanId | null;
+    lemonVariantId?: string | null;
+    lemonProductId?: string | null;
+    lemonOrderId?: string | null;
   }): Promise<void>;
 }
 
@@ -202,6 +212,9 @@ export async function processLemonSqueezyEvent(opts: {
 
   if (!opts.dryRun && opts.writer) {
     const customerId = attributes?.customer_id;
+    const productId = extractProductId(attributes);
+    const orderId = extractOrderId(attributes);
+    const commercialPlan = checkoutPlanFromVariantId(variantId);
     await opts.writer.applyPlan({
       userId: custom.user_id,
       workspaceId: custom.workspace_id ?? null,
@@ -215,6 +228,11 @@ export async function processLemonSqueezyEvent(opts: {
         ? String(opts.payload.data.id)
         : null,
       status,
+      // Only pass mirror fields when present — undefined means "leave existing DB value".
+      ...(commercialPlan ? { commercialPlan } : {}),
+      ...(variantId ? { lemonVariantId: variantId } : {}),
+      ...(productId ? { lemonProductId: productId } : {}),
+      ...(orderId ? { lemonOrderId: orderId } : {}),
     });
   }
 

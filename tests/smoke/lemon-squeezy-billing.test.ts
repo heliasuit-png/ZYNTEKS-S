@@ -313,6 +313,150 @@ describe("Lemon Squeezy webhook events & entitlement", () => {
     void mappingEnv;
   });
 
+  it("persists commercial mirror fields for Developer variant 2094151", async () => {
+    process.env.LEMON_SQUEEZY_VARIANT_DEVELOPER = "2094151";
+    process.env.LEMON_SQUEEZY_VARIANT_PRO = "2094176";
+    process.env.LEMON_SQUEEZY_VARIANT_BUSINESS = "2094182";
+    const store = createMemoryIdempotencyStore();
+    type ApplyInput = Parameters<
+      NonNullable<
+        Parameters<typeof processLemonSqueezyEvent>[0]["writer"]
+      >["applyPlan"]
+    >[0];
+    const applied: ApplyInput[] = [];
+    const result = await processLemonSqueezyEvent({
+      payload: {
+        meta: {
+          event_name: "subscription_created",
+          webhook_id: "evt-mirror-dev",
+          custom_data: { user_id: "user-dev", workspace_id: "ws-dev" },
+        },
+        data: {
+          id: "2512168",
+          attributes: {
+            status: "active",
+            variant_id: 2094151,
+            product_id: 610234,
+            order_id: 987654,
+            customer_id: 9827924,
+          },
+        },
+      },
+      idempotency: store,
+      writer: {
+        async applyPlan(input) {
+          applied.push(input);
+        },
+      },
+    });
+    assert.equal(result.status, "processed");
+    assert.equal(result.entitlementPlan, "pro");
+    assert.equal(result.paidAccessActive, true);
+    assert.equal(applied.length, 1);
+    assert.equal(applied[0]?.plan, "pro");
+    assert.equal(applied[0]?.paidAccessActive, true);
+    assert.equal(applied[0]?.commercialPlan, "developer");
+    assert.equal(applied[0]?.lemonVariantId, "2094151");
+    assert.equal(applied[0]?.lemonProductId, "610234");
+    assert.equal(applied[0]?.lemonOrderId, "987654");
+    assert.equal(applied[0]?.providerSubscriptionId, "2512168");
+  });
+
+  it("omits missing mirror fields on subscription_updated (no null wipe)", async () => {
+    process.env.LEMON_SQUEEZY_VARIANT_DEVELOPER = "2094151";
+    const store = createMemoryIdempotencyStore();
+    type ApplyInput = Parameters<
+      NonNullable<
+        Parameters<typeof processLemonSqueezyEvent>[0]["writer"]
+      >["applyPlan"]
+    >[0];
+    const applied: ApplyInput[] = [];
+    const result = await processLemonSqueezyEvent({
+      payload: {
+        meta: {
+          event_name: "subscription_updated",
+          webhook_id: "evt-mirror-upd",
+          custom_data: { user_id: "user-dev" },
+        },
+        data: {
+          id: "2512168",
+          attributes: {
+            status: "active",
+            variant_id: 2094151,
+            // product_id / order_id intentionally absent
+            customer_id: 9827924,
+          },
+        },
+      },
+      idempotency: store,
+      writer: {
+        async applyPlan(input) {
+          applied.push(input);
+        },
+      },
+    });
+    assert.equal(result.entitlementPlan, "pro");
+    assert.equal(result.paidAccessActive, true);
+    assert.equal(applied.length, 1);
+    assert.equal(applied[0]?.commercialPlan, "developer");
+    assert.equal(applied[0]?.lemonVariantId, "2094151");
+    assert.equal("lemonProductId" in (applied[0] ?? {}), false);
+    assert.equal("lemonOrderId" in (applied[0] ?? {}), false);
+  });
+
+  it("same subscription id on update reuses applyPlan target (no new id)", async () => {
+    process.env.LEMON_SQUEEZY_VARIANT_DEVELOPER = "2094151";
+    const store = createMemoryIdempotencyStore();
+    const ids: string[] = [];
+    await processLemonSqueezyEvent({
+      payload: {
+        meta: {
+          event_name: "subscription_created",
+          webhook_id: "evt-same-1",
+          custom_data: { user_id: "user-1" },
+        },
+        data: {
+          id: "sub_same",
+          attributes: {
+            status: "active",
+            variant_id: 2094151,
+            product_id: 1,
+            order_id: 2,
+          },
+        },
+      },
+      idempotency: store,
+      writer: {
+        async applyPlan(input) {
+          if (input.providerSubscriptionId) ids.push(input.providerSubscriptionId);
+        },
+      },
+    });
+    await processLemonSqueezyEvent({
+      payload: {
+        meta: {
+          event_name: "subscription_updated",
+          webhook_id: "evt-same-2",
+          custom_data: { user_id: "user-1" },
+        },
+        data: {
+          id: "sub_same",
+          attributes: {
+            status: "active",
+            variant_id: 2094151,
+          },
+        },
+      },
+      idempotency: store,
+      writer: {
+        async applyPlan(input) {
+          if (input.providerSubscriptionId) ids.push(input.providerSubscriptionId);
+        },
+      },
+    });
+    assert.deepEqual(ids, ["sub_same", "sub_same"]);
+  });
+
   it("deduplicates webhook delivery", async () => {
     const store = createMemoryIdempotencyStore();
     const payload = {

@@ -133,18 +133,33 @@ export function createSupabaseEntitlementWriter(
           );
         }
         if (input.providerSubscriptionId) {
+          // Mirror commercial/Lemon ids only when provided — omit keeps prior DB values.
+          const subscriptionRow: Record<string, unknown> = {
+            user_id: input.userId,
+            workspace_id: input.workspaceId,
+            provider: "lemonsqueezy",
+            provider_subscription_id: input.providerSubscriptionId,
+            provider_customer_id: input.providerCustomerId,
+            plan: input.plan,
+            status: input.status,
+            paid_access_active: input.paidAccessActive,
+            updated_at: new Date().toISOString(),
+          };
+          if (input.commercialPlan) {
+            subscriptionRow.commercial_plan = input.commercialPlan;
+          }
+          if (input.lemonVariantId) {
+            subscriptionRow.lemon_variant_id = input.lemonVariantId;
+          }
+          if (input.lemonProductId) {
+            subscriptionRow.lemon_product_id = input.lemonProductId;
+          }
+          if (input.lemonOrderId) {
+            subscriptionRow.lemon_order_id = input.lemonOrderId;
+          }
+
           await raw.from("billing_subscriptions").upsert(
-            {
-              user_id: input.userId,
-              workspace_id: input.workspaceId,
-              provider: "lemonsqueezy",
-              provider_subscription_id: input.providerSubscriptionId,
-              provider_customer_id: input.providerCustomerId,
-              plan: input.plan,
-              status: input.status,
-              paid_access_active: input.paidAccessActive,
-              updated_at: new Date().toISOString(),
-            },
+            subscriptionRow,
             { onConflict: "provider,provider_subscription_id" },
           );
 
