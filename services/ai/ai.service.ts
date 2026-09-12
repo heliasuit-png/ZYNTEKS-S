@@ -113,7 +113,8 @@ export async function handleChat(
     conversation.project_id,
   );
   const history = await getHistory(supabase, userId, conversation.id);
-  const instructions = buildInstructions(context);
+  const { locale } = await getDictionary();
+  const instructions = buildInstructions(context, locale);
   const input = toResponsesInput(history);
 
   const client = getOpenAIClient();

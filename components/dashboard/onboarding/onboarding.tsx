@@ -25,12 +25,10 @@ import { Button } from "@/components/dashboard/button";
 import { useDictionary } from "@/components/i18n/locale-provider";
 import { DASHBOARD_ROUTES } from "@/lib/constants";
 import { fillTemplate } from "@/lib/i18n/fill-template";
-import { SUGGESTED_ANALYSES, promptLabelForIntent } from "@/features/ai/prompts";
+import { suggestedAnalyses, promptLabelForIntent } from "@/features/ai/prompts";
 
 const STORAGE_KEY = "zt:onboarding:done";
 const TOTAL = 6;
-
-const FIRST_PROMPTS = SUGGESTED_ANALYSES.slice(0, 3);
 
 function Confetti() {
   const pieces = useMemo(
@@ -70,10 +68,11 @@ interface StepDef {
 }
 
 export function Onboarding() {
-  const { dict } = useDictionary();
+  const { dict, locale } = useDictionary();
   const o = dict.dash.onboarding;
   const common = dict.dashboardCommon;
   const qa = dict.dash.home.quickActions;
+  const firstPrompts = useMemo(() => suggestedAnalyses(locale).slice(0, 3), [locale]);
 
   const stepLabels = [
     o.tabs.welcome,
@@ -268,7 +267,7 @@ export function Onboarding() {
 
                   {showFirstPrompts ? (
                     <ul className="mt-5 space-y-2">
-                      {FIRST_PROMPTS.map((s) => (
+                      {firstPrompts.map((s) => (
                         <li key={s.intent}>
                           <Link
                             href={`${DASHBOARD_ROUTES.aiAssistant}?intent=${encodeURIComponent(s.intent)}`}

@@ -12,7 +12,7 @@ import { ChatMessage } from "@/features/ai/components/chat-message";
 import { ConversationItem } from "@/features/ai/components/conversation-item";
 import { setConversationProjectAction } from "@/features/ai/actions";
 import {
-  SUGGESTED_ANALYSES,
+  suggestedAnalyses,
   promptLabelForIntent,
 } from "@/features/ai/prompts";
 import type {
@@ -140,9 +140,10 @@ export function AiWorkspace({
   selectedProjectId,
   initialPrompt,
 }: AiWorkspaceProps) {
-  const { dict } = useDictionary();
+  const { dict, locale } = useDictionary();
   const t = dict.dash.ai;
   const shell = dict.dash.shell;
+  const suggested = useMemo(() => suggestedAnalyses(locale), [locale]);
   const [messages, setMessages] = useState<ChatMessageView[]>(initialMessages);
   const [input, setInput] = useState("");
   const [streaming, setStreaming] = useState(false);
@@ -793,7 +794,7 @@ export function AiWorkspace({
               {t.emptyDesc}
             </p>
             <div className="mt-6 flex max-w-2xl flex-wrap items-center justify-center gap-2">
-              {SUGGESTED_ANALYSES.map((s) => (
+              {suggested.map((s) => (
                 <button
                   key={s.intent}
                   type="button"

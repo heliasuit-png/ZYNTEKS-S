@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 
 import { useDictionary } from "@/components/i18n/locale-provider";
+import { buildAnalyzeErrorDeepLinkPrompt } from "@/features/ai/prompts";
 import {
   Panel,
   PanelContent,
@@ -91,20 +92,21 @@ export function ErrorDetailView({ bundle, shareUrl }: ErrorDetailViewProps) {
   );
 
   const analyzeHref = `${DASHBOARD_ROUTES.aiAssistant}?intent=analyze-error&project=${error.projectId}&q=${encodeURIComponent(
-    [
-      `Analyze this error with root cause, recommendations, confidence, and related signals.`,
-      ``,
-      `Error ID: ${error.id}`,
-      `Message: ${error.message}`,
-      `Type: ${error.type ?? "n/a"}`,
-      `Level: ${error.level}`,
-      `Fingerprint: ${error.fingerprint}`,
-      `Occurrences: ${error.occurrences}`,
-      `Environment: ${error.environment}`,
-      `Release: ${error.release ?? "n/a"}`,
-      `URL: ${error.url ?? "n/a"}`,
-      error.stack ? `\nStack:\n${error.stack.slice(0, 3500)}` : "",
-    ].join("\n"),
+    buildAnalyzeErrorDeepLinkPrompt(
+      {
+        id: error.id,
+        message: error.message,
+        type: error.type,
+        level: error.level,
+        fingerprint: error.fingerprint,
+        occurrences: error.occurrences,
+        environment: error.environment,
+        release: error.release,
+        url: error.url,
+        stack: error.stack,
+      },
+      locale,
+    ),
   )}`;
 
   const primaryIncident = relatedIncidents[0];

@@ -67,7 +67,10 @@ export function Topbar({
           className="hidden items-center gap-1.5 rounded-full border border-zt-border bg-white/[0.02] px-3 py-1.5 text-xs font-medium text-zt-muted transition-colors hover:text-zt-text md:flex"
         >
           <Users className="size-3.5" aria-hidden />
-          {workspace.active.memberCount} members
+          {dict.dash.shell.membersCount.replace(
+            "{count}",
+            String(workspace.active.memberCount),
+          )}
         </Link>
         <Link
           href={DASHBOARD_ROUTES.billing}

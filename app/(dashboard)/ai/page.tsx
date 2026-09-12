@@ -16,6 +16,7 @@ import {
 import { createSupabaseServerClient } from "@/supabase/server";
 import { AiWorkspace } from "@/features/ai/components/ai-workspace";
 import { promptForIntent } from "@/features/ai/prompts";
+import { getDictionary } from "@/lib/i18n/get-dictionary";
 import type {
   ChatMessageView,
   ConversationListItem,
@@ -35,7 +36,9 @@ export default async function AiAssistantPage({
   }>;
 }) {
   const { c: requestedId, intent, q, project } = await searchParams;
-  const initialPrompt = q?.trim() || promptForIntent(intent) || undefined;
+  const { locale } = await getDictionary();
+  const initialPrompt =
+    q?.trim() || promptForIntent(intent, locale) || undefined;
   const supabase = await createSupabaseServerClient();
   const user = await getAuthenticatedUser(supabase);
   if (!user) {
